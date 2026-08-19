@@ -31,7 +31,6 @@ MonoBehaviour:
     assemblyNames:
     - Assembly-CSharp-firstpass
     - Zenject
-<<<<<<< HEAD
     - MCPForUnity.Runtime
     - Zenject-IntegrationTests
     - UniTask
@@ -41,15 +40,6 @@ MonoBehaviour:
     - Assembly-CSharp
     - ToonyColorsPro.Runtime
     - UniTask.Linq
-=======
-    - Zenject-IntegrationTests
-    - UniTask
-    - ToonyColorsPro.Editor
-    - PPv2URPConverters
-    - ToonyColorsPro.Runtime
-    - UniTask.Linq
-    - Assembly-CSharp
->>>>>>> 00dbe7313dd26e70dd6dc5b4f3111ec1aee5781c
     - Zenject-TestFramework
     - UniTask.TextMeshPro
     - UniTask.Addressables
