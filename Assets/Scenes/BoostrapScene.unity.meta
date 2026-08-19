@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Scenes/BoostrapScene.unity.meta
 guid: ad6e717cfc4329b40942c6770bf77957
+========
+guid: cba91227f716e89459e3da705a60cf53
+>>>>>>>> 00dbe7313dd26e70dd6dc5b4f3111ec1aee5781c:Assets/Scenes/Test/EyllSceneHard.unity.meta
 DefaultImporter:
   externalObjects: {}
   userData: 
