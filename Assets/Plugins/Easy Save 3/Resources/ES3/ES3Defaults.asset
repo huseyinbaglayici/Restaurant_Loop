@@ -34,10 +34,10 @@ MonoBehaviour:
     - MCPForUnity.Runtime
     - Zenject-IntegrationTests
     - UniTask
+    - Assembly-CSharp
     - ToonyColorsPro.Editor
     - MCPForUnity.Editor
     - PPv2URPConverters
-    - Assembly-CSharp
     - ToonyColorsPro.Runtime
     - UniTask.Linq
     - Zenject-TestFramework

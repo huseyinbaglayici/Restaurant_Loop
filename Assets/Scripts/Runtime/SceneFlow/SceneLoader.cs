@@ -10,10 +10,12 @@ namespace RestaurantLoop.SceneFlow
         private const string GameplaySceneName = "GameplayScene";
 
         private readonly SignalBus _signalBus;
+        private readonly CurrentLevelProvider _currentLevelProvider;
 
-        public SceneLoader(SignalBus signalBus)
+        public SceneLoader(SignalBus signalBus, CurrentLevelProvider currentLevelProvider)
         {
             _signalBus = signalBus;
+            _currentLevelProvider = currentLevelProvider;
         }
 
         public void Initialize()
@@ -50,6 +52,11 @@ namespace RestaurantLoop.SceneFlow
 
         private void OnPlayRequested(PlayRequestedSignal signal)
         {
+            // Null Level means "continue with whatever SaveManager resolved at boot" — only an
+            // explicit level-select (future menu) should override it.
+            if (signal.Level != null)
+                _currentLevelProvider.Current = signal.Level;
+
             LoadGameplayScene();
         }
     }

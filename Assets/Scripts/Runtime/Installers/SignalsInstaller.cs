@@ -13,6 +13,8 @@ namespace RestaurantLoop.Installers
             Container.DeclareSignal<PlayRequestedSignal>();
             Container.DeclareSignal<LoadingStartedSignal>();
             Container.DeclareSignal<GameplaySceneReadySignal>();
+            Container.DeclareSignal<SaveRequestedSignal>();
+            Container.DeclareSignal<LoadRequestedSignal>();
         }
     }
 }

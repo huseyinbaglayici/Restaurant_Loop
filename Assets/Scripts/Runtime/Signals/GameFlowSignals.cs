@@ -1,3 +1,5 @@
+using RestaurantLoop.Runtime.Data;
+
 namespace RestaurantLoop.Signals
 {
     public class LevelEndedSignal
@@ -7,6 +9,7 @@ namespace RestaurantLoop.Signals
 
     public class PlayRequestedSignal
     {
+        public ConveyorLevelDataSO Level;
     }
 
     public class LoadingStartedSignal

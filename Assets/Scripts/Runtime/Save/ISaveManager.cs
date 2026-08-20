@@ -4,5 +4,6 @@ namespace RestaurantLoop.Save
     {
         void Save();
         void Load();
+        void SetCurrentLevel(int levelId);
     }
 }

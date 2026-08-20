@@ -7,6 +7,7 @@ namespace RestaurantLoop.Installers
     {
         public override void InstallBindings()
         {
+            Container.Bind<CurrentLevelProvider>().AsSingle();
             Container.BindInterfacesTo<SceneLoader>().AsSingle();
         }
     }
