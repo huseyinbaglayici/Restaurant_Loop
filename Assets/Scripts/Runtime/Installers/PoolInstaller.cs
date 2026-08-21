@@ -8,6 +8,7 @@ namespace RestaurantLoop.Installers
     public class PoolInstaller : MonoInstaller
     {
         [SerializeField] private int _conveyorPieceInitialSize = 30;
+        [SerializeField] private int _foodItemInitialSize = 20;
 
         public override void InstallBindings()
         {
@@ -24,6 +25,9 @@ namespace RestaurantLoop.Installers
 
             BindConveyorPiecePool(ConveyorTileShape.Straight, settings.ConveyorStraightPrefab);
             BindConveyorPiecePool(ConveyorTileShape.Corner, settings.ConveyorCornerPrefab);
+
+            BindFoodItemPool();
+            BindExitSlotPool();
         }
 
         // Prewarmed at startup (WithInitialSize + NonLazy) instead of allocating the first time a
@@ -41,6 +45,53 @@ namespace RestaurantLoop.Installers
                 .WithInitialSize(_conveyorPieceInitialSize)
                 .FromComponentInNewPrefab(prefab)
                 .UnderTransformGroup("ConveyorPieces")
+                .NonLazy();
+        }
+
+        // Same prewarm reasoning as pieces — food stacks get placed/moved in bulk (queue fills,
+        // belt loads), not one at a time on demand.
+        private void BindFoodItemPool()
+        {
+            var foodSettings = Resources.Load<FoodItemPrefabSettings>("FoodItemPrefabSettings");
+            if (foodSettings == null || foodSettings.FoodItemPrefab == null)
+            {
+                Debug.LogError("[PoolInstaller] FoodItemPrefabSettings.asset missing or has no FoodItemPrefab assigned " +
+                                "under Assets/Resources — food item pool not bound.");
+                return;
+            }
+
+            Container.BindInstance(foodSettings).AsSingle();
+
+            // Optional — FoodItemController falls back to color-only if this asset is missing or
+            // has no entry for a given FoodType (see FoodMeshSettings).
+            var meshSettings = Resources.Load<FoodMeshSettings>("FoodMeshSettings");
+            if (meshSettings != null) Container.BindInstance(meshSettings).AsSingle();
+
+            Container.BindMemoryPool<FoodItemController, FoodItemController.Pool>()
+                .WithInitialSize(_foodItemInitialSize)
+                .FromComponentInNewPrefab(foodSettings.FoodItemPrefab)
+                .UnderTransformGroup("FoodItems")
+                .NonLazy();
+        }
+
+        // Fixed size (ExitStackAnchor.SlotCount), not a tunable field — there are exactly that
+        // many slots, ever.
+        private void BindExitSlotPool()
+        {
+            var exitSlotSettings = Resources.Load<ExitSlotPrefabSettings>("ExitSlotPrefabSettings");
+            if (exitSlotSettings == null || exitSlotSettings.ExitSlotPrefab == null)
+            {
+                Debug.LogError("[PoolInstaller] ExitSlotPrefabSettings.asset missing or has no ExitSlotPrefab assigned " +
+                                "under Assets/Resources — exit slot pool not bound.");
+                return;
+            }
+
+            Container.BindInstance(exitSlotSettings).AsSingle();
+
+            Container.BindMemoryPool<ExitSlotController, ExitSlotController.Pool>()
+                .WithInitialSize(ExitStackAnchor.SlotCount)
+                .FromComponentInNewPrefab(exitSlotSettings.ExitSlotPrefab)
+                .UnderTransformGroup("ExitSlots")
                 .NonLazy();
         }
     }

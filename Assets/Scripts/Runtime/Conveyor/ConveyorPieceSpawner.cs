@@ -1,5 +1,6 @@
+using System;
+using System.Collections.Generic;
 using RestaurantLoop.Runtime.Data;
-using UnityEngine;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
@@ -7,14 +8,20 @@ namespace RestaurantLoop.Runtime.Conveyor
     /// <summary>
     /// Builds the physical belt for the current level by pulling pieces from the pools bound in
     /// PoolInstaller (ProjectContext) — the runtime, pooled equivalent of the editor's
-    /// ConveyorSceneBuilder. Scene-scoped: runs once when GameplayScene's container initializes.
+    /// ConveyorSceneBuilder. Scene-scoped: runs once when GameplayScene's container initializes,
+    /// and returns everything it spawned to the pool when that container is torn down (GameplayScene
+    /// unloads) — the pools live in DDOL and outlive the scene, so nothing else would ever despawn
+    /// these pieces otherwise.
     /// </summary>
-    public class ConveyorPieceSpawner : IInitializable
+    public class ConveyorPieceSpawner : IInitializable, IDisposable
     {
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorPieceController.Pool _straightPool;
         private readonly ConveyorPieceController.Pool _cornerPool;
         private readonly ConveyorPrefabSettings _prefabSettings;
+
+        private readonly List<ConveyorPieceController> _spawnedStraight = new();
+        private readonly List<ConveyorPieceController> _spawnedCorner = new();
 
         public ConveyorPieceSpawner(
             ConveyorLevelDataSO level,
@@ -38,12 +45,22 @@ namespace RestaurantLoop.Runtime.Conveyor
                 // physical belt segment — it still counts for connectivity, but no piece here.
                 if (cell.IsGate) continue;
 
-                var pool = cell.Shape == ConveyorTileShape.Straight ? _straightPool : _cornerPool;
                 var position = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize);
                 var worldYRotation = ConveyorWorldUtil.ToWorldYRotation(cell.Shape, cell.Rotation);
 
-                pool.Spawn(position, worldYRotation);
+                if (cell.Shape == ConveyorTileShape.Straight)
+                    _spawnedStraight.Add(_straightPool.Spawn(position, worldYRotation));
+                else
+                    _spawnedCorner.Add(_cornerPool.Spawn(position, worldYRotation));
             }
+        }
+
+        public void Dispose()
+        {
+            foreach (var piece in _spawnedStraight) _straightPool.Despawn(piece);
+            foreach (var piece in _spawnedCorner) _cornerPool.Despawn(piece);
+            _spawnedStraight.Clear();
+            _spawnedCorner.Clear();
         }
     }
 }

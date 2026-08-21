@@ -3,7 +3,7 @@ using RestaurantLoop.SceneFlow;
 using UnityEngine;
 using Zenject;
 
-namespace Runtime.Installers
+namespace RestaurantLoop.Installers
 {
     /// <summary>
     /// Scene-scoped — attach to GameplayScene's SceneContext (Mono Installers list), not
@@ -28,6 +28,9 @@ namespace Runtime.Installers
 
             Container.BindInstance(level).AsSingle();
             Container.BindInterfacesTo<ConveyorPieceSpawner>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ExitStackAnchor>().AsSingle();
+            Container.BindInterfacesAndSelfTo<QueueAnchor>().AsSingle();
+            Container.BindInterfacesTo<QueueSpawner>().AsSingle();
         }
     }
 }

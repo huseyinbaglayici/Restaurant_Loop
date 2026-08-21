@@ -1,8 +1,9 @@
 # Conveyor System — current state
 
 Snapshot of what's built so far: the level-editor tool, the data model it authors, and the
-runtime pipeline that turns a saved level into a running belt. Item movement (food riding the
-belt) is **not** built yet — this covers everything up to and including piece pooling/spawning.
+runtime pipeline that turns a saved level into a running belt, a positioned (but not yet
+functional) exit stack and supply queue. Item movement (food riding the belt, or routing in/out
+of the exit stack and queue) is **not** built yet.
 
 Written as a reference for renaming/reorganizing later, not as an API doc — read it once, then
 go change whatever naming you want; nothing here is a contract.
@@ -30,8 +31,14 @@ because it compiles cleanly, not because it's the intended final name.
 |---|---|
 | `ConveyorGeometry.cs` | `ConveyorTileShape` (Straight/Corner), `ConveyorCellPaint` (in-editor paint value), `ConveyorCellData` (flattened cell for the level asset) |
 | `ConveyorLevelDataSO.cs` | `FoodType` enum + `FoodTypeUtil` (color/icon), `FoodStackData`, `ConveyorEntityPlacement`, `TableData`, `QueueLaneData`, `ConveyorPathData`, and the top-level `ConveyorLevelDataSO` asset itself |
-| `ConveyorPrefabSettings.cs` | One persisted asset (`Assets/Resources/ConveyorPrefabSettings.asset`) — which prefabs represent a Straight/Corner piece, and world cell size |
-| `LevelDatabase.cs` | One persisted asset (`Assets/Resources/LevelDatabase.asset`) — `LevelId -> ConveyorLevelDataSO` lookup table, used to resolve a saved level index back into an asset |
+| `ConveyorPrefabSettings.cs` | One persisted asset — which prefabs represent a Straight/Corner piece, and world cell size |
+| `LevelDatabase.cs` | One persisted asset — `LevelId -> ConveyorLevelDataSO` lookup table, used to resolve a saved level index back into an asset |
+| `FoodItemPrefabSettings.cs` | One persisted asset — the single generic food-stack prefab (all `FoodType`s share it; see `FoodMeshSettings`) |
+| `FoodMeshSettings.cs` | One persisted asset — optional `FoodType -> Mesh` lookup; missing entries fall back to `FoodTypeUtil.ToColor` tinting |
+| `ExitSlotPrefabSettings.cs` | One persisted asset — the exit-stack slot floor prefab |
+
+All five `*Settings`/`LevelDatabase` assets live under `Assets/Resources/` and are
+`Resources.Load`ed once in `PoolInstaller`/`SaveInstaller` (see §6).
 
 `ConveyorLevelDataSO` is the single per-level asset: grid size, painted conveyor cells, food
 entities riding them, tables (each with its own order queue), supply queue lanes, and the
@@ -75,13 +82,25 @@ connectivity from Shape/Rotation itself.
 **Not yet verified**: this was derived mathematically, not yet confirmed against a real
 Gate+loop level's actual baked output. Worth a sanity check before anything reads it.
 
-## 5. Runtime conveyor pieces (`Runtime/Conveyor/`)
+## 5. Runtime conveyor pieces, food, exit stack, queue (`Runtime/Conveyor/`)
+
+All three pooled visual types (piece, food, exit slot) follow the same shape: a `MonoBehaviour`
+implementing `IPoolable<...>`
+(pure visual, no game logic) + a scene-scoped spawner that's `IInitializable` (spawns on
+GameplayScene boot) and `IDisposable` (despawns everything it spawned when GameplayScene
+unloads — the pools themselves live in ProjectContext/DDOL and outlive the scene, so nothing
+else would ever return these instances otherwise).
 
 | File | Role |
 |---|---|
-| `ConveyorPieceController.cs` | Pooled visual for one placed piece (Straight or Corner). Knows nothing about neighbours/routing/items — only owns its own belt-scroll texture animation (`Update()` advances a UV offset). Implements `IPoolable<Vector3, float>`: `OnSpawned(position, worldYRotation)` only ever sets Y rotation — X/Z tilt is whatever the prefab was authored with, captured once in `Awake()` so the pool never wipes it out. |
+| `ConveyorPieceController.cs` | Pooled visual for one placed belt piece (Straight or Corner). Only owns its belt-scroll texture animation. `OnSpawned` only ever sets Y rotation — X/Z tilt is whatever the prefab was authored with, captured once in `Awake()`. |
 | `ConveyorWorldUtil.cs` | The one place grid-coord → world-position/rotation math lives, shared by the editor preview and the runtime spawner so they can't drift apart. |
-| `ConveyorPieceSpawner.cs` | `IInitializable`. On `Initialize()`, walks the current level's `ConveyorCells`, skips the Gate, and calls `pool.Spawn(position, rotation)` per cell using the pool bound in `PoolInstaller`. |
+| `ConveyorPieceSpawner.cs` | Walks the level's `ConveyorCells` (skips the Gate), spawns from the Straight/Corner pools. |
+| `FoodItemController.cs` | Pooled visual for one food stack (`FoodStackData` — a queue slot or belt cell). Shows `Amount` as that many stacked unit visuals (plain instantiate/destroy children, not individually pooled), tinted by `FoodTypeUtil.ToColor`; swaps each unit's mesh via `FoodMeshSettings` if an entry exists for that `FoodType` (optional — falls back to color-only). |
+| `ExitSlotController.cs` | Pooled visual for one exit-stack slot floor. Position-only. |
+| `ExitStackAnchor.cs` | Computes 5 fixed slot positions (`SlotCount`) from the belt's actual min/max X and minimum-Y row — not level-authored, not the declared `GridWidth`. Spawns/despawns floors from the `ExitSlotController` pool. Where food exiting the belt will eventually land, in order — not built yet. |
+| `QueueAnchor.cs` | Computes one X position per supply-queue lane (lane count = `Queues.Count`), aligned to `ExitStackAnchor`'s own leftmost/rightmost slot, offset further -Z below it. No spawning itself. |
+| `QueueSpawner.cs` | Spawns each lane's `FoodStackData` entries (front = index 0) from the `FoodItemController` pool, one behind another going -Z into the lane. |
 
 ## 6. DI / boot wiring (`Runtime/Installers/`, `Runtime/SceneFlow/`)
 
@@ -93,29 +112,36 @@ Two container scopes matter:
 
 | Installer | Scope | Binds |
 |---|---|---|
-| `PoolInstaller` | ProjectContext | Loads `ConveyorPrefabSettings` from Resources, prewarms the Straight/Corner `MemoryPool`s (`WithInitialSize` + `NonLazy`) |
+| `PoolInstaller` | ProjectContext | Loads `ConveyorPrefabSettings`/`FoodItemPrefabSettings`/`FoodMeshSettings`/`ExitSlotPrefabSettings` from Resources, prewarms all four `MemoryPool`s (`WithInitialSize` + `NonLazy`) |
 | `SceneLoaderInstaller` | ProjectContext | `CurrentLevelProvider`, `SceneLoader` |
 | `SignalsInstaller` | ProjectContext | `SignalBus` + all declared signals |
 | `SaveInstaller` | ProjectContext | Loads `LevelDatabase` from Resources, binds `SaveManager` |
-| `ConveyorInstaller` | **GameplayScene SceneContext** | The current level (from `CurrentLevelProvider`), `ConveyorPieceSpawner` |
+| `ConveyorInstaller` | **GameplayScene SceneContext** | The current level (from `CurrentLevelProvider`), `ConveyorPieceSpawner`, `ExitStackAnchor`, `QueueAnchor`, `QueueSpawner` |
 
 Everything except `ConveyorInstaller` is project-wide and boots before any scene-specific logic
-runs — this is deliberate: piece pools prewarm once at app start, `ConveyorInstaller` (per
-GameplayScene load) just pulls from the already-warm pool according to whatever level is
-current.
+runs — this is deliberate: pools prewarm once at app start, `ConveyorInstaller` (per GameplayScene
+load) just pulls from the already-warm pools according to whatever level is current.
 
 ### Boot sequence (as actually wired right now)
 
-1. `ProjectContext` auto-loads → `PoolInstaller` prewarms piece pools, `SaveInstaller`'s
-   `SaveManager.Initialize()` resolves the current level (see §7) into `CurrentLevelProvider`.
+1. `ProjectContext` auto-loads → `PoolInstaller` prewarms all pools. `SaveInstaller` binds
+   `SaveManager`, which (via eager `IInitializable` resolution) transitively constructs
+   `CurrentLevelProvider` — its constructor resolves the current level from ES3 + `LevelDatabase`
+   right there (see §7), not in `Initialize()`. This ordering is load-bearing: Zenject calls
+   `Initialize()` during Unity's `Start()`, which is always *after* every scene's own
+   `SceneContext` has finished `InstallBindings()` in `Awake()` — a boot-time value that only
+   existed by `Initialize()` would already be too late for `ConveyorInstaller` to read.
 2. `Bootstrapper.Start()` (in `BoostrapScene`) loads `MainMenuScene` additively.
 3. `LoadingController.Start()` (in MainMenuScene) calls `ISceneLoader.LoadGameplayScene()`
    **directly** — not via a signal.
 4. `SceneLoader.LoadGameplayScene()` fires `LoadingStartedSignal`, loads `GameplayScene`
    additively, sets it active, fires `GameplaySceneReadySignal` on completion.
-5. `GameplayScene`'s `SceneContext` builds → `ConveyorInstaller` reads
-   `CurrentLevelProvider.Current` (already populated in step 1) and binds `ConveyorPieceSpawner`,
-   which spawns pieces from the pool.
+5. `GameplayScene`'s `SceneContext` builds → `ConveyorInstaller` reads `CurrentLevelProvider.Current`
+   (already populated in step 1) and binds the spawners, which pull from the already-warm pools.
+6. On `LevelEndedSignal`, `SceneLoader` unloads `GameplayScene` → its `SceneContext`'s container is
+   disposed → every spawner's `Dispose()` runs, returning what it spawned to the pool (or, for
+   `ExitStackAnchor`'s floors, likewise despawning to its pool) before the scene's own GameObjects
+   are torn down.
 
 **Dead code right now**: `PlayRequestedSignal` and `SceneLoader.OnPlayRequested` exist and are
 wired up, but nothing fires `PlayRequestedSignal` — `LoadingController` calls
@@ -126,15 +152,16 @@ whether to wire a real button to it or delete it once the menu exists.
 
 ## 7. Save / level-select (`Runtime/Save/`, `Runtime/Signals/SaveSignals.cs`)
 
-Uses Easy Save 3. `SaveManager` (ProjectContext singleton):
+Uses Easy Save 3.
 
-- `Initialize()`: subscribes to `SaveRequestedSignal`/`LoadRequestedSignal`, then immediately
-  calls `Load()` once so `CurrentLevelProvider` is populated before anything asks for it.
-- `Load()`: reads ES3 key `CurrentLevelId` (int); if it doesn't exist, defaults to `1`. Looks
-  that id up in `LevelDatabase`, writes the result into `CurrentLevelProvider.Current`.
-- `Save()`: **empty stub** — no save data model exists yet beyond the level index.
-- `SetCurrentLevel(int levelId)`: writes the ES3 key. Nothing calls this yet — future hook for
-  "level completed, advance to next" or a level-select menu.
+- `CurrentLevelProvider` (ProjectContext singleton) owns the actual ES3 + `LevelDatabase` lookup
+  in `ResolveFromSave()` — reads ES3 key `CurrentLevelId` (int), defaults to `1` if unset, looks
+  it up in `LevelDatabase`, sets `Current`. Runs once from its own constructor (the boot-time
+  default) and again whenever `SaveManager.Load()` is called.
+- `SaveManager` (ProjectContext singleton): `Initialize()` subscribes to
+  `SaveRequestedSignal`/`LoadRequestedSignal`. `Save()` is an **empty stub** — no save data model
+  exists yet beyond the level index. `SetCurrentLevel(int levelId)` writes the ES3 key; nothing
+  calls this yet — future hook for "level completed, advance to next" or a level-select menu.
 
 `LevelDatabase.asset` currently has exactly one entry: `ConveyorLevel_1` (LevelId `1`). Adding a
 new level = save it from the tool, then drag it into `LevelDatabase`'s list in the Inspector.
@@ -143,10 +170,10 @@ new level = save it from the tool, then drag it into `LevelDatabase`'s list in t
 
 - Anything that moves food along `BakedPath.OrderedPath` at runtime (a `ConveyorManager` or
   similar) — items are placed by the editor tool but nothing animates them along the belt.
-- Pooling for the belt-riding food items themselves (separate from piece pooling, deliberately
-  deferred until after pieces).
+- Anything that routes food *into* the exit stack slots or *out of* the queue lanes — both are
+  positioned and can hold spawned stacks, but nothing currently triggers either.
+- The level-end win condition (exit stack full, in order).
 - A real MainMenu "Play"/level-select UI — `LoadingController` currently loads GameplayScene
   unconditionally on menu start.
-- Table/queue gameplay logic (serving orders, consuming supply) — only the data model and
-  editor authoring exist.
+- Table gameplay logic (serving orders) — only the data model and editor authoring exist.
 - Empirical verification of `ConveyorPathBaker`'s clockwise-direction logic on a real level.

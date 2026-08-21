@@ -120,6 +120,18 @@ MonoBehaviour:
     - {x: 1, y: 1}
   Tables: []
   Queues:
-  - Entries: []
-  - Entries: []
-  - Entries: []
+  - Entries:
+    - Type: 0
+      Amount: 3
+    - Type: 0
+      Amount: 3
+  - Entries:
+    - Type: 0
+      Amount: 3
+    - Type: 0
+      Amount: 3
+  - Entries:
+    - Type: 0
+      Amount: 3
+    - Type: 0
+      Amount: 3
