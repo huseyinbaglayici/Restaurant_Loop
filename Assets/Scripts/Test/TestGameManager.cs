@@ -10,7 +10,10 @@ public class TestGameManager : MonoBehaviour
     
     [Header("Rack Settings")]
     public Transform[] rackSlots; // Raf boşluklarının (slotlarının) pozisyonları
-    private TestFoodStack[] rackItems; // Raftaki objeleri takip eder
+    public TestFoodStack[] rackItems; // Raftaki objeleri takip eder
+
+    [Header("Power Up States")]
+    public bool allowPickFromBottom = false;
     
     [Header("Queue Settings")]
     public Transform[] queueSlots; // 3 kuyruk başı pozisyonu
@@ -18,13 +21,13 @@ public class TestGameManager : MonoBehaviour
     
     [Header("Customer Generation")]
     public Transform customerCenter; // Müşterilerin etrafında dizileceği merkez nokta
-    public int outerCustomerCount = 18;
-    public float custRectWidth = 6.5f; // Dış müşteri dikdörtgeninin genişliği
-    public float custRectDepth = 9f; // Dış müşteri dikdörtgeninin derinliği
-    public float innerOffset = 1.2f; // İç müşterilerin ne kadar içeride duracağı
-    public Color[] possibleColors = new Color[] { Color.red, Color.blue, Color.yellow, Color.green };
+    [HideInInspector] public int outerCustomerCount = 18;
+    [HideInInspector] public float custRectWidth = 6.5f; // Dış müşteri dikdörtgeninin genişliği
+    [HideInInspector] public float custRectDepth = 9f; // Dış müşteri dikdörtgeninin derinliği
+    [HideInInspector] public float innerOffset = 1.2f; // İç müşterilerin ne kadar içeride duracağı
+    [HideInInspector] public Color[] possibleColors = new Color[] { Color.red, Color.blue, Color.yellow, Color.green };
     
-    private void Awake() 
+    protected virtual void Awake() 
     { 
         Instance = this; 
         if (rackSlots != null && rackSlots.Length > 0)
@@ -33,7 +36,7 @@ public class TestGameManager : MonoBehaviour
         }
     }
     
-    private void Start()
+    protected virtual void Start()
     {
         GenerateCustomers();
         GenerateQueues();
@@ -134,6 +137,13 @@ public class TestGameManager : MonoBehaviour
         {
             if (colorCounts.ContainsKey(c.orderColor)) colorCounts[c.orderColor]++;
             else colorCounts[c.orderColor] = 1;
+            
+            // Eğer ikinci bir siparişi varsa, onu da yemek sayısına dahil et!
+            if (c.hasSecondOrder)
+            {
+                if (colorCounts.ContainsKey(c.orderColor2)) colorCounts[c.orderColor2]++;
+                else colorCounts[c.orderColor2] = 1;
+            }
         }
 
         // 2. Chunk into sizes
@@ -187,7 +197,7 @@ public class TestGameManager : MonoBehaviour
                 // Böylece j=0 (tıklanabilir olan ilk eleman) bantlara en yakın (en üstte) kalır.
                 food.transform.position = queueSlots[i].position + new Vector3(0, 0, -j * 1.2f);
                 
-                if (j == 0)
+                if (j == 0 || allowPickFromBottom)
                 {
                     food.isClickable = true;
                 }
@@ -210,21 +220,41 @@ public class TestGameManager : MonoBehaviour
     {
         if (queueIndex >= 0 && queueIndex < 3)
         {
-            if (queues[queueIndex].Count > 0 && queues[queueIndex][0] == food)
+            if (queues[queueIndex].Contains(food))
             {
-                queues[queueIndex].RemoveAt(0);
+                queues[queueIndex].Remove(food);
                 
                 // Kalanları öne kaydır
                 for (int i = 0; i < queues[queueIndex].Count; i++)
                 {
                     TestFoodStack nextFood = queues[queueIndex][i];
                     nextFood.transform.position = queueSlots[queueIndex].position + new Vector3(0, 0, -i * 1.2f);
-                    
-                    if (i == 0)
+                }
+                
+                // Power-up tek kullanımlıksa gücü kapat ve tüm kuyrukların tıklanabilirliğini güncelle
+                if (allowPickFromBottom)
+                {
+                    allowPickFromBottom = false;
+                    RefreshAllQueuesClickability();
+                }
+                else
+                {
+                    if (queues[queueIndex].Count > 0)
                     {
-                        nextFood.isClickable = true;
+                        queues[queueIndex][0].isClickable = true;
                     }
                 }
+            }
+        }
+    }
+
+    public void RefreshAllQueuesClickability()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < queues[i].Count; j++)
+            {
+                queues[i][j].isClickable = (j == 0 || allowPickFromBottom);
             }
         }
     }
@@ -282,6 +312,73 @@ public class TestGameManager : MonoBehaviour
             // Gerçek bir senaryoda bantta dönenlerin hiçbiriyle uyuşmuyorsa fail verilir,
             // Prototip olduğu için basitçe raf dolunca FAIL yazdırıyoruz.
             Debug.Log("FAIL! - Raf doldu, hamle kalmadı.");
+        }
+    }
+
+    public bool hasAddedExtraRackSlot = false;
+
+    public bool AddExtraRackSlot()
+    {
+        if (hasAddedExtraRackSlot) return false;
+        if (rackSlots == null || rackSlots.Length == 0) return false;
+
+        hasAddedExtraRackSlot = true;
+        Transform lastSlot = rackSlots[rackSlots.Length - 1];
+        GameObject newSlotObj = Instantiate(lastSlot.gameObject, lastSlot.parent);
+        newSlotObj.name = "RackSlot_" + rackSlots.Length;
+        
+        Vector3 delta = Vector3.right * 1.2f; // Default aralık
+        if (rackSlots.Length > 1)
+        {
+            delta = rackSlots[rackSlots.Length - 1].position - rackSlots[rackSlots.Length - 2].position;
+        }
+        
+        newSlotObj.transform.position = lastSlot.position + delta;
+
+        Transform[] newSlots = new Transform[rackSlots.Length + 1];
+        for (int i = 0; i < rackSlots.Length; i++) newSlots[i] = rackSlots[i];
+        newSlots[newSlots.Length - 1] = newSlotObj.transform;
+        rackSlots = newSlots;
+
+        TestFoodStack[] newItems = new TestFoodStack[rackItems.Length + 1];
+        for (int i = 0; i < rackItems.Length; i++) newItems[i] = rackItems[i];
+        rackItems = newItems;
+        
+        Debug.Log("Added extra tray slot! Total slots: " + rackSlots.Length);
+        return true;
+    }
+
+    public void ShuffleQueues()
+    {
+        List<TestFoodStack> allInQueue = new List<TestFoodStack>();
+        foreach (var q in queues)
+        {
+            allInQueue.AddRange(q);
+            q.Clear();
+        }
+
+        ShuffleList(allInQueue);
+
+        for (int i = 0; i < allInQueue.Count; i++)
+        {
+            int qIndex = i % 3;
+            queues[qIndex].Add(allInQueue[i]);
+            allInQueue[i].queueIndex = qIndex;
+            allInQueue[i].isClickable = false;
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < queues[i].Count; j++)
+            {
+                TestFoodStack food = queues[i][j];
+                food.transform.position = queueSlots[i].position + new Vector3(0, 0, -j * 1.2f);
+                
+                if (j == 0 || allowPickFromBottom)
+                {
+                    food.isClickable = true;
+                }
+            }
         }
     }
 }

@@ -26,7 +26,7 @@ public class TestConveyorBelt : MonoBehaviour
     private void Awake() 
     { 
         Instance = this; 
-        GenerateVisuals();
+        // GenerateVisuals(); // Kendi modellerinizi kullandığınız için kapatıldı
         CreateUI();
     }
     
@@ -41,7 +41,7 @@ public class TestConveyorBelt : MonoBehaviour
         textObj.transform.SetParent(canvasObj.transform);
         capacityText = textObj.AddComponent<Text>();
         capacityText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        capacityText.fontSize = 18;
+        capacityText.fontSize = 36;
         capacityText.color = Color.white;
         capacityText.alignment = TextAnchor.UpperLeft;
         
@@ -138,9 +138,18 @@ public class TestConveyorBelt : MonoBehaviour
     
     private void Update()
     {
-        if (capacityText != null)
+        if (capacityText != null && TestGameManager.Instance != null)
         {
-            capacityText.text = $"Belt: {items.Count} / {capacity}";
+            int rackOccupied = 0;
+            if (TestGameManager.Instance.rackItems != null)
+            {
+                foreach (var item in TestGameManager.Instance.rackItems)
+                {
+                    if (item != null) rackOccupied++;
+                }
+            }
+            int rackTotal = TestGameManager.Instance.rackSlots != null ? TestGameManager.Instance.rackSlots.Length : 0;
+            capacityText.text = $"Rack: {rackOccupied} / {rackTotal}";
         }
         
         for (int i = items.Count - 1; i >= 0; i--)
@@ -217,23 +226,35 @@ public class TestConveyorBelt : MonoBehaviour
             // Müşteri servis edilebilir mi ve sipariş rengi aynı mı?
             if (customer.isServeable && customer.orderColor == beltItem.food.foodColor)
             {
-                float dist = Vector3.Distance(customer.transform.position, beltItem.food.transform.position);
+                // Orthogonal (Dik) hizada mı diye kontrol et (sadece sağ/sol veya üst/alt hizasındakileri görebilsin)
+                float alignThreshold = 0.5f;
+                bool isAlignedX = Mathf.Abs(customer.transform.position.x - beltItem.food.transform.position.x) < alignThreshold;
+                bool isAlignedZ = Mathf.Abs(customer.transform.position.z - beltItem.food.transform.position.z) < alignThreshold;
                 
-                // Belirli bir mesafeden geçerse müşteriye ver
-                if (dist < 4.5f) 
+                if (isAlignedX || isAlignedZ)
                 {
+                    float dist = Vector3.Distance(customer.transform.position, beltItem.food.transform.position);
+                    
                     // --- ENGEL (OBSTACLE) KONTROLÜ ---
-                    // Yemek ile Müşteri arasına bir Ray (Işın) atarak arada TestObstacle var mı diye kontrol et
                     Vector3 direction = customer.transform.position - beltItem.food.transform.position;
                     RaycastHit[] hits = Physics.RaycastAll(beltItem.food.transform.position, direction.normalized, dist);
                     
                     bool isBlocked = false;
                     foreach (var hit in hits)
                     {
+                        if (hit.collider.gameObject == customer.gameObject) continue;
+                        
                         if (hit.collider.GetComponent<TestObstacle>() != null)
                         {
                             isBlocked = true;
-                            break; // Arada engel var, yemek geçemez
+                            break;
+                        }
+                        
+                        TestCustomer hitCst = hit.collider.GetComponent<TestCustomer>();
+                        if (hitCst != null)
+                        {
+                            isBlocked = true;
+                            break;
                         }
                     }
                     
@@ -248,8 +269,10 @@ public class TestConveyorBelt : MonoBehaviour
                         {
                             items.RemoveAt(index);
                             Destroy(beltItem.food.gameObject);
-                            return; // Bu food yok oldu, kontrolden çık
                         }
+                        
+                        // Bir frame'de aynı food stack ile sadece 1 müşteriye hizmet et, yoksa anında tüm haritayı temizler
+                        return;
                     }
                 }
             }
