@@ -1,0 +1,116 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 964c8e41b2279eb4fadd721debc4089f, type: 3}
+  m_Name: deneme
+  m_EditorClassIdentifier: 
+  conveyorData: {fileID: 11400000, guid: e52b2b226b5604b4bb9b68b8724da801, type: 2}
+  customerPrefab: {fileID: 0}
+  foodStackYOffset: 0.5
+  redFood:
+    openPrefab: {fileID: 0}
+    closedPrefab: {fileID: 0}
+  yellowFood:
+    openPrefab: {fileID: 0}
+    closedPrefab: {fileID: 0}
+  whiteFood:
+    openPrefab: {fileID: 0}
+    closedPrefab: {fileID: 0}
+  blueFood:
+    openPrefab: {fileID: 0}
+    closedPrefab: {fileID: 0}
+  pinkFood:
+    openPrefab: {fileID: 0}
+    closedPrefab: {fileID: 0}
+  gridSizeX: 10
+  gridSizeY: 10
+  customers:
+  - gridX: 3
+    gridY: 7
+    behavior: 0
+    orderColor: 1
+    orderColor2: 2
+  - gridX: 4
+    gridY: 6
+    behavior: 1
+    orderColor: 2
+    orderColor2: 2
+  - gridX: 4
+    gridY: 5
+    behavior: 1
+    orderColor: 5
+    orderColor2: 2
+  - gridX: 4
+    gridY: 4
+    behavior: 2
+    orderColor: 1
+    orderColor2: 1
+  - gridX: 5
+    gridY: 5
+    behavior: 2
+    orderColor: 1
+    orderColor2: 1
+  - gridX: 5
+    gridY: 6
+    behavior: 2
+    orderColor: 1
+    orderColor2: 2
+  - gridX: 3
+    gridY: 6
+    behavior: 0
+    orderColor: 3
+    orderColor2: 2
+  - gridX: 3
+    gridY: 5
+    behavior: 0
+    orderColor: 4
+    orderColor2: 2
+  - gridX: 3
+    gridY: 4
+    behavior: 0
+    orderColor: 4
+    orderColor2: 2
+  - gridX: 5
+    gridY: 4
+    behavior: 0
+    orderColor: 4
+    orderColor2: 2
+  - gridX: 5
+    gridY: 7
+    behavior: 0
+    orderColor: 4
+    orderColor2: 2
+  - gridX: 4
+    gridY: 7
+    behavior: 0
+    orderColor: 4
+    orderColor2: 2
+  queue1:
+  - color: {r: 1, g: 0, b: 0, a: 1}
+    amount: 3
+    linkID: 1
+  - color: {r: 1, g: 0.4, b: 0.7, a: 1}
+    amount: 1
+    linkID: 0
+  queue2:
+  - color: {r: 1, g: 0, b: 0, a: 1}
+    amount: 3
+    linkID: 1
+  - color: {r: 1, g: 1, b: 1, a: 1}
+    amount: 1
+    linkID: 0
+  queue3:
+  - color: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+    amount: 2
+    linkID: 0
+  - color: {r: 0, g: 0, b: 1, a: 1}
+    amount: 5
+    linkID: 0

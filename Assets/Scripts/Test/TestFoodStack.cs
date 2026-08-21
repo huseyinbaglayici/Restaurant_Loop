@@ -14,16 +14,53 @@ public class TestFoodStack : MonoBehaviour
     public int queueIndex = -1; // Hangi kuyrukta olduğu
     public bool isClickable = false; // Tıklanabilir mi?
     
+    [Header("Link System")]
+    public TestFoodStack linkedStack;
+    public bool isGhost = false; // Miktarı 0 olunca bağlı obje bantta kalmaya devam edebilsin diye
+    
     private List<GameObject> visualCubes = new List<GameObject>();
     private BoxCollider col;
     private TextMesh textMesh;
     private GameObject bubbleBgObj;
+    private LineRenderer lineRend;
     
     private void Start()
     {
         col = GetComponent<BoxCollider>();
         CreateVisualCubes();
         CreateUI();
+        
+        if (linkedStack != null)
+        {
+            // İkili bağ görseli (ip) oluştur
+            // Sadece ID'si küçük olan objenin LineRenderer'ı çizsin ki üst üste çakışmasın (Z-fighting)
+            if (gameObject.GetInstanceID() < linkedStack.gameObject.GetInstanceID())
+            {
+                lineRend = gameObject.AddComponent<LineRenderer>();
+                lineRend.startWidth = 0.25f;
+                lineRend.endWidth = 0.25f;
+                lineRend.positionCount = 2;
+                
+                // Unlit materyal
+                lineRend.material = new Material(Shader.Find("Sprites/Default"));
+                
+                // Ortadan ikiye bölünen renk gradienti
+                Gradient gradient = new Gradient();
+                gradient.SetKeys(
+                    new GradientColorKey[] { 
+                        new GradientColorKey(foodColor, 0.0f), 
+                        new GradientColorKey(foodColor, 0.49f), 
+                        new GradientColorKey(linkedStack.foodColor, 0.51f), 
+                        new GradientColorKey(linkedStack.foodColor, 1.0f) 
+                    },
+                    new GradientAlphaKey[] { 
+                        new GradientAlphaKey(1.0f, 0.0f), 
+                        new GradientAlphaKey(1.0f, 1.0f) 
+                    }
+                );
+                lineRend.colorGradient = gradient;
+            }
+        }
     }
     
     private void CreateVisualCubes()
@@ -43,18 +80,18 @@ public class TestFoodStack : MonoBehaviour
         GameObject prefabToSpawn = null;
         
         // GameManager'dan prefableri çekmeyi dene
-        if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM)
+        if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM && painterGM.levelData != null)
         {
             if (foodColor == Color.red) 
-                prefabToSpawn = isOpen ? painterGM.redFood.openPrefab : painterGM.redFood.closedPrefab;
+                prefabToSpawn = isOpen ? painterGM.levelData.redFood.openPrefab : painterGM.levelData.redFood.closedPrefab;
             else if (foodColor == Color.yellow) 
-                prefabToSpawn = isOpen ? painterGM.yellowFood.openPrefab : painterGM.yellowFood.closedPrefab;
+                prefabToSpawn = isOpen ? painterGM.levelData.yellowFood.openPrefab : painterGM.levelData.yellowFood.closedPrefab;
             else if (foodColor == Color.white) 
-                prefabToSpawn = isOpen ? painterGM.whiteFood.openPrefab : painterGM.whiteFood.closedPrefab;
+                prefabToSpawn = isOpen ? painterGM.levelData.whiteFood.openPrefab : painterGM.levelData.whiteFood.closedPrefab;
             else if (foodColor == Color.blue) 
-                prefabToSpawn = isOpen ? painterGM.blueFood.openPrefab : painterGM.blueFood.closedPrefab;
+                prefabToSpawn = isOpen ? painterGM.levelData.blueFood.openPrefab : painterGM.levelData.blueFood.closedPrefab;
             else // Pink: new Color(1f, 0.4f, 0.7f)
-                prefabToSpawn = isOpen ? painterGM.pinkFood.openPrefab : painterGM.pinkFood.closedPrefab;
+                prefabToSpawn = isOpen ? painterGM.levelData.pinkFood.openPrefab : painterGM.levelData.pinkFood.closedPrefab;
         }
         
         GameObject block;
@@ -62,8 +99,8 @@ public class TestFoodStack : MonoBehaviour
         {
             block = Instantiate(prefabToSpawn, transform);
             float yOffset = 1.05f;
-            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM2)
-                yOffset = painterGM2.foodStackYOffset;
+            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM2 && painterGM2.levelData != null)
+                yOffset = painterGM2.levelData.foodStackYOffset;
 
             block.transform.localPosition = new Vector3(0, index * yOffset, 0);
             // Prefab'in kendi orijinal scale ve rotation değerlerini bozmuyoruz!
@@ -74,8 +111,8 @@ public class TestFoodStack : MonoBehaviour
             block = GameObject.CreatePrimitive(PrimitiveType.Cube);
             block.transform.SetParent(transform);
             float yOffset = 1.05f;
-            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM2)
-                yOffset = painterGM2.foodStackYOffset;
+            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM2 && painterGM2.levelData != null)
+                yOffset = painterGM2.levelData.foodStackYOffset;
 
             block.transform.localPosition = new Vector3(0, index * yOffset, 0);
             block.transform.localScale = Vector3.one;
@@ -95,8 +132,8 @@ public class TestFoodStack : MonoBehaviour
         if (col != null && amount > 0)
         {
             float yOffset = 1.05f;
-            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM)
-                yOffset = painterGM.foodStackYOffset;
+            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM && painterGM.levelData != null)
+                yOffset = painterGM.levelData.foodStackYOffset;
                 
             // Tüm blokları kapsayacak kadar büyük bir collider
             col.size = new Vector3(1f, amount * yOffset, 1f);
@@ -148,25 +185,29 @@ public class TestFoodStack : MonoBehaviour
     {
         if (textMesh != null) textMesh.text = amount.ToString();
         
-        // Artık kuyrukta arkada olsalar da numaralarını gösteriyoruz
         if (textMesh != null && bubbleBgObj != null)
         {
-            bool showUI = amount > 0;
+            // Ghost durumundaysa da UI açık kalsın (üzerinde 0 yazacak)
+            bool showUI = amount > 0 || isGhost;
             
             textMesh.GetComponent<Renderer>().enabled = showUI;
             bubbleBgObj.GetComponent<Renderer>().enabled = showUI;
             
             float yOffset = 1.05f;
-            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM)
-                yOffset = painterGM.foodStackYOffset;
+            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM && painterGM.levelData != null)
+                yOffset = painterGM.levelData.foodStackYOffset;
                 
-            // Yüksekliği en üstteki küpe göre ayarla, X ve Z'yi sağ alt köşe (+X, -Z) yap
-            textMesh.transform.localPosition = new Vector3(0.6f, amount * yOffset + 0.1f, -0.6f);
+            // Yüksekliği en üstteki küpe göre ayarla, 0 olsa bile 1 yüksekliğinde dursun
+            float currentAmount = Mathf.Max(1, amount);
+            textMesh.transform.localPosition = new Vector3(0.6f, currentAmount * yOffset + 0.1f, -0.6f);
         }
         
-        // Yenilmiş (miktarı düşmüş) küpleri görselden sil
         bool countChanged = false;
-        while (visualCubes.Count > amount && visualCubes.Count > 0)
+        // Eğer ghost ise ve miktar 0'a düştüyse, 1 tane kutu kalsın (Asset olarak dursun)
+        int targetVisualCount = (isGhost && amount == 0) ? 1 : amount;
+        
+        // Yenilmiş (miktarı düşmüş) küpleri görselden sil
+        while (visualCubes.Count > targetVisualCount && visualCubes.Count > 0)
         {
             GameObject topCube = visualCubes[visualCubes.Count - 1];
             visualCubes.RemoveAt(visualCubes.Count - 1);
@@ -195,23 +236,44 @@ public class TestFoodStack : MonoBehaviour
     {
         Debug.Log($"Clicked on {gameObject.name}. State: {state}, isClickable: {isClickable}");
         
+        // Eğer bir partneri varsa ve partneri tıklanabilir DEĞİLSE, tıklamayı reddet
+        if (linkedStack != null && !linkedStack.isClickable)
+        {
+            Debug.Log("Cannot click! Linked partner is not at the front of its queue.");
+            return;
+        }
+
         // Kuyruktaysa doğrudan BANDA (Conveyor Belt) gönder
         if (state == FoodState.InQueue && isClickable)
         {
-            bool addedToBelt = TestConveyorBelt.Instance.TryAddItem(this);
-            Debug.Log($"TryAddItem (to belt from queue) result: {addedToBelt}");
-            if (addedToBelt)
+            if (linkedStack != null)
             {
-                state = FoodState.OnBelt;
-                // Kuyruktan çıkar ve arkadakini aktifleştir
-                TestGameManager.Instance.PopQueue(queueIndex, this);
+                // İkili bant ekleme
+                bool addedBoth = TestConveyorBelt.Instance.TryAddLinkedItems(this, linkedStack);
+                if (addedBoth)
+                {
+                    state = FoodState.OnBelt;
+                    linkedStack.state = FoodState.OnBelt;
+                    TestGameManager.Instance.PopQueue(queueIndex, this);
+                    TestGameManager.Instance.PopQueue(linkedStack.queueIndex, linkedStack);
+                }
+            }
+            else
+            {
+                // Tekli
+                bool addedToBelt = TestConveyorBelt.Instance.TryAddItem(this);
+                if (addedToBelt)
+                {
+                    state = FoodState.OnBelt;
+                    TestGameManager.Instance.PopQueue(queueIndex, this);
+                }
             }
         }
-        // Raftaysa Banda Sok
+        // Raftaysa Banda Sok (Raftan ikili dönme olayını şimdilik tekli gibi bırakıyoruz veya TODO ekliyoruz)
         else if (state == FoodState.OnRack)
         {
+            // Eğer rack sisteminde linked yapılar varsa buraya eklenebilir, şu an basit geçiyorum.
             bool added = TestConveyorBelt.Instance.TryAddItem(this);
-            Debug.Log($"TryAddItem (to belt) result: {added}");
             if (added)
             {
                 state = FoodState.OnBelt;
@@ -222,7 +284,27 @@ public class TestFoodStack : MonoBehaviour
     
     private void Update()
     {
-        // UI'ın anlık durumunu güncellemek için (Şu an kaldırıldı)
         UpdateUI();
+        
+        if (lineRend != null && linkedStack != null)
+        {
+            // Eğer birimiz tamamen yok olduysak çizgiyi kapat
+            if (amount <= 0 && linkedStack.amount <= 0)
+            {
+                lineRend.enabled = false;
+            }
+            else
+            {
+                float yOffset = 1.05f;
+                if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM && painterGM.levelData != null)
+                    yOffset = painterGM.levelData.foodStackYOffset;
+
+                Vector3 pos1 = transform.position + new Vector3(0, Mathf.Max(0.5f, (amount * yOffset) / 2f), 0);
+                Vector3 pos2 = linkedStack.transform.position + new Vector3(0, Mathf.Max(0.5f, (linkedStack.amount * yOffset) / 2f), 0);
+                
+                lineRend.SetPosition(0, pos1);
+                lineRend.SetPosition(1, pos2);
+            }
+        }
     }
 }

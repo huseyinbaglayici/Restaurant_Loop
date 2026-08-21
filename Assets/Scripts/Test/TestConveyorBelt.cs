@@ -136,6 +136,34 @@ public class TestConveyorBelt : MonoBehaviour
         return true;
     }
     
+    public bool TryAddLinkedItems(TestFoodStack f1, TestFoodStack f2)
+    {
+        if (items.Count + 1 >= capacity) return false; // 2 boş yer lazım
+        
+        float startDistance = 0f; 
+        float spacing = Perimeter / (capacity + 1);
+        
+        foreach (var item in items)
+        {
+            if (Mathf.Abs(startDistance - item.distance) < spacing && 
+                Mathf.Abs(startDistance - item.distance) > -spacing + Perimeter) 
+            {
+                if (item.distance < spacing || item.distance > Perimeter - spacing)
+                {
+                    return false; 
+                }
+            }
+        }
+        
+        // Birini startDistance'a, diğerini daha yakınına (spacing / 3) koyalım
+        float linkedSpacing = spacing / 3f;
+        
+        items.Add(new BeltItem { food = f1, distance = startDistance });
+        items.Add(new BeltItem { food = f2, distance = startDistance - linkedSpacing });
+        
+        return true;
+    }
+    
     private void Update()
     {
         if (capacityText != null && TestGameManager.Instance != null)
@@ -155,6 +183,8 @@ public class TestConveyorBelt : MonoBehaviour
         for (int i = items.Count - 1; i >= 0; i--)
         {
             var item = items[i];
+            if (item == null || item.food == null) continue; // Null check eklendi
+            
             item.distance += speed * Time.deltaTime;
             
             if (item.distance >= Perimeter) 
@@ -164,12 +194,12 @@ public class TestConveyorBelt : MonoBehaviour
                 if (moved)
                 {
                     item.food.state = TestFoodStack.FoodState.OnRack;
-                    items.RemoveAt(i);
+                    items[i] = null; // RemoveAt yerine null atıyoruz ki döngü kaymasın
                     continue; // Bu item artık bantta değil, bir sonrakine geç.
                 }
                 else
                 {
-                    // Raf doluysa mecburen bantta dönmeye devam eder (ya da FAIL tetiklenir)
+                    // Raf doluysa mecburen bantta dönmeye devam eder
                     item.distance -= Perimeter;
                 }
             }
@@ -177,13 +207,16 @@ public class TestConveyorBelt : MonoBehaviour
             // Konum hesaplama
             Vector3 pos = GetPositionOnBelt(item.distance);
             
-            // Yumuşak geçiş için Lerp (Raftan banda atlarken anında ışınlanmaması için)
+            // Yumuşak geçiş için Lerp
             Vector3 targetPos = transform.position + pos;
             item.food.transform.position = Vector3.Lerp(item.food.transform.position, targetPos, Time.deltaTime * 5f);
             
             // Bant hareket ederken müşterilerle eşleşmeyi kontrol et
             CheckServe(item, i);
         }
+        
+        // Döngü bittikten sonra null olan (silinmiş/rafa inmiş) elemanları temizle
+        items.RemoveAll(x => x == null || x.food == null);
     }
     
     private Vector3 GetPositionOnBelt(float d)
@@ -223,10 +256,10 @@ public class TestConveyorBelt : MonoBehaviour
         {
             var customer = customers[i];
             
-            // Müşteri servis edilebilir mi ve sipariş rengi aynı mı?
-            if (customer.isServeable && customer.orderColor == beltItem.food.foodColor)
+            // Müşteri servis edilebilir mi ve sipariş rengi aynı mı? (Miktar > 0 olmalı)
+            if (beltItem.food.amount > 0 && customer.isServeable && customer.orderColor == beltItem.food.foodColor)
             {
-                // Orthogonal (Dik) hizada mı diye kontrol et (sadece sağ/sol veya üst/alt hizasındakileri görebilsin)
+                // Orthogonal (Dik) hizada mı diye kontrol et
                 float alignThreshold = 0.5f;
                 bool isAlignedX = Mathf.Abs(customer.transform.position.x - beltItem.food.transform.position.x) < alignThreshold;
                 bool isAlignedZ = Mathf.Abs(customer.transform.position.z - beltItem.food.transform.position.z) < alignThreshold;
@@ -261,17 +294,58 @@ public class TestConveyorBelt : MonoBehaviour
                     if (!isBlocked)
                     {
                         beltItem.food.amount--;
-                        beltItem.food.UpdateUI();
-                        
                         customer.Serve();
                         
                         if (beltItem.food.amount <= 0)
                         {
-                            items.RemoveAt(index);
-                            Destroy(beltItem.food.gameObject);
+                            if (beltItem.food.linkedStack != null && beltItem.food.linkedStack.amount > 0)
+                            {
+                                // Sadece hayalete dönüşür (Kutusu ve 0 yazısı kalır)
+                                beltItem.food.isGhost = true;
+                                beltItem.food.UpdateUI();
+                            }
+                            else
+                            {
+                                // İkisi de sıfırlandı veya zaten partneri yok
+                                beltItem.food.isGhost = false;
+                                beltItem.food.UpdateUI(); // Son kez güncelle
+                                
+                                // Partneri bul
+                                BeltItem partnerBeltItem = null;
+                                if (beltItem.food.linkedStack != null)
+                                {
+                                    foreach (var b in items)
+                                    {
+                                        if (b.food == beltItem.food.linkedStack)
+                                        {
+                                            partnerBeltItem = b;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                // Güvenli silme işlemi (Index kaymasını önlemek için null atıyoruz)
+                                items[index] = null;
+                                Destroy(beltItem.food.gameObject);
+                                
+                                if (partnerBeltItem != null)
+                                {
+                                    int pIndex = items.IndexOf(partnerBeltItem);
+                                    if (pIndex != -1)
+                                    {
+                                        items[pIndex] = null; // Sadece null bırakıyoruz, döngü sonu temizlenecek
+                                        Destroy(partnerBeltItem.food.gameObject);
+                                    }
+                                }
+                                
+                                // items.RemoveAll(x => x == null); // BURADA YAPMIYORUZ! Döngüyü bozar.
+                            }
+                        }
+                        else
+                        {
+                            beltItem.food.UpdateUI();
                         }
                         
-                        // Bir frame'de aynı food stack ile sadece 1 müşteriye hizmet et, yoksa anında tüm haritayı temizler
                         return;
                     }
                 }
