@@ -1,18 +1,11 @@
 using System;
 using System.Collections.Generic;
+using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    /// <summary>
-    /// Builds the physical belt for the current level by pulling pieces from the pools bound in
-    /// PoolInstaller (ProjectContext) — the runtime, pooled equivalent of the editor's
-    /// ConveyorSceneBuilder. Scene-scoped: runs once when GameplayScene's container initializes,
-    /// and returns everything it spawned to the pool when that container is torn down (GameplayScene
-    /// unloads) — the pools live in DDOL and outlive the scene, so nothing else would ever despawn
-    /// these pieces otherwise.
-    /// </summary>
     public class ConveyorPieceSpawner : IInitializable, IDisposable
     {
         private readonly ConveyorLevelDataSO _level;
@@ -25,8 +18,10 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public ConveyorPieceSpawner(
             ConveyorLevelDataSO level,
-            [Inject(Id = ConveyorTileShape.Straight)] ConveyorPieceController.Pool straightPool,
-            [Inject(Id = ConveyorTileShape.Corner)] ConveyorPieceController.Pool cornerPool,
+            [Inject(Id = ConveyorTileShape.Straight)]
+            ConveyorPieceController.Pool straightPool,
+            [Inject(Id = ConveyorTileShape.Corner)]
+            ConveyorPieceController.Pool cornerPool,
             ConveyorPrefabSettings prefabSettings)
         {
             _level = level;

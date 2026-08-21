@@ -5,13 +5,6 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    /// <summary>
-    /// Pooled visual for one food stack (a FoodStackData placement — one queue slot, one belt
-    /// cell). The stack's Amount is shown as that many unit visuals stacked vertically, not a
-    /// single object with a number on it — matches how the level editor and the old prototype
-    /// (TestFoodStack) both represent a stack. Units are plain instantiated/destroyed children,
-    /// not individually pooled — only the stack as a whole comes from PoolInstaller's pool.
-    /// </summary>
     public class FoodItemController : MonoBehaviour, IPoolable<Vector3, FoodStackData>
     {
         [SerializeField] private GameObject _unitPrefab;
@@ -22,9 +15,14 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private readonly List<GameObject> _units = new();
 
+        public FoodStackData Stack { get; private set; }
+
+        public Vector3 VisualCenter => transform.position + Vector3.up * (Stack.Amount * _stackSpacing * 0.5f);
+
         public void OnSpawned(Vector3 position, FoodStackData stack)
         {
             transform.position = position;
+            Stack = stack;
             ApplyStack(stack);
             gameObject.SetActive(true);
         }
@@ -71,6 +69,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        public class Pool : MonoPoolableMemoryPool<Vector3, FoodStackData, FoodItemController> { }
+        public class Pool : MonoPoolableMemoryPool<Vector3, FoodStackData, FoodItemController>
+        {
+        }
     }
 }

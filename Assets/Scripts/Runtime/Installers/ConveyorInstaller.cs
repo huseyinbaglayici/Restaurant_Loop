@@ -22,15 +22,19 @@ namespace RestaurantLoop.Installers
             var level = _currentLevelProvider.Current;
             if (level == null)
             {
-                Debug.LogError("[ConveyorInstaller] CurrentLevelProvider is empty — SaveManager should have resolved a level at boot.");
+                Debug.LogError(
+                    "[ConveyorInstaller] CurrentLevelProvider is empty — SaveManager should have resolved a level at boot.");
                 return;
             }
 
             Container.BindInstance(level).AsSingle();
+            Container.Bind<RuntimeTableState>().AsSingle();
             Container.BindInterfacesTo<ConveyorPieceSpawner>().AsSingle();
             Container.BindInterfacesAndSelfTo<ExitStackAnchor>().AsSingle();
             Container.BindInterfacesAndSelfTo<QueueAnchor>().AsSingle();
-            Container.BindInterfacesTo<QueueSpawner>().AsSingle();
+            Container.BindInterfacesAndSelfTo<QueueSpawner>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ConveyorManager>().AsSingle();
+            Container.BindInterfacesTo<ConveyorEntryInput>().AsSingle();
         }
     }
 }

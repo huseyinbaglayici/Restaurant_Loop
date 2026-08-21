@@ -3,10 +3,6 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    /// <summary>
-    /// Grid-coord-to-world conversion for conveyor pieces — the single place this math lives, so
-    /// the editor preview (ConveyorSceneBuilder) and the runtime spawner never drift apart.
-    /// </summary>
     public static class ConveyorWorldUtil
     {
         public static Vector3 ToWorldPosition(Vector2Int coord, float cellSize) =>

@@ -3,7 +3,7 @@ using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.Installers
+namespace Runtime.Installers
 {
     public class PoolInstaller : MonoInstaller
     {
@@ -16,8 +16,8 @@ namespace RestaurantLoop.Installers
             if (settings == null)
             {
                 Debug.LogError("[PoolInstaller] ConveyorPrefabSettings.asset not found under a Resources folder — " +
-                                "open RestaurantLoop/Level Editor Settings once to create it, assign the prefabs, " +
-                                "then make sure it's saved under Assets/Resources.");
+                               "open RestaurantLoop/Level Editor Settings once to create it, assign the prefabs, " +
+                               "then make sure it's saved under Assets/Resources.");
                 return;
             }
 
@@ -28,6 +28,20 @@ namespace RestaurantLoop.Installers
 
             BindFoodItemPool();
             BindExitSlotPool();
+            BindTuning();
+        }
+
+        private void BindTuning()
+        {
+            var tuning = Resources.Load<ConveyorTuning>("ConveyorTuning");
+            if (tuning == null)
+            {
+                Debug.LogError("[PoolInstaller] ConveyorTuning.asset not found under Assets/Resources — " +
+                               "queue/exit-stack/belt/input runtime classes need this bound.");
+                return;
+            }
+
+            Container.BindInstance(tuning).AsSingle();
         }
 
         // Prewarmed at startup (WithInitialSize + NonLazy) instead of allocating the first time a
@@ -36,7 +50,8 @@ namespace RestaurantLoop.Installers
         {
             if (prefab == null)
             {
-                Debug.LogError($"[PoolInstaller] No prefab assigned for {shape} — set it in RestaurantLoop/Level Editor Settings.");
+                Debug.LogError(
+                    $"[PoolInstaller] No prefab assigned for {shape} — set it in RestaurantLoop/Level Editor Settings.");
                 return;
             }
 
@@ -55,8 +70,9 @@ namespace RestaurantLoop.Installers
             var foodSettings = Resources.Load<FoodItemPrefabSettings>("FoodItemPrefabSettings");
             if (foodSettings == null || foodSettings.FoodItemPrefab == null)
             {
-                Debug.LogError("[PoolInstaller] FoodItemPrefabSettings.asset missing or has no FoodItemPrefab assigned " +
-                                "under Assets/Resources — food item pool not bound.");
+                Debug.LogError(
+                    "[PoolInstaller] FoodItemPrefabSettings.asset missing or has no FoodItemPrefab assigned " +
+                    "under Assets/Resources — food item pool not bound.");
                 return;
             }
 
@@ -81,8 +97,9 @@ namespace RestaurantLoop.Installers
             var exitSlotSettings = Resources.Load<ExitSlotPrefabSettings>("ExitSlotPrefabSettings");
             if (exitSlotSettings == null || exitSlotSettings.ExitSlotPrefab == null)
             {
-                Debug.LogError("[PoolInstaller] ExitSlotPrefabSettings.asset missing or has no ExitSlotPrefab assigned " +
-                                "under Assets/Resources — exit slot pool not bound.");
+                Debug.LogError(
+                    "[PoolInstaller] ExitSlotPrefabSettings.asset missing or has no ExitSlotPrefab assigned " +
+                    "under Assets/Resources — exit slot pool not bound.");
                 return;
             }
 

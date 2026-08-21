@@ -4,29 +4,18 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    /// <summary>
-    /// Foundation for the supply queue lanes — one X position per lane (lane count = the level's
-    /// Queues.Count, not a hardcoded number). Aligned to ExitStackAnchor's own leftmost/rightmost
-    /// slot positions (not the conveyor cells directly) so the queue lines up under the exit stack
-    /// rather than the belt grid, offset further along -Z below it.
-    /// </summary>
     public class QueueAnchor : IInitializable
     {
-        // World units "below" (further -Z) ExitStackAnchor's slot row.
-        private const float ZOffsetFromExitStack = 2.2f;
-
-        // World units between consecutive lanes on X. Centered under the exit stack's own
-        // midpoint, not stretched to span its full leftmost-rightmost width.
-        private const float LaneSpacing = 1.2f;
-
         private readonly ConveyorLevelDataSO _level;
+        private readonly ConveyorTuning _tuning;
         private readonly ExitStackAnchor _exitStackAnchor;
 
         public Vector3[] LanePositions { get; private set; }
 
-        public QueueAnchor(ConveyorLevelDataSO level, ExitStackAnchor exitStackAnchor)
+        public QueueAnchor(ConveyorLevelDataSO level, ConveyorTuning tuning, ExitStackAnchor exitStackAnchor)
         {
             _level = level;
+            _tuning = tuning;
             _exitStackAnchor = exitStackAnchor;
             LanePositions = ComputeLanePositions();
         }
@@ -43,14 +32,15 @@ namespace RestaurantLoop.Runtime.Conveyor
             float leftX = _exitStackAnchor.SlotPositions[0].x;
             float rightX = _exitStackAnchor.SlotPositions[^1].x;
             float centerX = (leftX + rightX) * 0.5f;
-            float z = _exitStackAnchor.SlotPositions[0].z - ZOffsetFromExitStack;
+            float z = _exitStackAnchor.SlotPositions[0].z - _tuning.QueueZOffsetFromExitStack;
 
             var positions = new Vector3[laneCount];
             for (int i = 0; i < laneCount; i++)
             {
-                float x = centerX + (i - (laneCount - 1) * 0.5f) * LaneSpacing;
+                float x = centerX + (i - (laneCount - 1) * 0.5f) * _tuning.QueueLaneSpacing;
                 positions[i] = new Vector3(x, 0f, z);
             }
+
             return positions;
         }
 

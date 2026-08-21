@@ -18,7 +18,8 @@ namespace Editor.LevelEditor
             var settings = ConveyorSettingsProvider.GetOrCreate();
             if (settings.ConveyorStraightPrefab == null || settings.ConveyorCornerPrefab == null)
             {
-                Debug.LogWarning("[ConveyorSceneBuilder] Assign both conveyor prefabs in RestaurantLoop/Level Editor Settings first.");
+                Debug.LogWarning(
+                    "[ConveyorSceneBuilder] Assign both conveyor prefabs in RestaurantLoop/Level Editor Settings first.");
                 return;
             }
 
@@ -45,7 +46,8 @@ namespace Editor.LevelEditor
 
                 // Keep whatever X/Z tilt the prefab was authored with — only Y (facing) is ours to set.
                 var baseEuler = instance.transform.localRotation.eulerAngles;
-                instance.transform.localRotation = Quaternion.Euler(baseEuler.x, ConveyorWorldUtil.ToWorldYRotation(cell.Shape, cell.Rotation), baseEuler.z);
+                instance.transform.localRotation = Quaternion.Euler(baseEuler.x,
+                    ConveyorWorldUtil.ToWorldYRotation(cell.Shape, cell.Rotation), baseEuler.z);
                 Undo.RegisterCreatedObjectUndo(instance, "Build Conveyor");
             }
 

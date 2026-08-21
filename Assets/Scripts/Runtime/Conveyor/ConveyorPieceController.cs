@@ -3,14 +3,6 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    /// <summary>
-    /// Pooled visual for one conveyor piece (Straight or Corner). Knows nothing about items,
-    /// neighbours, or routing — that's ConveyorManager's job, driven off the baked path. The only
-    /// thing this owns is its own belt-scroll texture animation.
-    ///
-    /// Spawn only ever sets the Y (facing) rotation — X/Z is whatever tilt the prefab was
-    /// authored with, captured once in Awake before the pool ever repositions the instance.
-    /// </summary>
     public class ConveyorPieceController : MonoBehaviour, IPoolable<Vector3, float>
     {
         [SerializeField] private Renderer _renderer;
@@ -46,6 +38,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             _renderer.material.SetTextureOffset(_texturePropertyName, _uvOffset);
         }
 
-        public class Pool : MonoPoolableMemoryPool<Vector3, float, ConveyorPieceController> { }
+        public class Pool : MonoPoolableMemoryPool<Vector3, float, ConveyorPieceController>
+        {
+        }
     }
 }
