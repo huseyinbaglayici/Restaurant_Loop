@@ -9,7 +9,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 {
     public class ExitStackAnchor : IInitializable, IDisposable
     {
-        public const int SlotCount = 5;
+        public const int BaseSlotCount = 5;
 
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorPrefabSettings _prefabSettings;
@@ -18,10 +18,23 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly FoodItemController.Pool _foodPool;
         private readonly List<ExitSlotController> _spawnedFloors = new();
 
-        // null = empty. Index matches SlotPositions.
-        private readonly FoodItemController[] _occupants = new FoodItemController[SlotCount];
+        // null = empty. Index matches SlotPositions. Grows by one if an Extra Tray power-up is used.
+        private FoodItemController[] _occupants = new FoodItemController[BaseSlotCount];
 
         public Vector3[] SlotPositions { get; private set; }
+        public int SlotCount => SlotPositions.Length;
+        public bool HasExtraSlot { get; private set; }
+
+        public int OccupiedCount
+        {
+            get
+            {
+                int count = 0;
+                for (int i = 0; i < _occupants.Length; i++)
+                    if (_occupants[i] != null) count++;
+                return count;
+            }
+        }
 
         public ExitStackAnchor(
             ConveyorLevelDataSO level,
@@ -57,15 +70,14 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             float cellSize = _prefabSettings.CellWorldSize;
             float spanWorldX = (maxX - minX + 1) * cellSize;
-            float slotSpacing = spanWorldX / SlotCount;
+            float slotSpacing = spanWorldX / BaseSlotCount;
             float startX = minX * cellSize - cellSize * 0.5f;
 
-            // minY's row edge (closest belt element to the exit stack), then the fixed margin below it.
             float nearestRowEdgeZ = minY * cellSize - cellSize * 0.5f;
             float z = nearestRowEdgeZ - _tuning.ExitStackZOffsetFromGrid;
 
-            var positions = new Vector3[SlotCount];
-            for (int i = 0; i < SlotCount; i++)
+            var positions = new Vector3[BaseSlotCount];
+            for (int i = 0; i < BaseSlotCount; i++)
             {
                 float x = startX + slotSpacing * (i + 0.5f);
                 positions[i] = new Vector3(x, 0f, z);
@@ -109,7 +121,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             return false;
         }
 
-        // Non-removing peek — for hit-testing (ConveyorEntryInput) before committing to a slot.
+        // peek-only
         public bool TryGetOccupant(int slotIndex, out FoodItemController visual)
         {
             if (slotIndex < 0 || slotIndex >= _occupants.Length || _occupants[slotIndex] == null)
@@ -122,8 +134,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             return true;
         }
 
-        // Caller takes ownership of the returned visual (despawn it, or hand it to whatever's
-        // next — this only frees the slot).
         public bool TryRemoveFromSlot(int slotIndex, out FoodItemController visual)
         {
             if (slotIndex < 0 || slotIndex >= _occupants.Length || _occupants[slotIndex] == null)
@@ -134,6 +144,32 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             visual = _occupants[slotIndex];
             _occupants[slotIndex] = null;
+            return true;
+        }
+
+        // Extra Tray power-up: appends one slot, following the same spacing as the last two.
+        // Capped at once per level — call with HasExtraSlot already true is a no-op.
+        public bool TryAddExtraSlot()
+        {
+            if (HasExtraSlot) return false;
+            if (SlotPositions.Length == 0) return false;
+
+            Vector3 delta = SlotPositions.Length > 1
+                ? SlotPositions[^1] - SlotPositions[^2]
+                : new Vector3(_prefabSettings.CellWorldSize, 0f, 0f);
+            Vector3 newSlotPosition = SlotPositions[^1] + delta;
+
+            var newPositions = new Vector3[SlotPositions.Length + 1];
+            SlotPositions.CopyTo(newPositions, 0);
+            newPositions[^1] = newSlotPosition;
+            SlotPositions = newPositions;
+
+            var newOccupants = new FoodItemController[_occupants.Length + 1];
+            _occupants.CopyTo(newOccupants, 0);
+            _occupants = newOccupants;
+
+            _spawnedFloors.Add(_exitSlotPool.Spawn(newSlotPosition));
+            HasExtraSlot = true;
             return true;
         }
     }

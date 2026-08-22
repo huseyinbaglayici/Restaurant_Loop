@@ -46,7 +46,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Initialize()
         {
-            // Placeholder floors per lane go here once a prefab exists for them.
+            // TODO: lane floors
         }
     }
 }

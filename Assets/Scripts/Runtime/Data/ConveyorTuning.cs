@@ -2,10 +2,6 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Data
 {
-    // Same pattern as ConveyorPrefabSettings — one persisted asset under Resources, loaded once
-    // in PoolInstaller. Every tunable number from the entry-input/queue/exit-stack/belt-movement
-    // work lives here instead of scattered private consts, so it's Inspector-editable instead of
-    // needing a code change per adjustment.
     [CreateAssetMenu(fileName = "ConveyorTuning", menuName = "RestaurantLoop/Conveyor Tuning")]
     public class ConveyorTuning : ScriptableObject
     {

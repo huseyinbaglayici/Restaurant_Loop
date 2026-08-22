@@ -96,14 +96,14 @@ MonoBehaviour:
   queue1:
   - color: {r: 1, g: 0, b: 0, a: 1}
     amount: 3
-    linkID: 1
+    linkID: 0
   - color: {r: 1, g: 0.4, b: 0.7, a: 1}
     amount: 1
     linkID: 0
   queue2:
   - color: {r: 1, g: 0, b: 0, a: 1}
     amount: 3
-    linkID: 1
+    linkID: 0
   - color: {r: 1, g: 1, b: 1, a: 1}
     amount: 1
     linkID: 0

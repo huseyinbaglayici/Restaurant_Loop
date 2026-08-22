@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7e50b614a64dd34ca58fdf631ffe791, type: 3}
   m_Name: ConveyorTuning
   m_EditorClassIdentifier: 
-  BeltSpeed: 3
+  BeltSpeed: 5
   QueueLaneSpacing: 1.2
   QueueZOffsetFromExitStack: 2.2
   QueueRowSpacing: 1.2

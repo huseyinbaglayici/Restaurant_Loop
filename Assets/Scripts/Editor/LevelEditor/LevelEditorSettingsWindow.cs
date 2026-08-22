@@ -5,7 +5,6 @@ using UnityEngine.UIElements;
 
 namespace Editor.LevelEditor
 {
-    /// <summary>Assigns the prefabs the level editor tools instantiate into the scene.</summary>
     public class LevelEditorSettingsWindow : EditorWindow
     {
         [MenuItem("RestaurantLoop/Level Editor Settings")]

@@ -3,9 +3,6 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Data
 {
-    // Resources-loaded, same pattern as ConveyorPrefabSettings — lets SaveManager resolve a
-    // persisted level index back into a ConveyorLevelDataSO without a Resources.Load per-asset
-    // naming convention.
     [CreateAssetMenu(fileName = "LevelDatabase", menuName = "RestaurantLoop/Level Database")]
     public class LevelDatabase : ScriptableObject
     {

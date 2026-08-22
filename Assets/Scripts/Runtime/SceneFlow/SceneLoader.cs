@@ -22,6 +22,7 @@ namespace RestaurantLoop.SceneFlow
         {
             _signalBus.Subscribe<LevelEndedSignal>(OnLevelEnded);
             _signalBus.Subscribe<PlayRequestedSignal>(OnPlayRequested);
+            _signalBus.Subscribe<RestartLevelSignal>(OnRestartRequested);
         }
 
         public void LoadGameplayScene()
@@ -35,6 +36,20 @@ namespace RestaurantLoop.SceneFlow
         public void UnloadGameplayScene()
         {
             SceneManager.UnloadSceneAsync(GameplaySceneName);
+        }
+
+        // waits for the old instance to fully unload before loading the new one — avoids two
+        // GameplayScene instances (and their scene-scoped singletons/EventSystems) overlapping
+        private void OnRestartRequested(RestartLevelSignal signal)
+        {
+            var operation = SceneManager.UnloadSceneAsync(GameplaySceneName);
+            if (operation == null)
+            {
+                LoadGameplayScene();
+                return;
+            }
+
+            operation.completed += _ => LoadGameplayScene();
         }
 
         private void OnGameplaySceneLoaded(AsyncOperation operation)

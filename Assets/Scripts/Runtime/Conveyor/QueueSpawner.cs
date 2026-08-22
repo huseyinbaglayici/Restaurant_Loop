@@ -17,6 +17,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         // Per lane, front-to-back (index 0 = front).
         private readonly List<List<FoodItemController>> _lanes = new();
 
+        // Pick From Bottom power-up: while true, any row in a lane is pickable, not just the front. One-shot.
+        public bool PickFromBottomEnabled { get; set; }
+
         public QueueSpawner(ConveyorLevelDataSO level, ConveyorTuning tuning, QueueAnchor queueAnchor, FoodItemController.Pool foodPool)
         {
             _level = level;
@@ -44,9 +47,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        // Every item is nudged toward the slot its current row index implies. A no-op for items
-        // already there (the common case) — only actually moves anything for the few frames right
-        // after a PopFront shifts everyone's row index down by one.
         public void Tick()
         {
             for (int lane = 0; lane < _lanes.Count; lane++)
@@ -63,30 +63,52 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        // The visual itself, not just its Stack — callers that need to hit-test against what's
-        // actually on screen (ConveyorEntryInput) want FoodItemController.VisualCenter, which
-        // accounts for stack height.
-        public bool TryGetFrontVisual(int lane, out FoodItemController visual)
+        public int GetLaneCount(int lane) => (lane >= 0 && lane < _lanes.Count) ? _lanes[lane].Count : 0;
+
+        public bool TryGetVisual(int lane, int row, out FoodItemController visual)
         {
-            if (lane < 0 || lane >= _lanes.Count || _lanes[lane].Count == 0)
+            if (lane < 0 || lane >= _lanes.Count || row < 0 || row >= _lanes[lane].Count)
             {
                 visual = null;
                 return false;
             }
 
-            visual = _lanes[lane][0];
+            visual = _lanes[lane][row];
             return true;
         }
 
-        // Despawns the front item; Tick() animates the rest of the lane forward on subsequent
-        // frames. Caller is responsible for reading the front's Stack before calling this.
-        public void PopFront(int lane)
+        public void PopAt(int lane, int row)
         {
-            if (lane < 0 || lane >= _lanes.Count || _lanes[lane].Count == 0) return;
+            if (lane < 0 || lane >= _lanes.Count) return;
 
             var laneVisuals = _lanes[lane];
-            _foodPool.Despawn(laneVisuals[0]);
-            laneVisuals.RemoveAt(0);
+            if (row < 0 || row >= laneVisuals.Count) return;
+
+            _foodPool.Despawn(laneVisuals[row]);
+            laneVisuals.RemoveAt(row);
+        }
+
+        // Shuffle power-up: flattens every lane, shuffles, then redeals round-robin.
+        // Tick() picks up the new order next frame and animates each visual to its new slot.
+        public void ShuffleLanes()
+        {
+            if (_lanes.Count == 0) return;
+
+            var all = new List<FoodItemController>();
+            foreach (var lane in _lanes)
+            {
+                all.AddRange(lane);
+                lane.Clear();
+            }
+
+            for (int i = 0; i < all.Count; i++)
+            {
+                int randomIndex = UnityEngine.Random.Range(i, all.Count);
+                (all[i], all[randomIndex]) = (all[randomIndex], all[i]);
+            }
+
+            for (int i = 0; i < all.Count; i++)
+                _lanes[i % _lanes.Count].Add(all[i]);
         }
 
         public void Dispose()

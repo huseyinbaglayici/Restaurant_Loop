@@ -22,13 +22,15 @@ namespace Editor.LevelEditor
         private ConveyorLevelDataSO _draft;
         private ConveyorGridCanvas _canvas;
         private QueueGridCanvas _queueCanvas;
-        private IntegerField _levelIdField, _widthField, _heightField, _queueDepthField, _amountField;
+        private IntegerField _levelIdField, _widthField, _heightField, _queueDepthField, _amountField, _linkIdField;
         private Label _cellCountLabel;
-        private VisualElement _tablePanel;
         private readonly List<Button> _paletteButtons = new();
         private readonly Dictionary<CanvasMode, Button> _modeButtons = new();
         private readonly Dictionary<ConveyorTileShape, Button> _brushButtons = new();
+        private readonly Dictionary<CustomerSubMode, Button> _customerSubModeButtons = new();
         private VisualElement _brushRow;
+        private VisualElement _customerSubModeRow;
+        private Label _customerSubModeHint;
         private VisualElement _paletteRow;
 
         [MenuItem("RestaurantLoop/Conveyor Grid Tool")]
@@ -68,7 +70,6 @@ namespace Editor.LevelEditor
             app.Add(BuildModeBar());
 
             app.Add(BuildConveyorSection());
-            app.Add(BuildTablePanel());
             app.Add(BuildQueueSection());
         }
 
@@ -79,7 +80,6 @@ namespace Editor.LevelEditor
 
         private void OnUndoRedo() => RefreshUiFromDraft();
 
-        /// <summary>Syncs every field/canvas to <see cref="_draft"/>'s current state. Call after replacing its contents (New/Load/undo-redo/Resize).</summary>
         private void RefreshUiFromDraft()
         {
             _levelIdField.SetValueWithoutNotify(_draft.LevelId);
@@ -91,8 +91,6 @@ namespace Editor.LevelEditor
             _canvas.Resize();
             _canvas.RebuildCacheAndRepaint();
             UpdateCellCountLabel();
-
-            RebuildTablePanel();
 
             _queueCanvas.Resize();
             _queueCanvas.MarkDirtyRepaint();
@@ -134,7 +132,7 @@ namespace Editor.LevelEditor
             _draft.GridHeight = 8;
             _draft.ConveyorCells.Clear();
             _draft.ConveyorEntities.Clear();
-            _draft.Tables.Clear();
+            _draft.Customers.Clear();
             _draft.Queues = Enumerable.Range(0, QueueLaneCount).Select(_ => new QueueLaneData()).ToList();
 
             RefreshUiFromDraft();
@@ -155,9 +153,7 @@ namespace Editor.LevelEditor
             asset.GridHeight = _draft.GridHeight;
             asset.ConveyorCells = new List<ConveyorCellData>(_draft.ConveyorCells);
             asset.ConveyorEntities = new List<ConveyorEntityPlacement>(_draft.ConveyorEntities);
-            asset.Tables = _draft.Tables
-                .Select(t => new TableData { Coord = t.Coord, Orders = new List<FoodStackData>(t.Orders) })
-                .ToList();
+            asset.Customers = new List<CustomerEntity>(_draft.Customers);
             asset.Queues = _draft.Queues.Select(q => new QueueLaneData { Entries = new List<FoodStackData>(q.Entries) })
                 .ToList();
 
@@ -196,9 +192,7 @@ namespace Editor.LevelEditor
             _draft.GridHeight = loaded.GridHeight;
             _draft.ConveyorCells = new List<ConveyorCellData>(loaded.ConveyorCells);
             _draft.ConveyorEntities = new List<ConveyorEntityPlacement>(loaded.ConveyorEntities);
-            _draft.Tables = loaded.Tables
-                .Select(t => new TableData { Coord = t.Coord, Orders = new List<FoodStackData>(t.Orders) })
-                .ToList();
+            _draft.Customers = new List<CustomerEntity>(loaded.Customers);
             _draft.Queues = Enumerable.Range(0, QueueLaneCount)
                 .Select(i => i < loaded.Queues.Count
                     ? new QueueLaneData { Entries = new List<FoodStackData>(loaded.Queues[i].Entries) }
@@ -230,6 +224,7 @@ namespace Editor.LevelEditor
 
             bar.Add(MakeButton("Resize", ApplySize, Css.BtnPrimary));
             bar.Add(MakeButton("Clear Conveyor", () => _canvas.ClearAll(), Css.BtnDanger));
+            bar.Add(MakeButton("Clear Customers", () => _canvas.ClearCustomers(), Css.BtnDanger));
 
             return bar;
         }
@@ -242,7 +237,7 @@ namespace Editor.LevelEditor
             modeRow.AddToClassList(Css.Topbar);
             AddModeButton(modeRow, CanvasMode.Path, "Path");
             AddModeButton(modeRow, CanvasMode.Entity, "Entity");
-            AddModeButton(modeRow, CanvasMode.Table, "Table");
+            AddModeButton(modeRow, CanvasMode.Customer, "Customer");
             container.Add(modeRow);
 
             _brushRow = new VisualElement();
@@ -250,6 +245,20 @@ namespace Editor.LevelEditor
             AddBrushButton(_brushRow, ConveyorTileShape.Straight, "Straight");
             AddBrushButton(_brushRow, ConveyorTileShape.Corner, "Corner");
             container.Add(_brushRow);
+
+            _customerSubModeRow = new VisualElement();
+            _customerSubModeRow.AddToClassList(Css.Topbar);
+            AddCustomerSubModeButton(_customerSubModeRow, CustomerSubMode.Order, "Order",
+                "Click paints the primary order from the palette below. Right-click erases the whole customer.");
+            AddCustomerSubModeButton(_customerSubModeRow, CustomerSubMode.SecondOrder, "2nd Order",
+                "Click an existing customer to give it a second dish (from the palette below), servable after the first. Right-click clears it.");
+            AddCustomerSubModeButton(_customerSubModeRow, CustomerSubMode.Hidden, "Hidden",
+                "Click an existing customer to toggle it Hidden (dimmed) — unservable until a neighboring customer is served.");
+            container.Add(_customerSubModeRow);
+
+            _customerSubModeHint = new Label();
+            _customerSubModeHint.AddToClassList(Css.StatusLabel);
+            container.Add(_customerSubModeHint);
 
             _paletteRow = new VisualElement();
             _paletteRow.AddToClassList(Css.Topbar);
@@ -296,20 +305,38 @@ namespace Editor.LevelEditor
             parent.Add(btn);
         }
 
+        private void AddCustomerSubModeButton(VisualElement parent, CustomerSubMode subMode, string label, string tooltip)
+        {
+            var btn = new Button(() => SelectCustomerSubMode(subMode)) { text = label, tooltip = tooltip };
+            btn.AddToClassList(Css.Tool);
+            _customerSubModeButtons[subMode] = btn;
+            parent.Add(btn);
+        }
+
         private void SetMode(CanvasMode mode)
         {
             _canvas.Mode = mode;
             foreach (var kv in _modeButtons) kv.Value.EnableInClassList(Css.ToolActive, kv.Key == mode);
 
-            // Brush shape only matters in Path mode. The color palette stays visible either way —
-            // Entity mode needs it for the conveyor, and Table mode needs it to add orders.
             _brushRow.style.display = mode == CanvasMode.Path ? DisplayStyle.Flex : DisplayStyle.None;
+
+            bool isCustomer = mode == CanvasMode.Customer;
+            _customerSubModeRow.style.display = isCustomer ? DisplayStyle.Flex : DisplayStyle.None;
+            _customerSubModeHint.style.display = isCustomer ? DisplayStyle.Flex : DisplayStyle.None;
+            if (isCustomer) SelectCustomerSubMode(_canvas.CustomerMode);
         }
 
         private void SelectBrush(ConveyorTileShape shape)
         {
             _canvas.BrushShape = shape;
             foreach (var kv in _brushButtons) kv.Value.EnableInClassList(Css.ToolActive, kv.Key == shape);
+        }
+
+        private void SelectCustomerSubMode(CustomerSubMode subMode)
+        {
+            _canvas.CustomerMode = subMode;
+            foreach (var kv in _customerSubModeButtons) kv.Value.EnableInClassList(Css.ToolActive, kv.Key == subMode);
+            _customerSubModeHint.text = _customerSubModeButtons[subMode].tooltip;
         }
 
         private void SelectFoodType(FoodType food)
@@ -329,8 +356,8 @@ namespace Editor.LevelEditor
                 c.Coord.x < 0 || c.Coord.x >= _draft.GridWidth || c.Coord.y < 0 || c.Coord.y >= _draft.GridHeight);
             _draft.ConveyorEntities.RemoveAll(e =>
                 e.Coord.x < 0 || e.Coord.x >= _draft.GridWidth || e.Coord.y < 0 || e.Coord.y >= _draft.GridHeight);
-            _draft.Tables.RemoveAll(t =>
-                t.Coord.x < 0 || t.Coord.x >= _draft.GridWidth || t.Coord.y < 0 || t.Coord.y >= _draft.GridHeight);
+            _draft.Customers.RemoveAll(c =>
+                c.Coord.x < 0 || c.Coord.x >= _draft.GridWidth || c.Coord.y < 0 || c.Coord.y >= _draft.GridHeight);
 
             RefreshUiFromDraft();
         }
@@ -353,8 +380,6 @@ namespace Editor.LevelEditor
                 { GridWidth = _draft.GridWidth, GridHeight = _draft.GridHeight, Data = _draft };
             _canvas.AddToClassList(Css.Canvas);
             _canvas.OnCellsChanged += UpdateCellCountLabel;
-            _canvas.OnTableSelected += _ => RebuildTablePanel();
-            _canvas.OnTablesChanged += RebuildTablePanel;
             _canvas.Resize();
             _canvas.RebuildCacheAndRepaint();
 
@@ -383,45 +408,6 @@ namespace Editor.LevelEditor
 
         #endregion
 
-        #region Table order panel
-
-        private VisualElement BuildTablePanel()
-        {
-            _tablePanel = MakeSection("Table");
-            RebuildTablePanel();
-            return _tablePanel;
-        }
-
-        private void RebuildTablePanel()
-        {
-            if (_tablePanel == null) return;
-
-            // section header is the first child (added by MakeSection); keep it, rebuild the rest
-            while (_tablePanel.childCount > 1) _tablePanel.RemoveAt(1);
-
-            var coord = _canvas.SelectedTable;
-            if (!coord.HasValue || !_canvas.Tables.TryGetValue(coord.Value, out var table))
-            {
-                var hint = new Label("Table mode — click inside the loop to place or select a table.");
-                hint.AddToClassList(Css.StatusLabel);
-                _tablePanel.Add(hint);
-                return;
-            }
-
-            var listView = new TableOrderListView(coord.Value, table.Orders, _draft);
-            listView.OnAddRequested += () =>
-            {
-                Undo.RecordObject(_draft, "Add Table Order");
-                listView.Orders.Add(new FoodStackData
-                    { Type = _canvas.SelectedFoodType, Amount = _canvas.SelectedAmount });
-                listView.Refresh();
-                _canvas.RebuildCacheAndRepaint(); // front-order icon on the table cell may have changed
-            };
-            _tablePanel.Add(listView);
-        }
-
-        #endregion
-
         #region Queue section
 
         private VisualElement BuildQueueSection()
@@ -437,6 +423,17 @@ namespace Editor.LevelEditor
                 _queueCanvas.Depth = Mathf.Max(1, _queueDepthField.value);
                 _queueCanvas.Resize();
             }, Css.BtnPrimary));
+            sizeBar.Add(MakeButton("Clear Queue", () => _queueCanvas.ClearQueues(), Css.BtnDanger));
+
+            _linkIdField = CompactIntField("Link ID", 0);
+            _linkIdField.tooltip = "0 = unlinked. Matching nonzero ids pair two queue entries together.";
+            _linkIdField.RegisterValueChangedCallback(evt =>
+            {
+                int clamped = Mathf.Max(0, evt.newValue);
+                if (clamped != evt.newValue) _linkIdField.SetValueWithoutNotify(clamped);
+                if (_queueCanvas != null) _queueCanvas.SelectedLinkId = clamped;
+            });
+            sizeBar.Add(_linkIdField);
             section.Add(sizeBar);
 
             var canvasHost = new VisualElement();
@@ -447,7 +444,8 @@ namespace Editor.LevelEditor
                 Data = _draft,
                 Depth = _queueDepthField.value,
                 SelectedFoodType = _canvas.SelectedFoodType,
-                SelectedAmount = _canvas.SelectedAmount
+                SelectedAmount = _canvas.SelectedAmount,
+                SelectedLinkId = _linkIdField.value
             };
             _queueCanvas.AddToClassList(Css.Canvas);
             _queueCanvas.Resize();

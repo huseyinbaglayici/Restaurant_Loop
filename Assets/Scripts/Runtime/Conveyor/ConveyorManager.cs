@@ -23,6 +23,11 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private readonly List<Vector3> _pathWorldPositions = new();
         private readonly List<BeltItem> _items = new();
+        
+        private readonly List<(int PathIndex, FoodItemController Visual)> _crossingsThisFrame = new();
+        public IReadOnlyList<(int PathIndex, FoodItemController Visual)> CrossingsThisFrame => _crossingsThisFrame;
+
+        public int ItemCount => _items.Count;
 
         public ConveyorManager(
             ConveyorLevelDataSO level,
@@ -66,13 +71,25 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        // Feeds a new item onto the belt at the entry (path index 0, right after the Gate).
         public void AddItemAtEntry(FoodStackData stack)
         {
             if (_pathWorldPositions.Count == 0) return;
 
             var visual = _foodPool.Spawn(_pathWorldPositions[0], stack);
             _items.Add(new BeltItem { Visual = visual, Progress = 0f });
+            _crossingsThisFrame.Add((0, visual));
+        }
+
+        // cleared by ConsumeService, not here
+        public void ClearCrossings() => _crossingsThisFrame.Clear();
+
+        public void ClearBelt()
+        {
+            for (int i = _items.Count - 1; i >= 0; i--)
+            {
+                _foodPool.Despawn(_items[i].Visual);
+                _items.RemoveAt(i);
+            }
         }
 
         public void Tick()
@@ -85,6 +102,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             for (int i = _items.Count - 1; i >= 0; i--)
             {
                 var item = _items[i];
+                int prevIndex = Mathf.FloorToInt(item.Progress);
                 item.Progress += delta;
 
                 if (item.Progress >= lastIndex)
@@ -99,8 +117,53 @@ namespace RestaurantLoop.Runtime.Conveyor
                     continue;
                 }
 
+                // lag-skip guard
+                int newIndex = Mathf.FloorToInt(item.Progress);
+                for (int idx = prevIndex + 1; idx <= newIndex; idx++)
+                    _crossingsThisFrame.Add((idx, item.Visual));
+
                 item.Visual.transform.position = SampleWorldPosition(item.Progress);
             }
+        }
+
+        // peek-only
+        public bool TryPeekTypeAt(int pathIndex, out FoodType type)
+        {
+            for (int i = 0; i < _items.Count; i++)
+            {
+                int itemIndex = Mathf.RoundToInt(_items[i].Progress) % _pathWorldPositions.Count;
+                if (itemIndex != pathIndex) continue;
+
+                type = _items[i].Visual.Stack.Type;
+                return true;
+            }
+
+            type = default;
+            return false;
+        }
+
+        // by-reference, not by position
+        public int ConsumeFromItem(FoodItemController visual, int amountWanted)
+        {
+            for (int i = 0; i < _items.Count; i++)
+            {
+                if (_items[i].Visual != visual) continue;
+
+                int amountTaken = Mathf.Min(amountWanted, visual.Stack.Amount);
+                if (amountTaken >= visual.Stack.Amount)
+                {
+                    _foodPool.Despawn(visual);
+                    _items.RemoveAt(i);
+                }
+                else
+                {
+                    visual.ReduceAmount(amountTaken);
+                }
+
+                return amountTaken;
+            }
+
+            return 0;
         }
 
         private Vector3 SampleWorldPosition(float progress)

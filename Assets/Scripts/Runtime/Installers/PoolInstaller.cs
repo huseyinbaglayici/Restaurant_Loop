@@ -3,12 +3,13 @@ using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 using Zenject;
 
-namespace Runtime.Installers
+namespace RestaurantLoop.Installers
 {
     public class PoolInstaller : MonoInstaller
     {
         [SerializeField] private int _conveyorPieceInitialSize = 30;
         [SerializeField] private int _foodItemInitialSize = 20;
+        [SerializeField] private int _customerInitialSize = 10;
 
         public override void InstallBindings()
         {
@@ -28,6 +29,7 @@ namespace Runtime.Installers
 
             BindFoodItemPool();
             BindExitSlotPool();
+            BindCustomerPool();
             BindTuning();
         }
 
@@ -44,8 +46,7 @@ namespace Runtime.Installers
             Container.BindInstance(tuning).AsSingle();
         }
 
-        // Prewarmed at startup (WithInitialSize + NonLazy) instead of allocating the first time a
-        // level asks for a piece — belt pieces are placed in bulk, mid-gameplay hitches aren't worth it.
+        // prewarmed
         private void BindConveyorPiecePool(ConveyorTileShape shape, GameObject prefab)
         {
             if (prefab == null)
@@ -63,8 +64,7 @@ namespace Runtime.Installers
                 .NonLazy();
         }
 
-        // Same prewarm reasoning as pieces — food stacks get placed/moved in bulk (queue fills,
-        // belt loads), not one at a time on demand.
+        // prewarmed
         private void BindFoodItemPool()
         {
             var foodSettings = Resources.Load<FoodItemPrefabSettings>("FoodItemPrefabSettings");
@@ -78,8 +78,7 @@ namespace Runtime.Installers
 
             Container.BindInstance(foodSettings).AsSingle();
 
-            // Optional — FoodItemController falls back to color-only if this asset is missing or
-            // has no entry for a given FoodType (see FoodMeshSettings).
+            // optional
             var meshSettings = Resources.Load<FoodMeshSettings>("FoodMeshSettings");
             if (meshSettings != null) Container.BindInstance(meshSettings).AsSingle();
 
@@ -90,8 +89,7 @@ namespace Runtime.Installers
                 .NonLazy();
         }
 
-        // Fixed size (ExitStackAnchor.SlotCount), not a tunable field — there are exactly that
-        // many slots, ever.
+        // base size: ExitStackAnchor.BaseSlotCount (pool auto-expands if the Extra Tray power-up adds a slot)
         private void BindExitSlotPool()
         {
             var exitSlotSettings = Resources.Load<ExitSlotPrefabSettings>("ExitSlotPrefabSettings");
@@ -106,9 +104,29 @@ namespace Runtime.Installers
             Container.BindInstance(exitSlotSettings).AsSingle();
 
             Container.BindMemoryPool<ExitSlotController, ExitSlotController.Pool>()
-                .WithInitialSize(ExitStackAnchor.SlotCount)
+                .WithInitialSize(ExitStackAnchor.BaseSlotCount)
                 .FromComponentInNewPrefab(exitSlotSettings.ExitSlotPrefab)
                 .UnderTransformGroup("ExitSlots")
+                .NonLazy();
+        }
+
+        private void BindCustomerPool()
+        {
+            var customerSettings = Resources.Load<CustomerPrefabSettings>("CustomerPrefabSettings");
+            if (customerSettings == null || customerSettings.CustomerPrefab == null)
+            {
+                Debug.LogError(
+                    "[PoolInstaller] CustomerPrefabSettings.asset missing or has no CustomerPrefab assigned " +
+                    "under Assets/Resources — customer pool not bound.");
+                return;
+            }
+
+            Container.BindInstance(customerSettings).AsSingle();
+
+            Container.BindMemoryPool<CustomerController, CustomerController.Pool>()
+                .WithInitialSize(_customerInitialSize)
+                .FromComponentInNewPrefab(customerSettings.CustomerPrefab)
+                .UnderTransformGroup("Customers")
                 .NonLazy();
         }
     }

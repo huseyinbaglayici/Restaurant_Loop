@@ -52,25 +52,36 @@ namespace RestaurantLoop.Runtime.Conveyor
         private bool TryHandleQueueClick(Camera camera, Vector2 screenPoint)
         {
             int bestLane = -1;
+            int bestRow = -1;
             FoodItemController bestVisual = null;
             float bestDistance = _tuning.ClickRadiusPixels;
 
             for (int lane = 0; lane < _queueAnchor.LanePositions.Length; lane++)
             {
-                if (!_queueSpawner.TryGetFrontVisual(lane, out var visual)) continue;
+                // Pick From Bottom power-up: every row is pickable, not just the front.
+                int rowLimit = _queueSpawner.PickFromBottomEnabled ? _queueSpawner.GetLaneCount(lane) : Mathf.Min(1, _queueSpawner.GetLaneCount(lane));
 
-                float distance = ScreenDistance(camera, visual.VisualCenter, screenPoint);
-                if (distance >= bestDistance) continue;
+                for (int row = 0; row < rowLimit; row++)
+                {
+                    if (!_queueSpawner.TryGetVisual(lane, row, out var visual)) continue;
 
-                bestDistance = distance;
-                bestLane = lane;
-                bestVisual = visual;
+                    float distance = ScreenDistance(camera, visual.VisualCenter, screenPoint);
+                    if (distance >= bestDistance) continue;
+
+                    bestDistance = distance;
+                    bestLane = lane;
+                    bestRow = row;
+                    bestVisual = visual;
+                }
             }
 
             if (bestLane < 0) return false;
 
+            if (_conveyorManager.ItemCount + _exitStackAnchor.OccupiedCount >= _exitStackAnchor.SlotCount) return false;
+
             var stack = bestVisual.Stack;
-            _queueSpawner.PopFront(bestLane);
+            _queueSpawner.PopAt(bestLane, bestRow);
+            _queueSpawner.PickFromBottomEnabled = false;
             _conveyorManager.AddItemAtEntry(stack);
             return true;
         }
@@ -99,8 +110,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             return true;
         }
 
-        // float.MaxValue for anything behind the camera, so it can never win the closest-match
-        // comparison above.
         private static float ScreenDistance(Camera camera, Vector3 worldPoint, Vector2 screenPoint)
         {
             Vector3 projected = camera.WorldToScreenPoint(worldPoint);

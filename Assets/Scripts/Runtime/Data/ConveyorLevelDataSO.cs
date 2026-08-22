@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Data
 {
-    /// <summary>The dish types customers can order — what rides the conveyor and fills the queue.</summary>
     public enum FoodType
     {
         Hamburger,
@@ -53,9 +52,11 @@ namespace RestaurantLoop.Runtime.Data
     {
         public FoodType Type;
         public int Amount;
+
+        // 0 = unlinked
+        public int LinkId;
     }
 
-    /// <summary>An entity (food stack) riding a specific cell of the conveyor.</summary>
     [System.Serializable]
     public struct ConveyorEntityPlacement
     {
@@ -63,31 +64,23 @@ namespace RestaurantLoop.Runtime.Data
         public FoodStackData Stack;
     }
 
-    /// <summary>A table sitting inside the conveyor loop, with its own order queue.</summary>
     [System.Serializable]
-    public class TableData
+    public struct CustomerEntity
     {
         public Vector2Int Coord;
-
-        // Index 0 = the order currently being requested — the only one servable in-game;
-        // the rest are waiting behind it.
-        public List<FoodStackData> Orders = new();
+        public FoodStackData Order;
+        public bool IsHidden;
+        public bool HasSecondOrder;
+        public FoodStackData SecondOrder;
     }
 
-    /// <summary>A supply lane feeding food stacks onto the belt — separate from table demand.</summary>
     [System.Serializable]
     public class QueueLaneData
     {
-        // Index 0 = front of the queue (closest to the belt) — the only entry that's
-        // clickable/servable in-game; the rest are waiting behind it.
+        // index 0 = front
         public List<FoodStackData> Entries = new();
     }
 
-    /// <summary>
-    /// The belt's actual travel order, baked from ConveyorCells + the Gate cell when the level is
-    /// saved. Index 0 = entry (fed by the Queue), last = exit (served/removed here). Gameplay code
-    /// only ever reads this — it never re-derives connectivity from Shape/Rotation itself.
-    /// </summary>
     [System.Serializable]
     public class ConveyorPathData
     {
@@ -108,8 +101,8 @@ namespace RestaurantLoop.Runtime.Data
         [Header("Baked at Save — do not hand-edit")]
         public ConveyorPathData BakedPath = new();
 
-        [Header("Tables — sit inside the loop, each with its own order queue (demand)")]
-        public List<TableData> Tables = new();
+        [Header("Customers — sit inside the loop, each wanting one food stack (demand)")]
+        public List<CustomerEntity> Customers = new();
 
         [Header("Queue — fixed supply lanes feeding the belt (always present)")]
         public List<QueueLaneData> Queues = new();

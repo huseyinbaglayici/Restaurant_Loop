@@ -5,18 +5,6 @@ using UnityEngine.UIElements;
 
 namespace Editor.LevelEditor
 {
-    /// <summary>
-    /// Grid view of the fixed supply lanes that feed food stacks onto the belt — always present,
-    /// separate from table demand. Each column is a lane, each row a position within that
-    /// lane — row 0 (top, highlighted) is the front, the only slot that's servable/clickable
-    /// in-game; lower rows are waiting behind it.
-    ///
-    /// Left-click/drag stamps the selected dish+amount onto a lane: it appends to the
-    /// next open slot, or edits an already-filled slot in place. Right-click/drag erases from
-    /// that slot to the back of the lane, so a lane can never end up with a hole in the middle.
-    /// Reads/writes <see cref="Data"/> directly (like <see cref="ConveyorGridCanvas"/>) so it
-    /// stays correct across Undo/Redo.
-    /// </summary>
     public class QueueGridCanvas : VisualElement
     {
         public ConveyorLevelDataSO Data;
@@ -25,6 +13,7 @@ namespace Editor.LevelEditor
 
         public FoodType SelectedFoodType = FoodType.Hamburger;
         public int SelectedAmount = 1;
+        public int SelectedLinkId = 0;
 
         public System.Action OnChanged;
 
@@ -61,7 +50,6 @@ namespace Editor.LevelEditor
             MarkDirtyRepaint();
         }
 
-        /// <summary>Icon + amount badge overlaid on entity circles — color alone can't tell 9 dishes apart.</summary>
         private void RebuildEntityLabels()
         {
             _entityLabelLayer.Clear();
@@ -81,7 +69,7 @@ namespace Editor.LevelEditor
         private (int lane, int row) CellAt(Vector2 localPos)
         {
             int lane = Mathf.FloorToInt(localPos.x / CellSize);
-            int row = Mathf.FloorToInt(localPos.y / CellSize); // row 0 at top = front, closest to the belt
+            int row = Mathf.FloorToInt(localPos.y / CellSize); // row 0 = front
             return (lane, row);
         }
 
@@ -136,9 +124,18 @@ namespace Editor.LevelEditor
             if (row > entries.Count) return; // can't skip ahead and leave a gap
 
             Undo.RecordObject(Data, "Paint Queue Entry");
-            var stack = new FoodStackData { Type = SelectedFoodType, Amount = SelectedAmount };
+            var stack = new FoodStackData { Type = SelectedFoodType, Amount = SelectedAmount, LinkId = SelectedLinkId };
             if (row == entries.Count) entries.Add(stack);
             else entries[row] = stack;
+            RebuildEntityLabels();
+            OnChanged?.Invoke();
+            MarkDirtyRepaint();
+        }
+
+        public void ClearQueues()
+        {
+            Undo.RecordObject(Data, "Clear Queues");
+            foreach (var lane in Data.Queues) lane.Entries.Clear();
             RebuildEntityLabels();
             OnChanged?.Invoke();
             MarkDirtyRepaint();

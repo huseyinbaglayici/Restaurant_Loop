@@ -36,8 +36,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             foreach (var cell in _level.ConveyorCells)
             {
-                // The Gate is a logical seam (spawn/despawn point for the baked path), not a
-                // physical belt segment — it still counts for connectivity, but no piece here.
+                // gate: no physical piece
                 if (cell.IsGate) continue;
 
                 var position = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize);

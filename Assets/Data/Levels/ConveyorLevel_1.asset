@@ -13,64 +13,24 @@ MonoBehaviour:
   m_Name: ConveyorLevel_1
   m_EditorClassIdentifier: 
   LevelId: 1
-  GridWidth: 8
-  GridHeight: 8
+  GridWidth: 7
+  GridHeight: 7
   ConveyorCells:
-  - Coord: {x: 1, y: 6}
-    Shape: 0
-    Rotation: 0
-    IsGate: 0
-  - Coord: {x: 2, y: 6}
-    Shape: 0
-    Rotation: 0
-    IsGate: 0
-  - Coord: {x: 3, y: 6}
-    Shape: 0
-    Rotation: 0
-    IsGate: 0
-  - Coord: {x: 4, y: 6}
-    Shape: 0
-    Rotation: 0
-    IsGate: 0
-  - Coord: {x: 0, y: 6}
-    Shape: 1
-    Rotation: 180
-    IsGate: 0
-  - Coord: {x: 0, y: 4}
-    Shape: 0
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 0, y: 5}
-    Shape: 0
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 0, y: 3}
-    Shape: 0
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 0, y: 2}
-    Shape: 0
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 0, y: 1}
+  - Coord: {x: 1, y: 1}
     Shape: 1
     Rotation: 270
-    IsGate: 1
+    IsGate: 0
   - Coord: {x: 2, y: 1}
     Shape: 0
-    Rotation: 180
-    IsGate: 0
-  - Coord: {x: 1, y: 1}
-    Shape: 0
-    Rotation: 180
+    Rotation: 0
     IsGate: 0
   - Coord: {x: 3, y: 1}
     Shape: 0
-    Rotation: 180
-    IsGate: 0
+    Rotation: 0
+    IsGate: 1
   - Coord: {x: 4, y: 1}
     Shape: 0
-    Rotation: 180
+    Rotation: 0
     IsGate: 0
   - Coord: {x: 5, y: 1}
     Shape: 1
@@ -78,60 +38,106 @@ MonoBehaviour:
     IsGate: 0
   - Coord: {x: 5, y: 2}
     Shape: 0
-    Rotation: 270
+    Rotation: 90
     IsGate: 0
   - Coord: {x: 5, y: 3}
     Shape: 0
-    Rotation: 270
+    Rotation: 90
     IsGate: 0
   - Coord: {x: 5, y: 4}
     Shape: 0
-    Rotation: 270
+    Rotation: 90
     IsGate: 0
   - Coord: {x: 5, y: 5}
+    Shape: 1
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 4, y: 5}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 3, y: 5}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 2, y: 5}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 1, y: 2}
     Shape: 0
     Rotation: 270
     IsGate: 0
-  - Coord: {x: 5, y: 6}
+  - Coord: {x: 1, y: 3}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 1, y: 4}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 1, y: 5}
     Shape: 1
-    Rotation: 90
+    Rotation: 180
     IsGate: 0
   ConveyorEntities: []
   BakedPath:
     OrderedPath:
-    - {x: 0, y: 2}
-    - {x: 0, y: 3}
-    - {x: 0, y: 4}
-    - {x: 0, y: 5}
-    - {x: 0, y: 6}
-    - {x: 1, y: 6}
-    - {x: 2, y: 6}
-    - {x: 3, y: 6}
-    - {x: 4, y: 6}
-    - {x: 5, y: 6}
-    - {x: 5, y: 5}
-    - {x: 5, y: 4}
-    - {x: 5, y: 3}
-    - {x: 5, y: 2}
-    - {x: 5, y: 1}
     - {x: 4, y: 1}
-    - {x: 3, y: 1}
-    - {x: 2, y: 1}
+    - {x: 5, y: 1}
+    - {x: 5, y: 2}
+    - {x: 5, y: 3}
+    - {x: 5, y: 4}
+    - {x: 5, y: 5}
+    - {x: 4, y: 5}
+    - {x: 3, y: 5}
+    - {x: 2, y: 5}
+    - {x: 1, y: 5}
+    - {x: 1, y: 4}
+    - {x: 1, y: 3}
+    - {x: 1, y: 2}
     - {x: 1, y: 1}
-  Tables: []
+    - {x: 2, y: 1}
+  Customers:
+  - Coord: {x: 4, y: 3}
+    Order:
+      Type: 0
+      Amount: 3
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 1
+    SecondOrder:
+      Type: 1
+      Amount: 2
+      LinkId: 0
   Queues:
   - Entries:
     - Type: 0
-      Amount: 3
+      Amount: 2
+      LinkId: 0
     - Type: 0
       Amount: 3
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 0
   - Entries:
+    - Type: 1
+      Amount: 1
+      LinkId: 0
     - Type: 0
       Amount: 3
+      LinkId: 0
     - Type: 0
       Amount: 3
+      LinkId: 0
   - Entries:
+    - Type: 1
+      Amount: 1
+      LinkId: 0
     - Type: 0
       Amount: 3
+      LinkId: 0
     - Type: 0
       Amount: 3
+      LinkId: 0

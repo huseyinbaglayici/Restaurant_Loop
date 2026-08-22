@@ -30,15 +30,5 @@ namespace Editor.LevelEditor
         // ── Color/entity palette ─────────────────────────────────────────────
         public const string PaletteSwatch         = "rl-palette-swatch";
         public const string PaletteSwatchSelected = "rl-palette-swatch--selected";
-
-        // ── Table order queue (side panel) ───────────────────────────────────
-        public const string Lane       = "rl-lane";
-        public const string LaneHeader = "rl-lane__header";
-        public const string LaneList   = "rl-lane__list";
-        public const string Chip       = "rl-chip";
-        public const string ChipFront  = "rl-chip--front";
-        public const string ChipIcon   = "rl-chip__icon";
-        public const string ChipLabel  = "rl-chip__label";
-        public const string ChipRemove = "rl-chip__remove";
     }
 }

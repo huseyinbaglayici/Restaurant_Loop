@@ -5,17 +5,7 @@ using UnityEngine;
 
 namespace Editor.LevelEditor
 {
-    /// <summary>
-    /// Turns the designer's unordered ConveyorCells (Shape+Rotation per cell) into the belt's
-    /// actual travel order, run once when the level is saved. Gameplay never sees Shape/Rotation —
-    /// only the resulting <see cref="ConveyorPathData.OrderedPath"/>.
-    ///
-    /// Method: derive which two orthogonal edges each cell's belt touches from its Shape+Rotation
-    /// (the same geometry the editor's two-arrow corner rendering already uses), link cells whose
-    /// edges face each other, and require every cell end up with exactly two neighbours — i.e. a
-    /// single closed loop. From the Gate cell, walk the loop both ways and keep whichever direction
-    /// is clockwise on screen (negative shoelace signed area on the grid coordinates).
-    /// </summary>
+    // cell graph -> closed loop -> ordered path, direction picked from painted arrows
     internal static class ConveyorPathBaker
     {
         public static bool TryBake(ConveyorLevelDataSO data, out List<Vector2Int> orderedPath, out string error)
@@ -66,12 +56,35 @@ namespace Editor.LevelEditor
 
             var pathA = WalkCycle(gateCell.Coord, neighbors[gateCell.Coord][0], neighbors);
             var pathB = WalkCycle(gateCell.Coord, neighbors[gateCell.Coord][1], neighbors);
-            var clockwise = SignedArea(pathA) < 0f ? pathA : pathB;
 
-            int gateIdx = clockwise.IndexOf(gateCell.Coord);
-            orderedPath = clockwise.Skip(gateIdx + 1).Concat(clockwise.Take(gateIdx)).ToList();
+            int arrowScore = ScoreAgainstArrows(pathA, cellsByCoord);
+            var chosen = arrowScore > 0 ? pathA
+                : arrowScore < 0 ? pathB
+                : (SignedArea(pathA) < 0f ? pathA : pathB); // all-corner fallback
+
+            int gateIdx = chosen.IndexOf(gateCell.Coord);
+            orderedPath = chosen.Skip(gateIdx + 1).Concat(chosen.Take(gateIdx)).ToList();
             error = null;
             return true;
+        }
+
+        // +1/-1 per Straight cell vs its painted arrow; corners don't vote
+        private static int ScoreAgainstArrows(List<Vector2Int> path, Dictionary<Vector2Int, ConveyorCellData> cellsByCoord)
+        {
+            int score = 0;
+            for (int i = 0; i < path.Count; i++)
+            {
+                var cell = cellsByCoord[path[i]];
+                if (cell.Shape != ConveyorTileShape.Straight) continue;
+
+                var next = path[(i + 1) % path.Count];
+                var actualDir = next - path[i];
+                var arrowDir = Rotate(Vector2Int.right, cell.Rotation);
+
+                if (actualDir == arrowDir) score++;
+                else if (actualDir == -arrowDir) score--;
+            }
+            return score;
         }
 
         private static List<Vector2Int> WalkCycle(Vector2Int start, Vector2Int second, Dictionary<Vector2Int, List<Vector2Int>> neighbors)
@@ -102,11 +115,7 @@ namespace Editor.LevelEditor
             return area * 0.5f;
         }
 
-        /// <summary>
-        /// Which orthogonal grid directions this cell's belt touches, before rotation. Straight
-        /// connects two opposite edges (its rotation = the facing direction). Corner connects Left
-        /// and Up at rotation 0, matching the editor's DrawCornerTile pivot.
-        /// </summary>
+        // pre-rotation touched edges; corner = Left+Up at rotation 0 (matches DrawCornerTile)
         private static List<Vector2Int> ConnectedDirections(ConveyorTileShape shape, float rotation)
         {
             if (shape == ConveyorTileShape.Straight)
@@ -118,10 +127,7 @@ namespace Editor.LevelEditor
             return new List<Vector2Int> { Rotate(Vector2Int.left, rotation), Rotate(Vector2Int.up, rotation) };
         }
 
-        /// <summary>
-        /// Standard counter-clockwise rotation in grid space (+Y = up), which is what reproduces the
-        /// editor canvas's screen-space rotation once you account for the canvas being Y-down.
-        /// </summary>
+        // CCW in grid space (+Y up) — matches canvas rotation once Y-down is accounted for
         private static Vector2Int Rotate(Vector2Int dir, float degrees)
         {
             int steps = Mathf.RoundToInt(degrees / 90f) % 4;

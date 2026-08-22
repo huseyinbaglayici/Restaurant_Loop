@@ -4,11 +4,6 @@ using UnityEngine;
 
 namespace Editor.LevelEditor
 {
-    /// <summary>
-    /// Editor-side get-or-create for <see cref="ConveyorPrefabSettings"/>. Lives here (not on the
-    /// Runtime type itself) because AssetDatabase isn't available outside the editor — the asset
-    /// path is under Resources/ so PoolInstaller can Resources.Load the same file at runtime.
-    /// </summary>
     internal static class ConveyorSettingsProvider
     {
         private const string AssetPath = "Assets/Resources/ConveyorPrefabSettings.asset";

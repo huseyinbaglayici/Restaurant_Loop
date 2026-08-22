@@ -6,56 +6,31 @@ using UnityEngine.UIElements;
 
 namespace Editor.LevelEditor
 {
-    public enum CanvasMode { Path, Entity, Table }
+    public enum CanvasMode { Path, Entity, Customer }
 
-    /// <summary>
-    /// Custom-drawn grid canvas for painting the conveyor plus the food entities that ride it.
-    /// The source of truth is <see cref="Data"/> (a <see cref="ConveyorLevelDataSO"/>) — every
-    /// mutation goes through <c>Undo.RecordObject</c> on it first, so Ctrl+Z/Y work the same way
-    /// they do for any other Unity object. <see cref="Cells"/>/<see cref="Entities"/> are just a
-    /// fast lookup cache rebuilt from <see cref="Data"/> after every change (including undo/redo).
-    ///
-    /// Path mode: pick a brush shape (Straight or Corner) and left-drag to stamp it onto cells
-    /// (new/changed cells start at rotation 0). Rotation is set explicitly, standard tile-editor
-    /// style: Shift+Click a cell to rotate it 90° CW, or hover it and press R. Right-drag erases.
-    ///
-    /// Entity mode: left-drag across existing conveyor cells to stamp the selected dish+amount
-    /// onto them; right-drag clears entities. Only valid on cells that are conveyor.
-    ///
-    /// Table mode: click an empty non-conveyor cell to place a table there (its order queue
-    /// starts empty — edit it in the side panel); click an existing table to select it instead
-    /// of re-placing it. Right-click erases a table and its whole queue.
-    /// </summary>
+    public enum CustomerSubMode { Order, SecondOrder, Hidden }
+
     public class ConveyorGridCanvas : VisualElement
     {
         public int GridWidth = 8;
         public int GridHeight = 8;
         public float CellSize = 40f;
 
-        /// <summary>Backing data — must be assigned before any interaction. Every edit records Undo on this.</summary>
         public ConveyorLevelDataSO Data;
 
-        /// <summary>Read-only lookup cache mirroring Data.ConveyorCells, rebuilt after every change.</summary>
         public readonly Dictionary<Vector2Int, ConveyorCellPaint> Cells = new();
-
-        /// <summary>Read-only lookup cache mirroring Data.ConveyorEntities.</summary>
         public readonly Dictionary<Vector2Int, FoodStackData> Entities = new();
-
-        /// <summary>Read-only lookup cache mirroring Data.Tables.</summary>
-        public readonly Dictionary<Vector2Int, TableData> Tables = new();
+        public readonly Dictionary<Vector2Int, CustomerEntity> Customers = new();
 
         public CanvasMode Mode = CanvasMode.Path;
+        public CustomerSubMode CustomerMode = CustomerSubMode.Order;
         public ConveyorTileShape BrushShape = ConveyorTileShape.Straight;
         public FoodType SelectedFoodType = FoodType.Hamburger;
         public int SelectedAmount = 1;
-        public Vector2Int? SelectedTable { get; private set; }
 
         public System.Action OnCellsChanged;
         public System.Action OnEntitiesChanged;
-        public System.Action OnTablesChanged;
-
-        /// <summary>Fires whenever a table is selected (placed or clicked) — argument is its coord.</summary>
-        public System.Action<Vector2Int> OnTableSelected;
+        public System.Action OnCustomersChanged;
 
         private static readonly Color GridLineColor = new(1f, 1f, 1f, 0.08f);
         private static readonly Color CellBgColor = new(1f, 1f, 1f, 0.03f);
@@ -64,9 +39,8 @@ namespace Editor.LevelEditor
         private static readonly Color TreadColor = new(0.38f, 0.38f, 0.40f);
         private static readonly Color ArrowColor = new(0.95f, 0.75f, 0.15f);
         private static readonly Color EntityOutline = new(0f, 0f, 0f, 0.55f);
-        private static readonly Color TableColor = new(0.18f, 0.42f, 0.38f);
-        private static readonly Color TableOutline = new(0.10f, 0.24f, 0.22f);
-        private static readonly Color TableSelectedOutline = new(0.95f, 0.75f, 0.15f);
+        private static readonly Color CustomerColor = new(0.18f, 0.42f, 0.38f);
+        private static readonly Color CustomerOutline = new(0.10f, 0.24f, 0.22f);
         private static readonly Color GateColor = new(0.2f, 0.9f, 0.95f);
 
         private bool _isDragging;
@@ -100,7 +74,6 @@ namespace Editor.LevelEditor
             MarkDirtyRepaint();
         }
 
-        /// <summary>Rebuilds the lookup cache from Data and repaints. Call after Data changes externally (Load, undo/redo).</summary>
         public void RebuildCacheAndRepaint()
         {
             Cells.Clear();
@@ -109,14 +82,13 @@ namespace Editor.LevelEditor
             Entities.Clear();
             foreach (var e in Data.ConveyorEntities) Entities[e.Coord] = e.Stack;
 
-            Tables.Clear();
-            foreach (var t in Data.Tables) Tables[t.Coord] = t;
+            Customers.Clear();
+            foreach (var c in Data.Customers) Customers[c.Coord] = c;
 
             RebuildEntityLabels();
             MarkDirtyRepaint();
         }
 
-        /// <summary>Icon + amount badge overlaid on entity/table cells — color alone can't tell 9 dishes apart.</summary>
         private void RebuildEntityLabels()
         {
             _entityLabelLayer.Clear();
@@ -128,15 +100,36 @@ namespace Editor.LevelEditor
                     _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(kv.Value.Amount, center, CellSize));
             }
 
-            // A table shows the icon for whatever it's currently requesting (front of its queue).
-            foreach (var kv in Tables)
+            foreach (var kv in Customers)
             {
-                if (kv.Value.Orders.Count == 0) continue;
-                var front = kv.Value.Orders[0];
                 Vector2 center = CellCenterLocal(kv.Key);
-                _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(front.Type, center, CellSize));
-                if (front.Amount > 1)
-                    _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(front.Amount, center, CellSize));
+                var order = kv.Value.Order;
+
+                if (kv.Value.HasSecondOrder)
+                {
+                    // split cell left/right
+                    Vector2 leftCenter = center - new Vector2(CellSize * 0.24f, 0f);
+                    Vector2 rightCenter = center + new Vector2(CellSize * 0.24f, 0f);
+                    float halfSize = CellSize * 0.6f;
+
+                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(order.Type, leftCenter, halfSize));
+                    if (order.Amount > 1)
+                        _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(order.Amount, leftCenter, halfSize));
+
+                    var second = kv.Value.SecondOrder;
+                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(second.Type, rightCenter, halfSize));
+                    if (second.Amount > 1)
+                        _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(second.Amount, rightCenter, halfSize));
+                }
+                else
+                {
+                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(order.Type, center, CellSize));
+                    if (order.Amount > 1)
+                        _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(order.Amount, center, CellSize));
+                }
+
+                if (kv.Value.IsHidden)
+                    _entityLabelLayer.Add(EntityLabelFactory.CreateHiddenBadge(center, CellSize));
             }
         }
 
@@ -145,12 +138,19 @@ namespace Editor.LevelEditor
             Undo.RecordObject(Data, "Clear Conveyor");
             Data.ConveyorCells.Clear();
             Data.ConveyorEntities.Clear();
-            Data.Tables.Clear();
-            SelectedTable = null;
+            Data.Customers.Clear();
             RebuildCacheAndRepaint();
             OnCellsChanged?.Invoke();
             OnEntitiesChanged?.Invoke();
-            OnTablesChanged?.Invoke();
+            OnCustomersChanged?.Invoke();
+        }
+
+        public void ClearCustomers()
+        {
+            Undo.RecordObject(Data, "Clear Customers");
+            Data.Customers.Clear();
+            RebuildCacheAndRepaint();
+            OnCustomersChanged?.Invoke();
         }
 
         private Vector2Int CellAt(Vector2 localPos)
@@ -170,7 +170,6 @@ namespace Editor.LevelEditor
             var cell = CellAt(evt.localPosition);
             if (!InBounds(cell)) return;
 
-            // Shift+left-click rotates an existing cell instead of painting/dragging.
             if (evt.button == 0 && evt.shiftKey && Mode == CanvasMode.Path)
             {
                 RotateAt(cell);
@@ -178,7 +177,6 @@ namespace Editor.LevelEditor
                 return;
             }
 
-            // Ctrl+left-click toggles the Gate (the belt's spawn/despawn seam) — at most one per level.
             if (evt.button == 0 && evt.ctrlKey && Mode == CanvasMode.Path)
             {
                 ToggleGateAt(cell);
@@ -186,10 +184,18 @@ namespace Editor.LevelEditor
                 return;
             }
 
-            // Tables are placed/selected one click at a time — no drag-painting.
-            if (Mode == CanvasMode.Table)
+            // one-shot, not drag-painted
+            if (Mode == CanvasMode.Customer && CustomerMode == CustomerSubMode.SecondOrder)
             {
-                HandleTableClick(cell, evt.button == 1);
+                if (evt.button == 1) ClearCustomerSecondOrderAt(cell);
+                else SetCustomerSecondOrderAt(cell);
+                evt.StopPropagation();
+                return;
+            }
+
+            if (Mode == CanvasMode.Customer && CustomerMode == CustomerSubMode.Hidden)
+            {
+                if (evt.button == 0) ToggleCustomerHiddenAt(cell);
                 evt.StopPropagation();
                 return;
             }
@@ -206,7 +212,7 @@ namespace Editor.LevelEditor
         {
             var cell = CellAt(evt.localPosition);
             _hoverCell = InBounds(cell) ? cell : null;
-            MarkDirtyRepaint(); // hover outline needs to track the cursor even while idle
+            MarkDirtyRepaint();
 
             if (!_isDragging || !InBounds(cell)) return;
 
@@ -224,42 +230,17 @@ namespace Editor.LevelEditor
 
         private void OnKeyDown(KeyDownEvent evt)
         {
-            if (evt.keyCode != KeyCode.R || Mode != CanvasMode.Path || !_hoverCell.HasValue) return;
-            RotateAt(_hoverCell.Value);
+            if (evt.keyCode != KeyCode.R || !_hoverCell.HasValue) return;
+
+            if (Mode == CanvasMode.Path) RotateAt(_hoverCell.Value);
+            else return;
+
             evt.StopPropagation();
         }
 
         private int FindCellIndex(Vector2Int coord) => Data.ConveyorCells.FindIndex(c => c.Coord == coord);
         private int FindEntityIndex(Vector2Int coord) => Data.ConveyorEntities.FindIndex(e => e.Coord == coord);
-        private int FindTableIndex(Vector2Int coord) => Data.Tables.FindIndex(t => t.Coord == coord);
-
-        private void HandleTableClick(Vector2Int cell, bool erase)
-        {
-            if (erase)
-            {
-                if (FindTableIndex(cell) < 0) return;
-                Undo.RecordObject(Data, "Erase Table");
-                Data.Tables.RemoveAll(t => t.Coord == cell);
-                if (SelectedTable == cell) SelectedTable = null;
-                RebuildCacheAndRepaint();
-                OnTablesChanged?.Invoke();
-                return;
-            }
-
-            if (Cells.ContainsKey(cell)) return; // tables only sit on floor cells, not the belt itself
-
-            if (!Tables.ContainsKey(cell))
-            {
-                Undo.RecordObject(Data, "Place Table");
-                Data.Tables.Add(new TableData { Coord = cell });
-                RebuildCacheAndRepaint();
-                OnTablesChanged?.Invoke();
-            }
-
-            SelectedTable = cell;
-            MarkDirtyRepaint();
-            OnTableSelected?.Invoke(cell);
-        }
+        private int FindCustomerIndex(Vector2Int coord) => Data.Customers.FindIndex(c => c.Coord == coord);
 
         private void RotateAt(Vector2Int cell)
         {
@@ -274,7 +255,7 @@ namespace Editor.LevelEditor
             OnCellsChanged?.Invoke();
         }
 
-        /// <summary>At most one Gate per level — setting a new one clears whichever cell held it before.</summary>
+        // at most one gate per level
         private void ToggleGateAt(Vector2Int cell)
         {
             int idx = FindCellIndex(cell);
@@ -301,6 +282,61 @@ namespace Editor.LevelEditor
             OnCellsChanged?.Invoke();
         }
 
+        private void ToggleCustomerHiddenAt(Vector2Int cell)
+        {
+            if (Cells.ContainsKey(cell)) return;
+
+            int idx = FindCustomerIndex(cell);
+            Undo.RecordObject(Data, "Toggle Customer Hidden");
+
+            if (idx < 0)
+            {
+                Data.Customers.Add(new CustomerEntity
+                {
+                    Coord = cell,
+                    Order = new FoodStackData { Type = SelectedFoodType, Amount = SelectedAmount },
+                    IsHidden = true
+                });
+            }
+            else
+            {
+                var entry = Data.Customers[idx];
+                entry.IsHidden = !entry.IsHidden;
+                Data.Customers[idx] = entry;
+            }
+
+            RebuildCacheAndRepaint();
+            OnCustomersChanged?.Invoke();
+        }
+
+        private void SetCustomerSecondOrderAt(Vector2Int cell)
+        {
+            int idx = FindCustomerIndex(cell);
+            if (idx < 0) return;
+
+            Undo.RecordObject(Data, "Set Customer 2nd Order");
+            var entry = Data.Customers[idx];
+            entry.HasSecondOrder = true;
+            entry.SecondOrder = new FoodStackData { Type = SelectedFoodType, Amount = SelectedAmount };
+            Data.Customers[idx] = entry;
+            RebuildCacheAndRepaint();
+            OnCustomersChanged?.Invoke();
+        }
+
+        private void ClearCustomerSecondOrderAt(Vector2Int cell)
+        {
+            int idx = FindCustomerIndex(cell);
+            if (idx < 0) return;
+
+            Undo.RecordObject(Data, "Clear Customer 2nd Order");
+            var entry = Data.Customers[idx];
+            entry.HasSecondOrder = false;
+            entry.SecondOrder = default;
+            Data.Customers[idx] = entry;
+            RebuildCacheAndRepaint();
+            OnCustomersChanged?.Invoke();
+        }
+
         private void PaintAt(Vector2Int cell)
         {
             if (Mode == CanvasMode.Path)
@@ -317,8 +353,6 @@ namespace Editor.LevelEditor
                 }
                 else
                 {
-                    // Only (re)stamp when the shape actually changes, so dragging back over
-                    // already-painted cells doesn't reset a rotation you already set.
                     if (Cells.TryGetValue(cell, out var existing) && existing.Shape == BrushShape) return;
 
                     Undo.RecordObject(Data, "Paint Conveyor Cell");
@@ -330,7 +364,7 @@ namespace Editor.LevelEditor
                     OnCellsChanged?.Invoke();
                 }
             }
-            else // Entity mode — only valid on existing conveyor cells
+            else if (Mode == CanvasMode.Entity) // only valid on existing conveyor cells
             {
                 if (!Cells.ContainsKey(cell)) return;
 
@@ -355,6 +389,38 @@ namespace Editor.LevelEditor
                     else Data.ConveyorEntities.Add(entry);
                     RebuildCacheAndRepaint();
                     OnEntitiesChanged?.Invoke();
+                }
+            }
+            else // customer mode
+            {
+                if (Cells.ContainsKey(cell)) return;
+
+                if (_eraseMode)
+                {
+                    if (FindCustomerIndex(cell) < 0) return;
+                    Undo.RecordObject(Data, "Erase Customer");
+                    Data.Customers.RemoveAll(c => c.Coord == cell);
+                    RebuildCacheAndRepaint();
+                    OnCustomersChanged?.Invoke();
+                }
+                else
+                {
+                    Undo.RecordObject(Data, "Paint Customer");
+                    int idx = FindCustomerIndex(cell);
+                    var newOrder = new FoodStackData { Type = SelectedFoodType, Amount = SelectedAmount };
+
+                    if (idx >= 0)
+                    {
+                        var entry = Data.Customers[idx];
+                        entry.Order = newOrder;
+                        Data.Customers[idx] = entry;
+                    }
+                    else
+                    {
+                        Data.Customers.Add(new CustomerEntity { Coord = cell, Order = newOrder });
+                    }
+                    RebuildCacheAndRepaint();
+                    OnCustomersChanged?.Invoke();
                 }
             }
         }
@@ -409,9 +475,7 @@ namespace Editor.LevelEditor
                 else
                 {
                     DrawCornerTile(painter, center, kv.Value.Rotation);
-                    // A corner connects two edges, not one flow direction — one arrow was
-                    // ambiguous (which edge is it even pointing from/to?). Two arrows, one per
-                    // connected edge, remove that ambiguity outright.
+                    // corner: two edges, two arrows
                     DrawArrow(painter, center, new Vector2(-1f, 0f), kv.Value.Rotation, CellSize * 0.22f, CellSize * 0.30f);
                     DrawArrow(painter, center, new Vector2(0f, -1f), kv.Value.Rotation, CellSize * 0.22f, CellSize * 0.30f);
                 }
@@ -423,14 +487,10 @@ namespace Editor.LevelEditor
                     DrawGateMarker(painter, center);
             }
 
-            // tables
-            foreach (var kv in Tables)
-            {
-                Vector2 center = CellCenterLocal(kv.Key);
-                DrawTable(painter, center, SelectedTable.HasValue && SelectedTable.Value == kv.Key);
-            }
+            // customers
+            foreach (var kv in Customers)
+                DrawCustomer(painter, CellCenterLocal(kv.Key), kv.Value.IsHidden, kv.Value.HasSecondOrder);
 
-            // hover outline — helps line up the R-to-rotate gesture with a specific cell
             if (_hoverCell.HasValue)
             {
                 var r = new Rect(_hoverCell.Value.x * CellSize, (GridHeight - 1 - _hoverCell.Value.y) * CellSize, CellSize, CellSize);
@@ -455,7 +515,7 @@ namespace Editor.LevelEditor
 
         private static Vector2 RotatePoint(Vector2 center, Vector2 local, float rotationDeg)
         {
-            // UI space Y grows downward, so invert to keep "clockwise" reading as clockwise on screen.
+            // Y grows downward, invert for CW
             float rad = -rotationDeg * Mathf.Deg2Rad;
             float cos = Mathf.Cos(rad), sin = Mathf.Sin(rad);
             return new Vector2(
@@ -463,7 +523,6 @@ namespace Editor.LevelEditor
                 center.y + local.x * sin + local.y * cos);
         }
 
-        /// <summary>A straight belt segment: a plank running fully across the cell, with a cross-tread in the middle.</summary>
         private void DrawStraightTile(Painter2D painter, Vector2 center, float rotation)
         {
             float h = CellSize * 0.46f;
@@ -486,7 +545,6 @@ namespace Editor.LevelEditor
             painter.Fill();
             painter.Stroke();
 
-            // tread ridges, echoing the real belt mesh's cross bars
             painter.strokeColor = TreadColor;
             painter.lineWidth = 2f;
             foreach (float lx in new[] { -h * 0.45f, h * 0.45f })
@@ -500,16 +558,11 @@ namespace Editor.LevelEditor
             }
         }
 
-        /// <summary>
-        /// A corner belt segment: an actual quarter-pipe elbow (not a square + dot), so the shape
-        /// reads as "this turns" at a glance. Base orientation (rotation 0) hugs the cell's
-        /// top-left corner, connecting the Left edge to the Top edge.
-        /// </summary>
         private void DrawCornerTile(Painter2D painter, Vector2 center, float rotation)
         {
             float h = CellSize * 0.46f;
             float outerR = h;
-            float innerR = outerR - CellSize * 0.32f; // same band thickness as the straight tile
+            float innerR = outerR - CellSize * 0.32f;
             Vector2 pivotLocal = new(-h, -h);
             const int segments = 10;
 
@@ -537,7 +590,6 @@ namespace Editor.LevelEditor
             painter.Fill();
             painter.Stroke();
 
-            // tread ridge following the curve's midline, same purpose as the straight tile's bars
             painter.strokeColor = TreadColor;
             painter.lineWidth = 1.5f;
             float midR = (outerR + innerR) * 0.5f;
@@ -552,18 +604,13 @@ namespace Editor.LevelEditor
             painter.Stroke();
         }
 
-        /// <summary>
-        /// Draws one arrow, built from a base direction (unrotated, at cell rotation 0) that gets
-        /// rotated by the cell's actual rotation — so the arrow always tracks a real edge of the
-        /// tile rather than an assumed "always points right" direction.
-        /// </summary>
-        private void DrawArrow(Painter2D painter, Vector2 center, Vector2 baseDir, float rotationDeg, float size, float centerOffset = 0f)
+        private void DrawArrow(Painter2D painter, Vector2 center, Vector2 baseDir, float rotationDeg, float size, float centerOffset = 0f, Color? color = null)
         {
             Vector2 dir = RotatePoint(Vector2.zero, baseDir, rotationDeg);
             Vector2 perp = new Vector2(-dir.y, dir.x);
             Vector2 arrowCenter = center + dir * centerOffset;
 
-            painter.fillColor = ArrowColor;
+            painter.fillColor = color ?? ArrowColor;
             painter.BeginPath();
             painter.MoveTo(arrowCenter + dir * (size * 0.5f));
             painter.LineTo(arrowCenter - dir * (size * 0.15f) + perp * (size * 0.35f));
@@ -585,14 +632,15 @@ namespace Editor.LevelEditor
             painter.Stroke();
         }
 
-        private void DrawTable(Painter2D painter, Vector2 center, bool selected)
+        private void DrawCustomer(Painter2D painter, Vector2 center, bool isHidden, bool hasSecondOrder)
         {
             float half = CellSize * 0.38f;
             var r = new Rect(center.x - half, center.y - half, half * 2, half * 2);
 
-            painter.fillColor = TableColor;
-            painter.strokeColor = selected ? TableSelectedOutline : TableOutline;
-            painter.lineWidth = selected ? 3f : 2f;
+            // hidden: dimmed
+            painter.fillColor = isHidden ? new Color(CustomerColor.r, CustomerColor.g, CustomerColor.b, 0.4f) : CustomerColor;
+            painter.strokeColor = CustomerOutline;
+            painter.lineWidth = 2f;
             painter.BeginPath();
             painter.MoveTo(r.position);
             painter.LineTo(new Vector2(r.xMax, r.yMin));
@@ -601,12 +649,18 @@ namespace Editor.LevelEditor
             painter.ClosePath();
             painter.Fill();
             painter.Stroke();
+
+            if (hasSecondOrder)
+            {
+                painter.strokeColor = CustomerOutline;
+                painter.lineWidth = 2f;
+                painter.BeginPath();
+                painter.MoveTo(new Vector2(center.x, r.yMin));
+                painter.LineTo(new Vector2(center.x, r.yMax));
+                painter.Stroke();
+            }
         }
 
-        /// <summary>
-        /// Diamond ring marking the belt's spawn/despawn seam — drawn as a vector shape (not a
-        /// text glyph) so it always renders regardless of what the editor's font supports.
-        /// </summary>
         private void DrawGateMarker(Painter2D painter, Vector2 center)
         {
             float r = CellSize * 0.16f;

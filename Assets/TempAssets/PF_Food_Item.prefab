@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4619656096028253516}
   - component: {fileID: 7110453979339062377}
   m_Layer: 0
-  m_Name: food_item_placeholder
+  m_Name: PF_Food_Item
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

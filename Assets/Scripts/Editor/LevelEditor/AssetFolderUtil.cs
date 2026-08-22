@@ -4,7 +4,6 @@ namespace Editor.LevelEditor
 {
     internal static class AssetFolderUtil
     {
-        /// <summary>Creates every missing segment of an Assets/-relative folder path.</summary>
         public static void EnsureFolder(string folder)
         {
             if (AssetDatabase.IsValidFolder(folder)) return;

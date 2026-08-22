@@ -7,11 +7,14 @@ namespace RestaurantLoop.Runtime.Conveyor
     {
         [SerializeField] private Renderer _renderer;
         [SerializeField] private string _texturePropertyName = "_MainTex";
+
         [SerializeField] private float _scrollSpeed = 0.5f;
+        [SerializeField] private float _scrollDirection = 1f;
 
         private float _baseTiltX;
         private float _baseTiltZ;
         private Vector2 _uvOffset;
+        private float _axisSign;
 
         private void Awake()
         {
@@ -24,6 +27,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             transform.SetPositionAndRotation(position, Quaternion.Euler(_baseTiltX, worldYRotation, _baseTiltZ));
             _uvOffset = Vector2.zero;
+            // axis flip at 90/270
+            _axisSign = Mathf.Cos(2f * worldYRotation * Mathf.Deg2Rad);
             gameObject.SetActive(true);
         }
 
@@ -34,7 +39,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void Update()
         {
-            _uvOffset.y += _scrollSpeed * Time.deltaTime;
+            _uvOffset.y += _axisSign * _scrollDirection * _scrollSpeed * Time.deltaTime;
             _renderer.material.SetTextureOffset(_texturePropertyName, _uvOffset);
         }
 

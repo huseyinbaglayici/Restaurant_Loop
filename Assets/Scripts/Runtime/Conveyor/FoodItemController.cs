@@ -32,6 +32,14 @@ namespace RestaurantLoop.Runtime.Conveyor
             gameObject.SetActive(false);
         }
 
+        public void ReduceAmount(int amount)
+        {
+            var stack = Stack;
+            stack.Amount -= amount;
+            Stack = stack;
+            ApplyStack(stack);
+        }
+
         private void ApplyStack(FoodStackData stack)
         {
             while (_units.Count < stack.Amount)
