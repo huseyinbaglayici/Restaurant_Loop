@@ -274,14 +274,14 @@ public class TestFoodStack : MonoBehaviour
     {
         Debug.Log($"Clicked on {gameObject.name}. State: {state}, isClickable: {isClickable}");
         
-        // Eğer bir partneri varsa ve partneri tıklanabilir DEĞİLSE, tıklamayı reddet
-        if (linkedStack != null && !linkedStack.isClickable)
+        // Sadece KUYRUKTAYSA (InQueue) partnerinin de kuyruk başında (tıklanabilir) olması şartı aranır
+        if (state == FoodState.InQueue && linkedStack != null && !linkedStack.isClickable)
         {
             Debug.Log("Cannot click! Linked partner is not at the front of its queue.");
             return;
         }
 
-        // Kuyruktaysa doğrudan BANDA (Conveyor Belt) gönder
+        // 1. Kuyruktaysa doğrudan BANDA (Conveyor Belt) gönder
         if (state == FoodState.InQueue && isClickable)
         {
             if (linkedStack != null)
@@ -307,15 +307,19 @@ public class TestFoodStack : MonoBehaviour
                 }
             }
         }
-        // Raftaysa Banda Sok (Raftan ikili dönme olayını şimdilik tekli gibi bırakıyoruz veya TODO ekliyoruz)
+        // 2. Raftaysa (OnRack) Banda Tekrar Sok
         else if (state == FoodState.OnRack)
         {
-            // Eğer rack sisteminde linked yapılar varsa buraya eklenebilir, şu an basit geçiyorum.
             bool added = TestConveyorBelt.Instance.TryAddItem(this);
             if (added)
             {
                 state = FoodState.OnBelt;
                 TestGameManager.Instance.RemoveFromRack(this);
+                Debug.Log($"Food {gameObject.name} moved from Rack to Belt successfully.");
+            }
+            else
+            {
+                Debug.Log("Cannot add to belt right now! Belt is full or entry point is blocked.");
             }
         }
     }

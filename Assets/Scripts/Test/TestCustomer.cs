@@ -19,6 +19,25 @@ public class TestCustomer : MonoBehaviour
     public int gridY;
     public int behaviorType; // 0: Classic, 1: Hidden, 2: Type3
     
+    [Header("Hair & Appearance")]
+    public GameObject[] hairObjects;
+    public Color[] hairColors = new Color[]
+    {
+        new Color(0x1D / 255f, 0x14 / 255f, 0x0E / 255f, 1f), // #1D140EFF
+        new Color(0x56 / 255f, 0x3C / 255f, 0x2B / 255f, 1f), // #563C2BFF
+        new Color(0xDA / 255f, 0x6B / 255f, 0x2D / 255f, 1f), // #DA6B2DFF
+        new Color(0xFD / 255f, 0xBA / 255f, 0x50 / 255f, 1f)  // #FDBA50FF
+    };
+
+    [Header("Animation Settings")]
+    public Animator animator;
+    public string idleStateName = "Idle";
+    [Tooltip("Final sipariş tamamlandığında rastgele seçilecek 2 sevinme animasyon trigger adı")]
+    public string[] happyTriggers = new string[] { "EatSuccess1", "EatSuccess2" };
+    [Tooltip("2. siparişi olan müşterilerde 1. sipariş teslim edildiğinde çalışacak özel animasyon trigger'ı")]
+    public string firstOrderServedTrigger = "FirstOrderServed";
+    public float serveAnimDelay = 0.8f;
+
     private GameObject canvasObj;
     private Image bubbleImage;
     private Image bubbleImage2; // İkinci baloncuk
@@ -28,6 +47,76 @@ public class TestCustomer : MonoBehaviour
     {
         CreateUI();
         UpdateVisuals();
+        RandomizeHair();
+        InitializeAnimation();
+    }
+
+    private void InitializeAnimation()
+    {
+        if (animator == null) animator = GetComponentInChildren<Animator>();
+        if (animator != null)
+        {
+            // Bütün müşterilerin aynı anda aynı şekilde hareket etmemesi için Idle animasyonunu rastgele bir zamandan başlatıyoruz:
+            float randomOffset = Random.Range(0f, 1f);
+            animator.Play(idleStateName, 0, randomOffset);
+            animator.speed = Random.Range(0.95f, 1.05f); // Zamanla senkronize olmalarını da engeller
+        }
+    }
+
+    public void RandomizeHair()
+    {
+        // Eğer inspector'dan atanmadıysa 'Hair' veya 'hair' isimli kafa altındaki objeleri otomatik tara
+        if (hairObjects == null || hairObjects.Length == 0)
+        {
+            Transform hairRoot = transform.Find("Hair");
+            if (hairRoot == null)
+            {
+                foreach (var t in GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.name.ToLower().Contains("hair") && t.childCount > 0)
+                    {
+                        hairRoot = t;
+                        break;
+                    }
+                }
+            }
+
+            if (hairRoot != null)
+            {
+                List<GameObject> hairs = new List<GameObject>();
+                for (int i = 0; i < hairRoot.childCount; i++)
+                {
+                    hairs.Add(hairRoot.GetChild(i).gameObject);
+                }
+                hairObjects = hairs.ToArray();
+            }
+        }
+
+        if (hairObjects != null && hairObjects.Length > 0)
+        {
+            int selectedIndex = Random.Range(0, hairObjects.Length);
+            Color? selectedColor = (hairColors != null && hairColors.Length > 0) ? hairColors[Random.Range(0, hairColors.Length)] : (Color?)null;
+
+            for (int i = 0; i < hairObjects.Length; i++)
+            {
+                if (hairObjects[i] == null) continue;
+                bool isActive = (i == selectedIndex);
+                hairObjects[i].SetActive(isActive);
+
+                if (isActive && selectedColor.HasValue)
+                {
+                    Renderer r = hairObjects[i].GetComponent<Renderer>() ?? hairObjects[i].GetComponentInChildren<Renderer>();
+                    if (r != null)
+                    {
+                        MaterialPropertyBlock block = new MaterialPropertyBlock();
+                        r.GetPropertyBlock(block);
+                        block.SetColor("_BaseColor", selectedColor.Value);
+                        block.SetColor("_Color", selectedColor.Value);
+                        r.SetPropertyBlock(block);
+                    }
+                }
+            }
+        }
     }
     
     private void CreateUI()
@@ -35,35 +124,38 @@ public class TestCustomer : MonoBehaviour
         // Dinamik olarak Canvas UI oluşturuyoruz
         canvasObj = new GameObject("OrderCanvas");
         canvasObj.transform.SetParent(transform);
-        // Sağ üste (top right) ve daha aşağıya (Y=1.3) pozisyonlama:
-        canvasObj.transform.localPosition = new Vector3(0.6f, 1.3f, 0.6f);
+        // Bedene daha yakın (omuz hizası X=0.35, Y=1.1, Z=0.25):
+        canvasObj.transform.localPosition = new Vector3(0.35f, 1.1f, 0.25f);
         canvasObj.transform.rotation = Quaternion.identity;
         
         Canvas canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
         canvasObj.GetComponent<RectTransform>().sizeDelta = new Vector2(2f, 2f);
         
+        float bubbleSize = 0.25f; // Daha küçük ve kompakt baloncuk boyutu
+
+        // 1. Baloncuk (Alt sipariş)
         GameObject bgObj = new GameObject("Bubble");
         bgObj.transform.SetParent(canvasObj.transform);
         bgObj.transform.localPosition = Vector3.zero;
         bubbleImage = bgObj.AddComponent<Image>();
-        // Boyutu 4'te 1'ine indiriyoruz (1.5f yerine 0.375f)
-        bgObj.GetComponent<RectTransform>().sizeDelta = new Vector2(0.375f, 0.375f);
-        bubbleImage.color = orderColor; // Bubble rengi siparişe göre değişsin
+        bgObj.GetComponent<RectTransform>().sizeDelta = new Vector2(bubbleSize, bubbleSize);
+        bubbleImage.color = orderColor;
         
 #if UNITY_EDITOR
         // Editörde yuvarlak görünmesi için Unity'nin varsayılan Knob sprite'ını atıyoruz
         bubbleImage.sprite = UnityEditor.AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
 #endif
 
-        // İkinci baloncuk (Eğer Type3 ise)
+        // 2. Baloncuk (Eğer Type3 / İkinci sipariş varsa - Yan yana DEĞİL, ÜST ÜSTE)
         if (hasSecondOrder)
         {
             GameObject bgObj2 = new GameObject("Bubble2");
             bgObj2.transform.SetParent(canvasObj.transform);
-            bgObj2.transform.localPosition = new Vector3(0.4f, 0, 0); // Biraz sağına
+            // Üst üste durması için Y ekseninde yukarı offset (0, 0.28f, 0)
+            bgObj2.transform.localPosition = new Vector3(0, bubbleSize + 0.04f, 0); 
             bubbleImage2 = bgObj2.AddComponent<Image>();
-            bgObj2.GetComponent<RectTransform>().sizeDelta = new Vector2(0.375f, 0.375f);
+            bgObj2.GetComponent<RectTransform>().sizeDelta = new Vector2(bubbleSize, bubbleSize);
             bubbleImage2.color = orderColor2;
             
 #if UNITY_EDITOR
@@ -74,14 +166,14 @@ public class TestCustomer : MonoBehaviour
         // Soru işareti için Text objesi (Şu anlık kapalı olacak)
         GameObject textObj = new GameObject("QuestionMark");
         textObj.transform.SetParent(canvasObj.transform);
-        textObj.transform.localPosition = hasSecondOrder ? new Vector3(0.2f, 0, 0) : Vector3.zero; // Ortaya
+        textObj.transform.localPosition = hasSecondOrder ? new Vector3(0, (bubbleSize + 0.04f) / 2f, 0) : Vector3.zero;
         questionMarkText = textObj.AddComponent<Text>();
         questionMarkText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         questionMarkText.text = "?";
         questionMarkText.fontSize = 24;
         questionMarkText.alignment = TextAnchor.MiddleCenter;
         questionMarkText.color = Color.black; 
-        textObj.GetComponent<RectTransform>().sizeDelta = new Vector2(hasSecondOrder ? 0.7f : 0.375f, 0.375f);
+        textObj.GetComponent<RectTransform>().sizeDelta = new Vector2(bubbleSize, bubbleSize);
         textObj.transform.localScale = Vector3.one * 0.05f; 
         
         Outline outline = textObj.AddComponent<Outline>();
@@ -226,25 +318,52 @@ public class TestCustomer : MonoBehaviour
 
     public void Serve()
     {
+        var controller = GetComponent<RestaurantLoop.Runtime.Conveyor.TestCustomerController>();
+
         if (hasSecondOrder)
         {
-            // İlk siparişi yedi, ikinciye geç
+            // 2. siparişi olan müşterilerde ilk sipariş tamamlandı -> Farklı özel animasyon
             hasSecondOrder = false;
             orderColor = orderColor2;
             orderColorEnum = orderColor2Enum;
+            isServeable = true; // 2. sipariş için artık tekrar yemek alabilir
             UpdateVisuals();
+
+            if (controller != null)
+            {
+                controller.OnOrderServed(true);
+            }
+            else if (animator != null && !string.IsNullOrEmpty(firstOrderServedTrigger))
+            {
+                animator.SetTrigger(firstOrderServedTrigger);
+            }
             
-            // Ufak bir zıplama efekti yapalım yediğini belli etmek için
             StartCoroutine(SmallJump());
             return;
         }
+
+        isServeable = false; // Final sipariş alındı, artık başka yemek alamaz
 
         if (TestGameManager.Instance != null)
         {
             TestGameManager.Instance.OnCustomerServed(this);
         }
+
+        // Final siparişi servis edilen müşteri -> 2 farklı sevinme animasyonundan biri rastgele seçilir
+        if (controller != null)
+        {
+            controller.OnOrderServed(false);
+        }
+        else if (animator != null && happyTriggers != null && happyTriggers.Length > 0)
+        {
+            string chosenHappyTrigger = happyTriggers[Random.Range(0, happyTriggers.Length)];
+            if (!string.IsNullOrEmpty(chosenHappyTrigger))
+            {
+                animator.SetTrigger(chosenHappyTrigger);
+            }
+        }
         
-        StartCoroutine(JumpAndDestroy());
+        StartCoroutine(CelebrateAndDestroy());
     }
     
     private IEnumerator SmallJump()
@@ -260,11 +379,17 @@ public class TestCustomer : MonoBehaviour
         transform.position = startPos;
     }
     
-    private IEnumerator JumpAndDestroy()
+    private IEnumerator CelebrateAndDestroy()
     {
+        // Sevinme animasyonunun görülmesi için kısa bir bekleme
+        if (serveAnimDelay > 0)
+        {
+            yield return new WaitForSeconds(serveAnimDelay);
+        }
+
         float t = 0;
         Vector3 startPos = transform.position;
-        // Zıplama Tween benzeri
+        // Zıplayarak sahneden ayrılma
         while (t < 0.5f)
         {
             t += Time.deltaTime;

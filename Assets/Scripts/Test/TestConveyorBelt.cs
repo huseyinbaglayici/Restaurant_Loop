@@ -118,17 +118,13 @@ public class TestConveyorBelt : MonoBehaviour
         float startDistance = 0f; 
         
         // Başlangıç noktasında çok yakın bir yemek var mı kontrolü
+        float minSpacing = Perimeter / (capacity + 1) * 0.75f;
         foreach (var item in items)
         {
-            // Mesafe farkı kapasite başına düşen uzunluktan azsa girmesin
-            float minSpacing = Perimeter / (capacity + 1);
-            if (Mathf.Abs(startDistance - item.distance) < minSpacing && 
-                Mathf.Abs(startDistance - item.distance) > -minSpacing + Perimeter) // Wrap kontrolü basitçe
+            if (item == null || item.food == null) continue;
+            if (item.distance < minSpacing || item.distance > Perimeter - minSpacing)
             {
-                if (item.distance < minSpacing || item.distance > Perimeter - minSpacing)
-                {
-                    return false; 
-                }
+                return false; 
             }
         }
         
@@ -319,8 +315,23 @@ public class TestConveyorBelt : MonoBehaviour
                 
                 if (!isBlocked)
                 {
+                    Vector3 startPos = beltItem.food.transform.position + Vector3.up * 0.4f;
+                    Color fColor = beltItem.food.foodColor;
+                    TestCustomer targetCustomer = customer;
+
+                    // Müşterinin sonraki karelerde (0.016s) aynı yemekten tekrar tekrar çekmesini engellemek için anında kapatıyoruz
+                    targetCustomer.isServeable = false;
+
+                    // Yemeğin müşteriye doğru uçması, küçülmesi ve varış anında partikül patlaması
+                    StartCoroutine(AnimateFoodToCustomer(startPos, targetCustomer, fColor, () =>
+                    {
+                        if (targetCustomer != null)
+                        {
+                            targetCustomer.Serve();
+                        }
+                    }));
+
                     beltItem.food.amount--;
-                    customer.Serve();
                     
                     if (beltItem.food.amount <= 0)
                     {
@@ -374,6 +385,92 @@ public class TestConveyorBelt : MonoBehaviour
                 }
             }
         }
+    }
+
+    private System.Collections.IEnumerator AnimateFoodToCustomer(Vector3 startPos, TestCustomer customer, Color foodColor, System.Action onArrive)
+    {
+        GameObject foodProj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        foodProj.name = "FlyingFood";
+        foodProj.transform.position = startPos;
+        foodProj.transform.localScale = Vector3.one * 0.35f;
+        Destroy(foodProj.GetComponent<Collider>());
+
+        Renderer rend = foodProj.GetComponent<Renderer>();
+        if (rend != null)
+        {
+            rend.material = new Material(Shader.Find("Sprites/Default"));
+            rend.material.color = foodColor;
+        }
+
+        float duration = 0.35f;
+        float elapsed = 0f;
+        Vector3 targetPos = customer != null ? customer.transform.position + Vector3.up * 0.85f : startPos;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            if (customer != null)
+            {
+                targetPos = customer.transform.position + Vector3.up * 0.85f;
+            }
+
+            // Müşteriye doğru tatlı bir parabolik yayla süzülme
+            Vector3 curPos = Vector3.Lerp(startPos, targetPos, t);
+            curPos.y += Mathf.Sin(t * Mathf.PI) * 0.6f;
+            foodProj.transform.position = curPos;
+
+            // Yaklaştıkça küçülme
+            float scale = Mathf.Lerp(0.35f, 0.05f, t * t);
+            foodProj.transform.localScale = Vector3.one * scale;
+
+            yield return null;
+        }
+
+        // Ağza/Gövdeye varış anında minik renkli kırıntı/yeme partikülü efekti
+        CreateBurstParticles(targetPos, foodColor);
+        Destroy(foodProj);
+
+        onArrive?.Invoke();
+    }
+
+    private void CreateBurstParticles(Vector3 pos, Color color)
+    {
+        GameObject pObj = new GameObject("FoodEatBurst");
+        pObj.transform.position = pos;
+
+        ParticleSystem ps = pObj.AddComponent<ParticleSystem>();
+        var main = ps.main;
+        main.startColor = color;
+        main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.16f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(1.5f, 3.5f);
+        main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.4f);
+        main.gravityModifier = 1.2f;
+        main.loop = false;
+
+        var emission = ps.emission;
+        emission.rateOverTime = 0;
+        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 15) });
+
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Sphere;
+        shape.radius = 0.1f;
+
+        var colorOverLifetime = ps.colorOverLifetime;
+        colorOverLifetime.enabled = true;
+        Gradient grad = new Gradient();
+        grad.SetKeys(
+            new GradientColorKey[] { new GradientColorKey(color, 0f), new GradientColorKey(Color.white, 0.3f), new GradientColorKey(color, 1f) },
+            new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 0.6f), new GradientAlphaKey(0f, 1f) }
+        );
+        colorOverLifetime.color = grad;
+
+        var renderer = pObj.GetComponent<ParticleSystemRenderer>();
+        renderer.material = new Material(Shader.Find("Sprites/Default"));
+
+        ps.Play();
+        Destroy(pObj, 0.5f);
     }
     
     private void OnDrawGizmos()
