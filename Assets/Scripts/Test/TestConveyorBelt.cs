@@ -251,103 +251,126 @@ public class TestConveyorBelt : MonoBehaviour
     
     private void CheckServe(BeltItem beltItem, int index)
     {
+        if (beltItem == null || beltItem.food == null || beltItem.food.amount <= 0) return;
+        if (TestGameManager.Instance == null || TestGameManager.Instance.customers == null) return;
+        
         var customers = TestGameManager.Instance.customers;
         for (int i = customers.Count - 1; i >= 0; i--)
         {
             var customer = customers[i];
+            if (customer == null || !customer.isServeable) continue;
             
-            // Müşteri servis edilebilir mi ve sipariş rengi aynı mı? (Miktar > 0 olmalı)
-            if (beltItem.food.amount > 0 && customer.isServeable && customer.orderColor == beltItem.food.foodColor)
+            // Renk eşleştirme: Enum varsa enum ile, yoksa Unity Color ile karşılaştır
+            bool colorMatch;
+            if (beltItem.food.foodColorEnum != TestCustomerData.CustomerColor.None 
+                && customer.orderColorEnum != TestCustomerData.CustomerColor.None)
             {
-                // Orthogonal (Dik) hizada mı diye kontrol et
-                float alignThreshold = 0.5f;
-                bool isAlignedX = Mathf.Abs(customer.transform.position.x - beltItem.food.transform.position.x) < alignThreshold;
-                bool isAlignedZ = Mathf.Abs(customer.transform.position.z - beltItem.food.transform.position.z) < alignThreshold;
+                colorMatch = (customer.orderColorEnum == beltItem.food.foodColorEnum);
+            }
+            else
+            {
+                colorMatch = (customer.orderColor == beltItem.food.foodColor);
+            }
+            
+            if (!colorMatch) continue;
+
+            // Orthogonal (Dik) hizada mı diye kontrol et (X veya Z ekseninde)
+            float alignThreshold = 0.8f;
+            float maxServeDist = 6.0f;
+            
+            float diffX = Mathf.Abs(customer.transform.position.x - beltItem.food.transform.position.x);
+            float diffZ = Mathf.Abs(customer.transform.position.z - beltItem.food.transform.position.z);
+            
+            bool isAlignedX = diffX < alignThreshold;
+            bool isAlignedZ = diffZ < alignThreshold;
+            
+            if (isAlignedX || isAlignedZ)
+            {
+                // Yatay eksende müşteri gövde yüksekliğinde Raycast (zemin veya bant meshlerine çarpmaması için)
+                Vector3 rayOrigin = new Vector3(beltItem.food.transform.position.x, customer.transform.position.y + 0.3f, beltItem.food.transform.position.z);
+                Vector3 rayTarget = new Vector3(customer.transform.position.x, customer.transform.position.y + 0.3f, customer.transform.position.z);
+                Vector3 direction = rayTarget - rayOrigin;
+                float dist = direction.magnitude;
                 
-                if (isAlignedX || isAlignedZ)
+                if (dist > maxServeDist) continue;
+                
+                // --- ENGEL (OBSTACLE) VE DİĞER MÜŞTERİ KONTROLÜ ---
+                RaycastHit[] hits = Physics.RaycastAll(rayOrigin, direction.normalized, dist);
+                
+                bool isBlocked = false;
+                foreach (var hit in hits)
                 {
-                    float dist = Vector3.Distance(customer.transform.position, beltItem.food.transform.position);
+                    // Kendisi veya çocuk collider'ı ise es geç
+                    TestCustomer hitCst = hit.collider.GetComponentInParent<TestCustomer>();
+                    if (hitCst == customer) continue;
                     
-                    // --- ENGEL (OBSTACLE) KONTROLÜ ---
-                    Vector3 direction = customer.transform.position - beltItem.food.transform.position;
-                    RaycastHit[] hits = Physics.RaycastAll(beltItem.food.transform.position, direction.normalized, dist);
-                    
-                    bool isBlocked = false;
-                    foreach (var hit in hits)
+                    if (hit.collider.GetComponentInParent<TestObstacle>() != null)
                     {
-                        if (hit.collider.gameObject == customer.gameObject) continue;
-                        
-                        if (hit.collider.GetComponent<TestObstacle>() != null)
-                        {
-                            isBlocked = true;
-                            break;
-                        }
-                        
-                        TestCustomer hitCst = hit.collider.GetComponent<TestCustomer>();
-                        if (hitCst != null)
-                        {
-                            isBlocked = true;
-                            break;
-                        }
+                        isBlocked = true;
+                        break;
                     }
                     
-                    if (!isBlocked)
+                    if (hitCst != null)
                     {
-                        beltItem.food.amount--;
-                        customer.Serve();
-                        
-                        if (beltItem.food.amount <= 0)
+                        isBlocked = true;
+                        break;
+                    }
+                }
+                
+                if (!isBlocked)
+                {
+                    beltItem.food.amount--;
+                    customer.Serve();
+                    
+                    if (beltItem.food.amount <= 0)
+                    {
+                        if (beltItem.food.linkedStack != null && beltItem.food.linkedStack.amount > 0)
                         {
-                            if (beltItem.food.linkedStack != null && beltItem.food.linkedStack.amount > 0)
-                            {
-                                // Sadece hayalete dönüşür (Kutusu ve 0 yazısı kalır)
-                                beltItem.food.isGhost = true;
-                                beltItem.food.UpdateUI();
-                            }
-                            else
-                            {
-                                // İkisi de sıfırlandı veya zaten partneri yok
-                                beltItem.food.isGhost = false;
-                                beltItem.food.UpdateUI(); // Son kez güncelle
-                                
-                                // Partneri bul
-                                BeltItem partnerBeltItem = null;
-                                if (beltItem.food.linkedStack != null)
-                                {
-                                    foreach (var b in items)
-                                    {
-                                        if (b.food == beltItem.food.linkedStack)
-                                        {
-                                            partnerBeltItem = b;
-                                            break;
-                                        }
-                                    }
-                                }
-                                
-                                // Güvenli silme işlemi (Index kaymasını önlemek için null atıyoruz)
-                                items[index] = null;
-                                Destroy(beltItem.food.gameObject);
-                                
-                                if (partnerBeltItem != null)
-                                {
-                                    int pIndex = items.IndexOf(partnerBeltItem);
-                                    if (pIndex != -1)
-                                    {
-                                        items[pIndex] = null; // Sadece null bırakıyoruz, döngü sonu temizlenecek
-                                        Destroy(partnerBeltItem.food.gameObject);
-                                    }
-                                }
-                                
-                                // items.RemoveAll(x => x == null); // BURADA YAPMIYORUZ! Döngüyü bozar.
-                            }
+                            // Sadece hayalete dönüşür (Kutusu ve 0 yazısı kalır)
+                            beltItem.food.isGhost = true;
+                            beltItem.food.UpdateUI();
                         }
                         else
                         {
-                            beltItem.food.UpdateUI();
+                            // İkisi de sıfırlandı veya zaten partneri yok
+                            beltItem.food.isGhost = false;
+                            beltItem.food.UpdateUI(); // Son kez güncelle
+                            
+                            // Partneri bul
+                            BeltItem partnerBeltItem = null;
+                            if (beltItem.food.linkedStack != null)
+                            {
+                                foreach (var b in items)
+                                {
+                                    if (b.food == beltItem.food.linkedStack)
+                                    {
+                                        partnerBeltItem = b;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Güvenli silme işlemi (Index kaymasını önlemek için null atıyoruz)
+                            items[index] = null;
+                            Destroy(beltItem.food.gameObject);
+                            
+                            if (partnerBeltItem != null)
+                            {
+                                int pIndex = items.IndexOf(partnerBeltItem);
+                                if (pIndex != -1)
+                                {
+                                    items[pIndex] = null; // Sadece null bırakıyoruz, döngü sonu temizlenecek
+                                    Destroy(partnerBeltItem.food.gameObject);
+                                }
+                            }
                         }
-                        
-                        return;
                     }
+                    else
+                    {
+                        beltItem.food.UpdateUI();
+                    }
+                    
+                    return;
                 }
             }
         }

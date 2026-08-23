@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: deneme
   m_EditorClassIdentifier: 
   conveyorData: {fileID: 11400000, guid: e52b2b226b5604b4bb9b68b8724da801, type: 2}
-  customerPrefab: {fileID: 0}
+  customerPrefab: {fileID: 919132149155446097, guid: f954ef567ad5ddd4cb99ba6dff56c865,
+    type: 3}
   foodStackYOffset: 0.5
   redFood:
     openPrefab: {fileID: 0}
@@ -94,23 +95,23 @@ MonoBehaviour:
     orderColor: 4
     orderColor2: 2
   queue1:
-  - color: {r: 1, g: 0, b: 0, a: 1}
+  - color: 1
     amount: 3
-    linkID: 0
-  - color: {r: 1, g: 0.4, b: 0.7, a: 1}
+    linkID: 1
+  - color: 5
     amount: 1
     linkID: 0
   queue2:
-  - color: {r: 1, g: 0, b: 0, a: 1}
+  - color: 1
     amount: 3
     linkID: 0
-  - color: {r: 1, g: 1, b: 1, a: 1}
+  - color: 3
     amount: 1
-    linkID: 0
+    linkID: 1
   queue3:
-  - color: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - color: 2
     amount: 2
     linkID: 0
-  - color: {r: 0, g: 0, b: 1, a: 1}
+  - color: 4
     amount: 5
     linkID: 0

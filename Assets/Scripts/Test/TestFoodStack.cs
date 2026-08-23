@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 
 public class TestFoodStack : MonoBehaviour
@@ -9,6 +10,7 @@ public class TestFoodStack : MonoBehaviour
     [Header("Food Stack Settings")]
     public FoodState state = FoodState.InQueue;
     public Color foodColor = Color.red;
+    public TestCustomerData.CustomerColor foodColorEnum;
     public int amount = 3; // Stack içindeki porsiyon sayısı
     
     public int queueIndex = -1; // Hangi kuyrukta olduğu
@@ -79,29 +81,61 @@ public class TestFoodStack : MonoBehaviour
     {
         GameObject prefabToSpawn = null;
         
-        // GameManager'dan prefableri çekmeyi dene
-        if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM && painterGM.levelData != null)
+        // GameManager'dan veya LevelData'dan prefableri çekmeyi dene
+        if (TestGameManager.Instance != null)
         {
-            if (foodColor == Color.red) 
-                prefabToSpawn = isOpen ? painterGM.levelData.redFood.openPrefab : painterGM.levelData.redFood.closedPrefab;
-            else if (foodColor == Color.yellow) 
-                prefabToSpawn = isOpen ? painterGM.levelData.yellowFood.openPrefab : painterGM.levelData.yellowFood.closedPrefab;
-            else if (foodColor == Color.white) 
-                prefabToSpawn = isOpen ? painterGM.levelData.whiteFood.openPrefab : painterGM.levelData.whiteFood.closedPrefab;
-            else if (foodColor == Color.blue) 
-                prefabToSpawn = isOpen ? painterGM.levelData.blueFood.openPrefab : painterGM.levelData.blueFood.closedPrefab;
-            else // Pink: new Color(1f, 0.4f, 0.7f)
-                prefabToSpawn = isOpen ? painterGM.levelData.pinkFood.openPrefab : painterGM.levelData.pinkFood.closedPrefab;
+            var gm = TestGameManager.Instance;
+            var ld = gm.levelData;
+
+            TestCustomerData.CustomerColor cEnum = foodColorEnum;
+            if (cEnum == TestCustomerData.CustomerColor.None)
+            {
+                if (foodColor == Color.red) cEnum = TestCustomerData.CustomerColor.Red;
+                else if (foodColor == Color.yellow) cEnum = TestCustomerData.CustomerColor.Yellow;
+                else if (foodColor == Color.white) cEnum = TestCustomerData.CustomerColor.White;
+                else if (foodColor == Color.blue) cEnum = TestCustomerData.CustomerColor.Blue;
+                else if (foodColor == new Color(1f, 0.4f, 0.7f)) cEnum = TestCustomerData.CustomerColor.Pink;
+            }
+
+            FoodPrefabData targetFood = null;
+            switch (cEnum)
+            {
+                case TestCustomerData.CustomerColor.Red:
+                    targetFood = (gm.redFood != null && (gm.redFood.openPrefab != null || gm.redFood.closedPrefab != null)) ? gm.redFood : (ld != null ? ld.redFood : null);
+                    break;
+                case TestCustomerData.CustomerColor.Yellow:
+                    targetFood = (gm.yellowFood != null && (gm.yellowFood.openPrefab != null || gm.yellowFood.closedPrefab != null)) ? gm.yellowFood : (ld != null ? ld.yellowFood : null);
+                    break;
+                case TestCustomerData.CustomerColor.White:
+                    targetFood = (gm.whiteFood != null && (gm.whiteFood.openPrefab != null || gm.whiteFood.closedPrefab != null)) ? gm.whiteFood : (ld != null ? ld.whiteFood : null);
+                    break;
+                case TestCustomerData.CustomerColor.Blue:
+                    targetFood = (gm.blueFood != null && (gm.blueFood.openPrefab != null || gm.blueFood.closedPrefab != null)) ? gm.blueFood : (ld != null ? ld.blueFood : null);
+                    break;
+                case TestCustomerData.CustomerColor.Pink:
+                    targetFood = (gm.pinkFood != null && (gm.pinkFood.openPrefab != null || gm.pinkFood.closedPrefab != null)) ? gm.pinkFood : (ld != null ? ld.pinkFood : null);
+                    break;
+            }
+
+            if (targetFood != null)
+            {
+                prefabToSpawn = isOpen ? targetFood.openPrefab : targetFood.closedPrefab;
+            }
         }
         
         GameObject block;
+        float yOffset = 0.5f;
+        if (TestGameManager.Instance != null)
+        {
+            yOffset = TestGameManager.Instance.foodStackYOffset;
+            if (yOffset <= 0 && TestGameManager.Instance.levelData != null)
+                yOffset = TestGameManager.Instance.levelData.foodStackYOffset;
+        }
+        if (yOffset <= 0) yOffset = 0.5f;
+
         if (prefabToSpawn != null)
         {
             block = Instantiate(prefabToSpawn, transform);
-            float yOffset = 1.05f;
-            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM2 && painterGM2.levelData != null)
-                yOffset = painterGM2.levelData.foodStackYOffset;
-
             block.transform.localPosition = new Vector3(0, index * yOffset, 0);
             // Prefab'in kendi orijinal scale ve rotation değerlerini bozmuyoruz!
         }
@@ -110,10 +144,6 @@ public class TestFoodStack : MonoBehaviour
             // Prefab yoksa Fallback olarak Küp oluştur
             block = GameObject.CreatePrimitive(PrimitiveType.Cube);
             block.transform.SetParent(transform);
-            float yOffset = 1.05f;
-            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM2 && painterGM2.levelData != null)
-                yOffset = painterGM2.levelData.foodStackYOffset;
-
             block.transform.localPosition = new Vector3(0, index * yOffset, 0);
             block.transform.localScale = Vector3.one;
             Renderer rnd = block.GetComponent<Renderer>();
@@ -127,13 +157,23 @@ public class TestFoodStack : MonoBehaviour
         return block;
     }
     
+    private float GetFoodStackYOffset()
+    {
+        if (TestGameManager.Instance != null)
+        {
+            float y = TestGameManager.Instance.foodStackYOffset;
+            if (y <= 0 && TestGameManager.Instance.levelData != null)
+                y = TestGameManager.Instance.levelData.foodStackYOffset;
+            if (y > 0) return y;
+        }
+        return 0.5f;
+    }
+
     private void UpdateCollider()
     {
         if (col != null && amount > 0)
         {
-            float yOffset = 1.05f;
-            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM && painterGM.levelData != null)
-                yOffset = painterGM.levelData.foodStackYOffset;
+            float yOffset = GetFoodStackYOffset();
                 
             // Tüm blokları kapsayacak kadar büyük bir collider
             col.size = new Vector3(1f, amount * yOffset, 1f);
@@ -193,9 +233,7 @@ public class TestFoodStack : MonoBehaviour
             textMesh.GetComponent<Renderer>().enabled = showUI;
             bubbleBgObj.GetComponent<Renderer>().enabled = showUI;
             
-            float yOffset = 1.05f;
-            if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM && painterGM.levelData != null)
-                yOffset = painterGM.levelData.foodStackYOffset;
+            float yOffset = GetFoodStackYOffset();
                 
             // Yüksekliği en üstteki küpe göre ayarla, 0 olsa bile 1 yüksekliğinde dursun
             float currentAmount = Mathf.Max(1, amount);
@@ -295,9 +333,7 @@ public class TestFoodStack : MonoBehaviour
             }
             else
             {
-                float yOffset = 1.05f;
-                if (TestGameManager.Instance != null && TestGameManager.Instance is TestPainterGameManager painterGM && painterGM.levelData != null)
-                    yOffset = painterGM.levelData.foodStackYOffset;
+                float yOffset = GetFoodStackYOffset();
 
                 Vector3 pos1 = transform.position + new Vector3(0, Mathf.Max(0.5f, (amount * yOffset) / 2f), 0);
                 Vector3 pos2 = linkedStack.transform.position + new Vector3(0, Mathf.Max(0.5f, (linkedStack.amount * yOffset) / 2f), 0);
@@ -305,6 +341,24 @@ public class TestFoodStack : MonoBehaviour
                 lineRend.SetPosition(0, pos1);
                 lineRend.SetPosition(1, pos2);
             }
+        }
+    }
+    
+    public IEnumerator MoveTo(Vector3 targetPos)
+    {
+        Vector3 startPos = transform.position;
+        float elapsed = 0f;
+        float duration = 0.2f;
+        while (elapsed < duration)
+        {
+            if (state != FoodState.InQueue) yield break;
+            elapsed += Time.deltaTime;
+            transform.position = Vector3.Lerp(startPos, targetPos, elapsed / duration);
+            yield return null;
+        }
+        if (state == FoodState.InQueue)
+        {
+            transform.position = targetPos;
         }
     }
 }

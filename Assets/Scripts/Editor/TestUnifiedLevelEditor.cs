@@ -365,16 +365,17 @@ public class TestUnifiedLevelEditor : EditorWindow
     {
         Undo.RecordObject(activeData, "Generate Food Dataset");
         
-        Dictionary<Color, int> colorCounts = new Dictionary<Color, int>();
+        Dictionary<TestCustomerData.CustomerColor, int> colorCounts = new Dictionary<TestCustomerData.CustomerColor, int>();
         foreach (var cst in activeData.customers)
         {
-            Color c1 = GetUnityColor(cst.orderColor);
-            if (colorCounts.ContainsKey(c1)) colorCounts[c1]++; else colorCounts[c1] = 1;
-
-            if (cst.behavior == TestCustomerData.CustomerBehavior.Type3)
+            if (cst.orderColor != TestCustomerData.CustomerColor.None)
             {
-                Color c2 = GetUnityColor(cst.orderColor2);
-                if (colorCounts.ContainsKey(c2)) colorCounts[c2]++; else colorCounts[c2] = 1;
+                if (colorCounts.ContainsKey(cst.orderColor)) colorCounts[cst.orderColor]++; else colorCounts[cst.orderColor] = 1;
+            }
+
+            if (cst.behavior == TestCustomerData.CustomerBehavior.Type3 && cst.orderColor2 != TestCustomerData.CustomerColor.None)
+            {
+                if (colorCounts.ContainsKey(cst.orderColor2)) colorCounts[cst.orderColor2]++; else colorCounts[cst.orderColor2] = 1;
             }
         }
 

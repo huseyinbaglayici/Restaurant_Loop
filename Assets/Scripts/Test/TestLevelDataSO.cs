@@ -31,7 +31,7 @@ public class TestLevelDataSO : ScriptableObject
 [System.Serializable]
 public class FoodChunk
 {
-    public Color color;
+    public TestCustomerData.CustomerColor color;
     public int amount;
     public int linkID; 
 }
