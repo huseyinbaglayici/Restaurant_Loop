@@ -28,6 +28,7 @@ namespace RestaurantLoop.Installers
             BindConveyorPiecePool(ConveyorTileShape.Corner, settings.ConveyorCornerPrefab);
 
             BindFoodItemPool();
+            BindTrayPool();
             BindExitSlotPool();
             BindCustomerPool();
             BindTuning();
@@ -100,6 +101,24 @@ namespace RestaurantLoop.Installers
                 .WithInitialSize(_foodItemInitialSize)
                 .FromComponentInNewPrefab(foodSettings.FoodItemPrefab)
                 .UnderTransformGroup("FoodItems")
+                .NonLazy();
+        }
+
+        private void BindTrayPool()
+        {
+            var traySettings = Resources.Load<TrayPrefabSettings>("TrayPrefabSettings");
+            if (traySettings == null || traySettings.TrayPrefab == null)
+            {
+                Debug.LogError(
+                    "[PoolInstaller] TrayPrefabSettings.asset missing or has no TrayPrefab assigned " +
+                    "under Assets/Resources — tray pool not bound.");
+                return;
+            }
+
+            Container.BindMemoryPool<TrayController, TrayController.Pool>()
+                .WithInitialSize(_foodItemInitialSize)
+                .FromComponentInNewPrefab(traySettings.TrayPrefab)
+                .UnderTransformGroup("Trays")
                 .NonLazy();
         }
 

@@ -13,6 +13,9 @@ namespace RestaurantLoop.Runtime.Data
         public float BeltFoodHeight = 1f;
 
         [Header("Queue (QueueAnchor, QueueSpawner)")]
+        [Tooltip("World Y every food item sits at while it is in a queue lane.")]
+        public float QueueFoodHeight = 1f;
+
         [Tooltip("World units between consecutive lanes on X, centered under the exit stack's midpoint.")]
         public float QueueLaneSpacing = 1.2f;
 
@@ -25,6 +28,13 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("World units/sec for the forward-shift animation after a queue PopFront.")]
         public float QueueShiftSpeed = 4f;
 
+        [Header("Serving Tray (TrayDispenserAnchor, TrayVisualService)")]
+        [Tooltip("World Y the dispenser prop (and every tray parked in it) rests at.")]
+        public float TrayDispenserHeight = 0f;
+
+        [Tooltip("World Y a tray sits at while riding the belt — kept slightly under BeltFoodHeight so the tray reads as underneath the food.")]
+        public float TrayBeltHeight = 0.9f;
+
         [Header("Exit Stack (ExitStackAnchor)")]
         [Tooltip("World units 'below' (negative Z) the belt's own closest (minimum-Y) row.")]
         public float ExitStackZOffsetFromGrid = 1.5f;
@@ -36,5 +46,15 @@ namespace RestaurantLoop.Runtime.Data
         [Header("Input (ConveyorEntryInput)")]
         [Tooltip("Click/tap hit-test radius in screen pixels.")]
         public float ClickRadiusPixels = 80f;
+
+        [Header("Queue Link Line (QueueLinkVisualizer)")]
+        [Tooltip("World units wide, the rope drawn between two linked queue items.")]
+        public float LinkLineWidth = 0.06f;
+
+        [Tooltip("World units the rope dips down at its midpoint — 0 draws it straight.")]
+        public float LinkLineSag = 0.35f;
+
+        [Tooltip("Curve smoothness — number of straight segments approximating the rope's arc.")]
+        public int LinkLineSegments = 16;
     }
 }

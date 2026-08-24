@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 546d157ac86e43642b3fc0486f37722b, type: 3}
   m_Name: ExitSlotPrefabSettings
   m_EditorClassIdentifier: 
-  ExitSlotPrefab: {fileID: 2504016776812403574, guid: 7d582310969bc664cad3ab5e57673a8a,
+  ExitSlotPrefab: {fileID: 2873491433116362623, guid: 019425c39655e0a45bc6810e2026cbbd,
     type: 3}

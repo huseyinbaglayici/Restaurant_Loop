@@ -18,42 +18,46 @@ namespace RestaurantLoop.Runtime.Data
         {
             public FoodType Type;
 
-            public Mesh OpenedMesh;
-            [Tooltip("One material per submesh of the opened mesh. Leave empty to keep the unit prefab's own " +
-                     "material and tint it with the food type colour.")]
-            public Material[] OpenedMaterials;
-            [Tooltip("Fixed local orientation for the opened mesh, for models authored facing the wrong way. " +
-                     "Constant — it is the same in the queue, on the belt and in the exit stack.")]
+            [Tooltip("Instantiated as-is for the opened unit visual — its own authored mesh, materials and " +
+                     "orientation are used directly. Leave empty to keep the pool's generic unit prefab, " +
+                     "tinted with the food type colour.")]
+            public GameObject OpenedPrefab;
+            [Tooltip("Extra local rotation applied on top of the prefab's own orientation, for models authored " +
+                     "facing the wrong way. Constant — same in the queue, on the belt and in the exit stack.")]
             public Vector3 OpenedRotationEuler;
 
-            public Mesh ClosedMesh;
-            [Tooltip("Same as Opened Materials, for the packaged mesh.")]
-            public Material[] ClosedMaterials;
-            [Tooltip("Same as Opened Rotation Euler, for the packaged mesh.")]
+            [Tooltip("Same as Opened Prefab, for the packaged/closed look.")]
+            public GameObject ClosedPrefab;
+            [Tooltip("Same as Opened Rotation Euler, for the packaged prefab.")]
             public Vector3 ClosedRotationEuler;
+
+            [Tooltip("UI sprite for this food type (order icons, recipe cards, etc).")]
+            public Sprite Icon;
+
+            [Tooltip("This prefab is one fixed rack holding several pre-placed items (e.g. a shelf of drinks), " +
+                     "not a single item to be stacked N times. One instance is spawned regardless of Amount; " +
+                     "individual items are shown/hidden as the stack is consumed instead. Structure: child[0] " +
+                     "is the always-visible base/decoration (e.g. the tray), children[1..] are the toggleable slots.")]
+            public bool FixedChildSlots;
         }
 
         // What a single food unit should look like in one visual state.
         public readonly struct MeshVisual
         {
-            public readonly Mesh Mesh;
-            public readonly Material[] Materials;
+            public readonly GameObject Prefab;
             public readonly Vector3 RotationEuler;
+            public readonly bool FixedChildSlots;
 
-            public MeshVisual(Mesh mesh, Material[] materials, Vector3 rotationEuler)
+            public MeshVisual(GameObject prefab, Vector3 rotationEuler, bool fixedChildSlots)
             {
-                Mesh = mesh;
-                Materials = materials;
+                Prefab = prefab;
                 RotationEuler = rotationEuler;
+                FixedChildSlots = fixedChildSlots;
             }
-
-            public bool HasMaterials => Materials != null && Materials.Length > 0;
         }
 
         [SerializeField] private List<Entry> _entries = new();
 
-        // Multi-submesh models (a burger is bun + patty + cheese + ...) need their own material array —
-        // the unit prefab only carries one, so every submesh past the first would render unshaded.
         public bool TryGetVisual(FoodType type, FoodVisualState state, out MeshVisual visual)
         {
             foreach (var entry in _entries)
@@ -62,13 +66,27 @@ namespace RestaurantLoop.Runtime.Data
 
                 bool isOpened = state == FoodVisualState.Opened;
                 visual = isOpened
-                    ? new MeshVisual(entry.OpenedMesh, entry.OpenedMaterials, entry.OpenedRotationEuler)
-                    : new MeshVisual(entry.ClosedMesh, entry.ClosedMaterials, entry.ClosedRotationEuler);
+                    ? new MeshVisual(entry.OpenedPrefab, entry.OpenedRotationEuler, entry.FixedChildSlots)
+                    : new MeshVisual(entry.ClosedPrefab, entry.ClosedRotationEuler, entry.FixedChildSlots);
 
-                return visual.Mesh != null;
+                return visual.Prefab != null;
             }
 
             visual = default;
+            return false;
+        }
+
+        public bool TryGetIcon(FoodType type, out Sprite icon)
+        {
+            foreach (var entry in _entries)
+            {
+                if (entry.Type != type) continue;
+
+                icon = entry.Icon;
+                return icon != null;
+            }
+
+            icon = null;
             return false;
         }
     }

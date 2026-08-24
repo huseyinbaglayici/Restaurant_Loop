@@ -57,6 +57,20 @@ namespace RestaurantLoop.Runtime.Data
         [Header("Belt -> customer (consume)")]
         public FlightTuning ConsumeToCustomer = new() { Speed = 14f, ArcHeight = 0.8f };
 
+        [Header("Serving tray")]
+        public FlightTuning DispenserToBelt = new() { Speed = 12f, ArcHeight = 0.3f };
+        public FlightTuning BeltToDispenser = new() { Speed = 10f, ArcHeight = 0.3f };
+
+        [Tooltip("Seconds for the tray's upright <-> flat rotation, played alongside the Dispenser<->Belt flight.")]
+        public float TrayRotateDuration = 0.25f;
+
+        [Tooltip("Small scale punch played on a tray the moment its food is fully eaten, before it flies back.")]
+        public Vector3 TrayConsumePunchStrength = new(0.15f, 0.15f, 0.15f);
+
+        public float TrayConsumePunchDuration = 0.2f;
+        public int TrayConsumePunchVibrato = 6;
+        [Range(0f, 1f)] public float TrayConsumePunchElasticity = 0.6f;
+
         // Runtime-only display scale. Nothing here is ever written back to the food prefab, the unit prefab or
         // the source mesh — the multiplier is applied to the spawned units every time the visual is rebuilt,
         // so a mesh that was authored at a different import scale can be normalized without touching art data.

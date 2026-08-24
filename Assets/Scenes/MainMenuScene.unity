@@ -961,6 +961,7 @@ MonoBehaviour:
   pressedScaleMultiplier: 0.88
   punchScaleMultiplier: 1.12
   animationSpeed: 16
+  clickSound: {fileID: 8300000, guid: 85bd6dbce48d98149afbad74bde02e20, type: 3}
 --- !u!114 &809869530
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1976,6 +1977,7 @@ GameObject:
   - component: {fileID: 1676871176}
   - component: {fileID: 1676871175}
   - component: {fileID: 1676871177}
+  - component: {fileID: 1676871178}
   m_Layer: 0
   m_Name: SettingsButton
   m_TagString: Untagged
@@ -2084,6 +2086,22 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1676871178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1676871173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf4cad8e064829d4989b45674fc338c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pressedScaleMultiplier: 0.88
+  punchScaleMultiplier: 1.12
+  animationSpeed: 16
+  clickSound: {fileID: 8300000, guid: 85bd6dbce48d98149afbad74bde02e20, type: 3}
 --- !u!1 &1787048431
 GameObject:
   m_ObjectHideFlags: 0

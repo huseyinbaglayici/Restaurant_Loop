@@ -14,18 +14,47 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _entries:
   - Type: 0
-    OpenedMesh: {fileID: 246237887660379932, guid: 90d351bbc805fdb47a816790714a0d87,
+    OpenedPrefab: {fileID: 2050022874529901392, guid: f72e0b0ffc690824db8ceee7d07c2bc2,
       type: 3}
-    OpenedMaterials:
-    - {fileID: -2813467912831258332, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
-    - {fileID: -6922793697723135513, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
-    - {fileID: 4874126678125670354, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
-    - {fileID: -6478536213147159724, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
-    - {fileID: -3846018093981099296, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
-    - {fileID: -6629797300637803691, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
-    - {fileID: -876546973899608171, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
-    - {fileID: 725804396391725484, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
-    ClosedMesh: {fileID: 4818487012807760169, guid: 4e7d2adbbfd60984c8d1529745325dbf,
+    OpenedRotationEuler: {x: 0, y: 0, z: 0}
+    ClosedPrefab: {fileID: 4522757509411977420, guid: 0ce9181b57f9e9c4b9ee0c4fbc113b69,
       type: 3}
-    ClosedMaterials:
-    - {fileID: 725804396391725484, guid: 4e7d2adbbfd60984c8d1529745325dbf, type: 3}
+    ClosedRotationEuler: {x: 0, y: 0, z: 0}
+    Icon: {fileID: 21300000, guid: d01f3a5aa505a1143b52745abcc51e11, type: 3}
+    FixedChildSlots: 0
+  - Type: 1
+    OpenedPrefab: {fileID: 6743053913074042673, guid: cb0f08fac397392489771db9f7851d7d,
+      type: 3}
+    OpenedRotationEuler: {x: 0, y: 0, z: 0}
+    ClosedPrefab: {fileID: 8953493769480355927, guid: 7e8a6476a60431c408d477aee0af04ba,
+      type: 3}
+    ClosedRotationEuler: {x: 0, y: 0, z: 0}
+    Icon: {fileID: 21300000, guid: 6467cbd3dad703244a8c2abd336c328e, type: 3}
+    FixedChildSlots: 0
+  - Type: 4
+    OpenedPrefab: {fileID: 2537419307790587190, guid: 3dc4e57de2b219344b6fcd2fcd3a3587,
+      type: 3}
+    OpenedRotationEuler: {x: 0, y: 0, z: 0}
+    ClosedPrefab: {fileID: 2866541499900841170, guid: 8caef4126299bf34db57663121800b50,
+      type: 3}
+    ClosedRotationEuler: {x: 0, y: 0, z: 0}
+    Icon: {fileID: 21300000, guid: 81c3711dcb85bd94ba31a4a87e173687, type: 3}
+    FixedChildSlots: 0
+  - Type: 3
+    OpenedPrefab: {fileID: 6038011667312175350, guid: 4fa9e819a21c1324f8236e9ff962b6c5,
+      type: 3}
+    OpenedRotationEuler: {x: 0, y: 0, z: 0}
+    ClosedPrefab: {fileID: 6038011667312175350, guid: 4fa9e819a21c1324f8236e9ff962b6c5,
+      type: 3}
+    ClosedRotationEuler: {x: 0, y: 0, z: 0}
+    Icon: {fileID: 21300000, guid: 4849446053d29bc42b15ae58d65afb5b, type: 3}
+    FixedChildSlots: 1
+  - Type: 9
+    OpenedPrefab: {fileID: 2830045199475947193, guid: 708750d9452a2bd46ad9c9e64b758990,
+      type: 3}
+    OpenedRotationEuler: {x: 0, y: 0, z: 0}
+    ClosedPrefab: {fileID: 7714696736389709273, guid: 4d4b6691bebdbac4dacf809b05fb4275,
+      type: 3}
+    ClosedRotationEuler: {x: 0, y: 0, z: 0}
+    Icon: {fileID: 21300000, guid: 5a7c14afca9e15e498e0c170d23a89ff, type: 3}
+    FixedChildSlots: 0

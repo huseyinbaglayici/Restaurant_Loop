@@ -20,14 +20,14 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         [SerializeField] private GameObject _secondOrderHolder;
         [SerializeField] private Image _secondFoodImage;
-        [SerializeField] private Image _secondBackgroundImage;
         [SerializeField] private TMP_Text _secondAmountText;
 
         [SerializeField] private CustomerVisualRandomizer _visualRandomizer;
         [SerializeField] private CustomerPlayableAnimator _playableAnimator;
 
+        [Inject(Optional = true)] private FoodMeshSettings _foodMeshSettings;
+
         private float _secondFoodDimAlpha = 1f;
-        private float _secondBackgroundDimAlpha = 1f;
         private float _secondAmountDimAlpha = 1f;
         private bool _dimAlphaCaptured;
 
@@ -78,7 +78,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void ApplyOrder(FoodStackData order)
         {
-            if (_foodImage != null) _foodImage.color = FoodTypeUtil.ToColor(order.Type);
+            ApplyFoodSprite(_foodImage, order.Type);
             if (_amountText != null) _amountText.text = "x" + order.Amount;
         }
 
@@ -92,15 +92,9 @@ namespace RestaurantLoop.Runtime.Conveyor
             {
                 // dimmed
                 SetAlpha(_secondFoodImage, _secondFoodDimAlpha);
-                SetAlpha(_secondBackgroundImage, _secondBackgroundDimAlpha);
                 SetAlpha(_secondAmountText, _secondAmountDimAlpha);
 
-                if (_secondFoodImage != null)
-                {
-                    var c = FoodTypeUtil.ToColor(secondOrder.Type);
-                    c.a = _secondFoodImage.color.a;
-                    _secondFoodImage.color = c;
-                }
+                ApplyFoodSprite(_secondFoodImage, secondOrder.Type);
 
                 if (_secondAmountText != null)
                     _secondAmountText.text = "x" + secondOrder.Amount;
@@ -109,8 +103,26 @@ namespace RestaurantLoop.Runtime.Conveyor
             {
                 // promoted
                 SetAlpha(_secondFoodImage, 1f);
-                SetAlpha(_secondBackgroundImage, 1f);
                 SetAlpha(_secondAmountText, 1f);
+            }
+        }
+
+        // Sprite-only visual: no separate background image anymore, the food sprite carries the full look.
+        private void ApplyFoodSprite(Image image, FoodType type)
+        {
+            if (image == null) return;
+
+            if (_foodMeshSettings != null && _foodMeshSettings.TryGetIcon(type, out var icon))
+            {
+                image.sprite = icon;
+                image.color = new Color(1f, 1f, 1f, image.color.a);
+            }
+            else
+            {
+                image.sprite = null;
+                var c = FoodTypeUtil.ToColor(type);
+                c.a = image.color.a;
+                image.color = c;
             }
         }
 
@@ -120,7 +132,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             _dimAlphaCaptured = true;
 
             if (_secondFoodImage != null) _secondFoodDimAlpha = _secondFoodImage.color.a;
-            if (_secondBackgroundImage != null) _secondBackgroundDimAlpha = _secondBackgroundImage.color.a;
             if (_secondAmountText != null) _secondAmountDimAlpha = _secondAmountText.color.a;
         }
 

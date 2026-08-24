@@ -13,7 +13,8 @@ namespace RestaurantLoop.Runtime.Data
         Sushi,
         Pizza,
         Croissant,
-        Kebab
+        Kebab,
+        Steak
     }
 
     public static class FoodTypeUtil
@@ -29,6 +30,7 @@ namespace RestaurantLoop.Runtime.Data
             FoodType.Pizza => new Color(0.85f, 0.35f, 0.15f),
             FoodType.Croissant => new Color(0.80f, 0.65f, 0.30f),
             FoodType.Kebab => new Color(0.55f, 0.30f, 0.15f),
+            FoodType.Steak => new Color(0.50f, 0.22f, 0.20f),
             _ => Color.gray
         };
 
@@ -43,6 +45,7 @@ namespace RestaurantLoop.Runtime.Data
             FoodType.Pizza => "\U0001F355",
             FoodType.Croissant => "\U0001F950",
             FoodType.Kebab => "\U0001F959",
+            FoodType.Steak => "\U0001F969",
             _ => "?"
         };
     }

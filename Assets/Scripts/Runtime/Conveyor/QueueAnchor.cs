@@ -38,7 +38,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             for (int i = 0; i < laneCount; i++)
             {
                 float x = centerX + (i - (laneCount - 1) * 0.5f) * _tuning.QueueLaneSpacing;
-                positions[i] = new Vector3(x, 0f, z);
+                positions[i] = new Vector3(x, _tuning.QueueFoodHeight, z);
             }
 
             return positions;

@@ -7,28 +7,42 @@ namespace RestaurantLoop.Runtime.Conveyor
 {
     public class FoodItemController : MonoBehaviour, IPoolable<Vector3, FoodStackData, FoodVisualState>
     {
+        // Above this, extra units still count toward Stack.Amount (consumed normally) but stop
+        // rendering — an uncapped stack reads as a tower instead of a pile of food.
+        private const int MaxVisibleUnits = 5;
+
         [SerializeField] private GameObject _unitPrefab;
         [SerializeField] private float _stackSpacing = 1.05f;
 
         [Inject(Optional = true)] private FoodMeshSettings _foodMeshSettings;
         [Inject(Optional = true)] private ConveyorFeelSettings _feel;
 
+        // Stacked-units mode (most food types): one GameObject per visible unit. Only the top unit
+        // (highest index) is ever Opened — and only while this whole item is Opened — everything below
+        // it stays Closed, so the pile always reads as "one unpacked item about to be eaten, the rest
+        // still packaged". Tracked per unit because Closed/Opened are often completely different meshes.
         private readonly List<GameObject> _units = new();
+        private readonly List<bool> _unitIsOpened = new();
+        private readonly List<GameObject> _unitSourcePrefab = new();
+        private readonly List<Vector3> _unitBaseScale = new();
+        private readonly List<Quaternion> _unitAppliedRotation = new();
 
-        // The prefab's authored scale. The feel multiplier is applied on top of it at runtime and never
-        // written back, so the prefab and the source mesh keep whatever the artist set.
-        private Vector3 _unitBaseScale = Vector3.one;
-        private bool _unitBaseScaleCaptured;
+        // Fixed-child-slots mode (e.g. a drink shelf holding several pre-placed bottles): one instance is
+        // spawned and kept for the item's whole life; Amount toggles which of its slot children are visible
+        // instead of stacking N separate copies. No per-unit Closed/Opened split applies here.
+        private GameObject _fixedSlotInstance;
+        private GameObject _fixedSlotSourcePrefab;
+        private Vector3 _fixedSlotBaseScale = Vector3.one;
+        private Quaternion _fixedSlotBaseRotation = Quaternion.identity;
+        private float _appliedFixedSlotScale = -1f;
 
-        private Mesh _unitBaseMesh;
-        private Material[] _unitBaseMaterials;
-        private bool _unitBaseVisualCaptured;
+        private bool _usesFixedChildSlots;
+        private bool _appliedUsesFixedChildSlots;
 
-        // Last multiplier / spacing pushed onto the units — used to pick up live tweaks while playing.
-        private float _appliedUnitScale = -1f;
+        // Last multiplier / spacing pushed onto the stacked units — used to pick up live tweaks while playing.
+        private float _appliedClosedScale = -1f;
+        private float _appliedOpenedScale = -1f;
         private float _appliedSpacing;
-        private Mesh _appliedMesh;
-        private Quaternion _appliedUnitRotation = Quaternion.identity;
 
         // The rotation this item rests at. Captured from the prefab, restored on every spawn so a pooled
         // object never inherits a spin left over from its previous life.
@@ -39,7 +53,9 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public FoodStackData Stack { get; private set; }
 
-        public Vector3 VisualCenter => transform.position + Vector3.up * (Stack.Amount * ResolveSpacing() * 0.5f);
+        public Vector3 VisualCenter => _usesFixedChildSlots
+            ? transform.position
+            : transform.position + Vector3.up * (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) * 0.5f);
 
         public void OnSpawned(Vector3 position, FoodStackData stack, FoodVisualState visualState)
         {
@@ -76,108 +92,277 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void ApplyStack(FoodStackData stack)
         {
-            CaptureUnitBaseScaleOnce();
-            CaptureUnitBaseVisualOnce();
+            FoodMeshSettings.MeshVisual closedVisual = default, openedVisual = default;
+            bool hasClosed = _foodMeshSettings != null &&
+                              _foodMeshSettings.TryGetVisual(stack.Type, FoodVisualState.Closed, out closedVisual);
+            bool hasOpened = _foodMeshSettings != null &&
+                              _foodMeshSettings.TryGetVisual(stack.Type, FoodVisualState.Opened, out openedVisual);
 
-            while (_units.Count < stack.Amount)
-                _units.Add(Instantiate(_unitPrefab, transform));
+            bool hasStateVisual = _visualState == FoodVisualState.Opened ? hasOpened : hasClosed;
+            var stateVisual = _visualState == FoodVisualState.Opened ? openedVisual : closedVisual;
+            _usesFixedChildSlots = hasStateVisual && stateVisual.FixedChildSlots;
 
-            while (_units.Count > stack.Amount)
+            // Switching between fixed-slot and stacked-units mode (e.g. a level mixing food types) can't
+            // reuse the other mode's objects — clear whichever one was built before.
+            if (_usesFixedChildSlots != _appliedUsesFixedChildSlots)
             {
-                var top = _units[^1];
-                _units.RemoveAt(_units.Count - 1);
-                Destroy(top);
+                ClearVisuals();
+                _appliedUsesFixedChildSlots = _usesFixedChildSlots;
+            }
+
+            if (_usesFixedChildSlots)
+            {
+                var sourcePrefab = stateVisual.Prefab;
+                if (sourcePrefab != _fixedSlotSourcePrefab)
+                {
+                    if (_fixedSlotInstance != null)
+                    {
+                        Destroy(_fixedSlotInstance);
+                        _fixedSlotInstance = null;
+                    }
+
+                    _fixedSlotSourcePrefab = sourcePrefab;
+                    _fixedSlotBaseScale = sourcePrefab != null ? sourcePrefab.transform.localScale : Vector3.one;
+                    _fixedSlotBaseRotation = sourcePrefab != null ? sourcePrefab.transform.localRotation : Quaternion.identity;
+                }
+
+                var correction = Quaternion.Euler(stateVisual.RotationEuler);
+                ApplyFixedChildSlots(stack, sourcePrefab, _fixedSlotBaseRotation * correction);
+            }
+            else
+            {
+                ApplyStackedUnits(stack, closedVisual, openedVisual, hasClosed, hasOpened);
+            }
+        }
+
+        private void ClearVisuals()
+        {
+            for (int i = 0; i < _units.Count; i++)
+                if (_units[i] != null) Destroy(_units[i]);
+
+            _units.Clear();
+            _unitIsOpened.Clear();
+            _unitSourcePrefab.Clear();
+            _unitBaseScale.Clear();
+            _unitAppliedRotation.Clear();
+
+            if (_fixedSlotInstance != null)
+            {
+                Destroy(_fixedSlotInstance);
+                _fixedSlotInstance = null;
+            }
+
+            _fixedSlotSourcePrefab = null;
+        }
+
+        private void ApplyStackedUnits(
+            FoodStackData stack,
+            FoodMeshSettings.MeshVisual closedVisual,
+            FoodMeshSettings.MeshVisual openedVisual,
+            bool hasClosed,
+            bool hasOpened)
+        {
+            int visibleCount = Mathf.Min(stack.Amount, MaxVisibleUnits);
+
+            while (_units.Count > visibleCount)
+            {
+                int last = _units.Count - 1;
+                if (_units[last] != null) Destroy(_units[last]);
+                _units.RemoveAt(last);
+                _unitIsOpened.RemoveAt(last);
+                _unitSourcePrefab.RemoveAt(last);
+                _unitBaseScale.RemoveAt(last);
+                _unitAppliedRotation.RemoveAt(last);
+            }
+
+            while (_units.Count < visibleCount)
+            {
+                _units.Add(null);
+                _unitIsOpened.Add(false);
+                _unitSourcePrefab.Add(null);
+                _unitBaseScale.Add(Vector3.one);
+                _unitAppliedRotation.Add(Quaternion.identity);
             }
 
             var color = FoodTypeUtil.ToColor(stack.Type);
-            FoodMeshSettings.MeshVisual meshVisual = default;
-            bool hasMesh = _foodMeshSettings != null &&
-                           _foodMeshSettings.TryGetVisual(stack.Type, _visualState, out meshVisual);
-            _appliedMesh = hasMesh ? meshVisual.Mesh : null;
 
-            // Fixed per-mesh orientation, not a runtime rotation: it is identical in the queue, on the belt
-            // and in the exit stack, so an item never appears to turn while it travels.
-            var unitRotation = hasMesh ? Quaternion.Euler(meshVisual.RotationEuler) : Quaternion.identity;
-            _appliedUnitRotation = unitRotation;
-
-            for (int i = 0; i < _units.Count; i++)
+            for (int i = 0; i < visibleCount; i++)
             {
-                var renderer = _units[i].GetComponentInChildren<Renderer>();
+                // Only the very top unit (highest index — see ApplyUnitLayout) shows unpacked, and only
+                // while this whole item is Opened. Consuming the top unit shrinks Amount, which exposes
+                // the unit below it as the new top — it picks up Opened here on the very next ApplyStack.
+                bool isTop = i == visibleCount - 1;
+                bool wantOpened = isTop && _visualState == FoodVisualState.Opened && hasOpened;
+                _unitIsOpened[i] = wantOpened;
 
-                if (renderer != null)
+                var visual = wantOpened ? openedVisual : closedVisual;
+                bool hasThisVisual = wantOpened ? hasOpened : hasClosed;
+                var sourcePrefab = hasThisVisual ? visual.Prefab : _unitPrefab;
+
+                if (_units[i] == null || sourcePrefab != _unitSourcePrefab[i])
                 {
-                    if (hasMesh && meshVisual.HasMaterials) renderer.sharedMaterials = meshVisual.Materials;
-                    else
+                    if (_units[i] != null) Destroy(_units[i]);
+
+                    _units[i] = Instantiate(sourcePrefab, transform);
+                    _unitSourcePrefab[i] = sourcePrefab;
+                    _unitBaseScale[i] = sourcePrefab != null ? sourcePrefab.transform.localScale : Vector3.one;
+                    var baseRotation = sourcePrefab != null ? sourcePrefab.transform.localRotation : Quaternion.identity;
+
+                    // Extra correction on top of the prefab's own authored orientation, not a runtime
+                    // rotation: it is identical in the queue, on the belt and in the exit stack, so an
+                    // item never appears to turn while it travels.
+                    var correction = hasThisVisual ? Quaternion.Euler(visual.RotationEuler) : Quaternion.identity;
+                    _unitAppliedRotation[i] = baseRotation * correction;
+                    _units[i].transform.localRotation = _unitAppliedRotation[i];
+
+                    if (!hasThisVisual)
                     {
-                        renderer.sharedMaterials = _unitBaseMaterials;
-                        renderer.material.color = color;
+                        var renderer = _units[i].GetComponentInChildren<Renderer>();
+                        if (renderer != null) renderer.material.color = color;
                     }
                 }
-
-                _units[i].transform.localRotation = unitRotation;
-
-                var meshFilter = _units[i].GetComponentInChildren<MeshFilter>();
-                if (meshFilter != null) meshFilter.sharedMesh = hasMesh ? meshVisual.Mesh : _unitBaseMesh;
             }
 
-            ApplyUnitLayout();
+            ApplyUnitLayout(stack.Type);
+        }
+
+        // A rack with pre-placed items instead of a vertical stack of copies: one instance total, and
+        // however many slot children the amount allows stay active — the rest hide. Slot children are
+        // found by walking through any single-child wrapper levels the prefab has (e.g. a pivot-fix
+        // wrapper around the artist's own rack asset) until reaching the node that actually branches.
+        private void ApplyFixedChildSlots(FoodStackData stack, GameObject sourcePrefab, Quaternion unitRotation)
+        {
+            if (_fixedSlotInstance == null)
+            {
+                _fixedSlotInstance = Instantiate(sourcePrefab, transform);
+                _fixedSlotInstance.transform.localPosition = Vector3.zero;
+            }
+
+            _fixedSlotInstance.transform.localRotation = unitRotation;
+            float scale = ResolveScale(stack.Type, _visualState);
+            _fixedSlotInstance.transform.localScale = _fixedSlotBaseScale * scale;
+            _appliedFixedSlotScale = scale;
+
+            // Convention: child[0] is the always-visible base/decoration (e.g. the tray), children[1..]
+            // are the toggleable slots.
+            var root = _fixedSlotInstance.transform;
+            int slotCount = Mathf.Max(0, root.childCount - 1);
+            int visibleCount = Mathf.Clamp(stack.Amount, 0, slotCount);
+
+            for (int i = 0; i < slotCount; i++)
+                root.GetChild(i + 1).gameObject.SetActive(i < visibleCount);
         }
 
         // Scale and stack spacing both come from the feel asset, so they are re-applied together.
-        private void ApplyUnitLayout()
+        private void ApplyUnitLayout(FoodType type)
         {
-            float unitScale = ResolveUnitScale();
-            float spacing = ResolveSpacing();
-
-            _appliedUnitScale = unitScale;
+            float spacing = ResolveSpacing(type);
+            _appliedClosedScale = ResolveScale(type, FoodVisualState.Closed);
+            _appliedOpenedScale = ResolveScale(type, FoodVisualState.Opened);
             _appliedSpacing = spacing;
 
             for (int i = 0; i < _units.Count; i++)
             {
+                float unitScale = ResolveScale(type, _unitIsOpened[i] ? FoodVisualState.Opened : FoodVisualState.Closed);
                 _units[i].transform.localPosition = new Vector3(0f, i * spacing, 0f);
-                _units[i].transform.localScale = _unitBaseScale * unitScale;
+                _units[i].transform.localScale = _unitBaseScale[i] * unitScale;
             }
         }
 
         // Units sit exactly one rendered height apart, so a short packaged mesh and a tall opened one
-        // both stack tightly without hand-tuning a constant per mesh.
-        private float ResolveSpacing()
+        // both stack tightly without hand-tuning a constant per mesh. Measured off the bottom unit —
+        // always Closed unless the stack is down to its last (Opened) piece — so the pile's spacing
+        // doesn't jump around as the top unit's mesh changes.
+        private float ResolveSpacing(FoodType type)
         {
             if (_feel == null || _feel.StackSpacingFactor <= 0f) return _stackSpacing;
+            if (_units.Count == 0) return _stackSpacing;
 
-            float unitHeight = ResolveUnitHeight() * ResolveUnitScale();
+            float scale = ResolveScale(type, _unitIsOpened[0] ? FoodVisualState.Opened : FoodVisualState.Closed);
+            float unitHeight = ResolveUnitHeight(_unitSourcePrefab[0], _unitAppliedRotation[0], _unitBaseScale[0] * scale);
             if (unitHeight <= 0.0001f) return _stackSpacing;
 
             return unitHeight * _feel.StackSpacingFactor;
         }
 
-        private float ResolveUnitHeight()
+        // Height along world Y after the unit's fixed orientation and scale are applied — a prefab laid
+        // on its side stacks by its new height, not the one it was authored with.
+        private static float ResolveUnitHeight(GameObject prefab, Quaternion appliedRotation, Vector3 scale)
         {
-            var mesh = _appliedMesh;
-            if (mesh == null && _unitPrefab != null)
-            {
-                var prefabMeshFilter = _unitPrefab.GetComponentInChildren<MeshFilter>();
-                if (prefabMeshFilter != null) mesh = prefabMeshFilter.sharedMesh;
-            }
+            var bounds = CombinedLocalBounds(prefab);
+            if (!bounds.HasValue) return 0f;
 
-            if (mesh == null) return 0f;
-
-            // Height along world Y after the fixed orientation is applied — a mesh laid on its side
-            // stacks by its new height, not the one it was authored with.
-            var size = _appliedUnitRotation * Vector3.Scale(mesh.bounds.size, _unitBaseScale);
+            var size = appliedRotation * Vector3.Scale(bounds.Value.size, scale);
             return Mathf.Abs(size.y);
         }
 
-        private float ResolveUnitScale() => _feel == null ? 1f : _feel.ResolveFoodScale(Stack.Type, _visualState);
+        // Encapsulates every child mesh's bounds in the prefab root's local space — covers composite
+        // visuals (e.g. a food item still sitting in its opened wrapper) with more than one MeshFilter.
+        private static Bounds? CombinedLocalBounds(GameObject prefab)
+        {
+            if (prefab == null) return null;
+
+            var meshFilters = prefab.GetComponentsInChildren<MeshFilter>(true);
+            if (meshFilters.Length == 0) return null;
+
+            var worldToRoot = prefab.transform.worldToLocalMatrix;
+            Bounds? combined = null;
+
+            for (int i = 0; i < meshFilters.Length; i++)
+            {
+                var meshFilter = meshFilters[i];
+                if (meshFilter.sharedMesh == null) continue;
+
+                var meshToRoot = worldToRoot * meshFilter.transform.localToWorldMatrix;
+                var meshBounds = meshFilter.sharedMesh.bounds;
+                var extents = meshBounds.extents;
+
+                var localBounds = new Bounds(meshToRoot.MultiplyPoint3x4(meshBounds.center), Vector3.zero);
+                for (int x = -1; x <= 1; x += 2)
+                for (int y = -1; y <= 1; y += 2)
+                for (int z = -1; z <= 1; z += 2)
+                {
+                    var corner = meshBounds.center + Vector3.Scale(extents, new Vector3(x, y, z));
+                    localBounds.Encapsulate(meshToRoot.MultiplyPoint3x4(corner));
+                }
+
+                if (combined.HasValue)
+                {
+                    var c = combined.Value;
+                    c.Encapsulate(localBounds);
+                    combined = c;
+                }
+                else combined = localBounds;
+            }
+
+            return combined;
+        }
+
+        private float ResolveScale(FoodType type, FoodVisualState state) => _feel == null ? 1f : _feel.ResolveFoodScale(type, state);
 
         // Picks up scale / spacing tweaks made in the feel asset while the game is running.
         private void LateUpdate()
         {
-            if (Mathf.Approximately(ResolveUnitScale(), _appliedUnitScale) &&
-                Mathf.Approximately(ResolveSpacing(), _appliedSpacing))
+            if (_usesFixedChildSlots)
+            {
+                float scale = ResolveScale(Stack.Type, _visualState);
+                if (Mathf.Approximately(scale, _appliedFixedSlotScale)) return;
+
+                if (_fixedSlotInstance != null) _fixedSlotInstance.transform.localScale = _fixedSlotBaseScale * scale;
+                _appliedFixedSlotScale = scale;
+                return;
+            }
+
+            float closedScale = ResolveScale(Stack.Type, FoodVisualState.Closed);
+            float openedScale = ResolveScale(Stack.Type, FoodVisualState.Opened);
+            float spacing = ResolveSpacing(Stack.Type);
+
+            if (Mathf.Approximately(closedScale, _appliedClosedScale) &&
+                Mathf.Approximately(openedScale, _appliedOpenedScale) &&
+                Mathf.Approximately(spacing, _appliedSpacing))
                 return;
 
-            ApplyUnitLayout();
+            ApplyUnitLayout(Stack.Type);
         }
 
         private void CaptureBaseRotationOnce()
@@ -186,27 +371,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _baseRotationCaptured = true;
             _baseRotation = transform.rotation;
-        }
-
-        private void CaptureUnitBaseScaleOnce()
-        {
-            if (_unitBaseScaleCaptured || _unitPrefab == null) return;
-
-            _unitBaseScaleCaptured = true;
-            _unitBaseScale = _unitPrefab.transform.localScale;
-        }
-
-        private void CaptureUnitBaseVisualOnce()
-        {
-            if (_unitBaseVisualCaptured || _unitPrefab == null) return;
-
-            _unitBaseVisualCaptured = true;
-
-            var meshFilter = _unitPrefab.GetComponentInChildren<MeshFilter>();
-            _unitBaseMesh = meshFilter != null ? meshFilter.sharedMesh : null;
-
-            var renderer = _unitPrefab.GetComponentInChildren<Renderer>();
-            _unitBaseMaterials = renderer != null ? renderer.sharedMaterials : null;
         }
 
         public class Pool : MonoPoolableMemoryPool<Vector3, FoodStackData, FoodVisualState, FoodItemController>

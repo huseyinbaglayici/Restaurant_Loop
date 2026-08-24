@@ -13,6 +13,7 @@ namespace RestaurantLoop.Installers
         [Inject] private CurrentLevelProvider _currentLevelProvider;
         [SerializeField] private Camera _mainCamera;
         [SerializeField] private TextMeshProUGUI _levelText;
+        [SerializeField] private Transform _trayDispenserRoot;
 
         public override void InstallBindings()
         {
@@ -32,13 +33,18 @@ namespace RestaurantLoop.Installers
             Container.BindInterfacesAndSelfTo<ExitStackAnchor>().AsSingle();
             Container.BindInterfacesAndSelfTo<QueueAnchor>().AsSingle();
             Container.BindInterfacesAndSelfTo<QueueSpawner>().AsSingle();
+            Container.BindInterfacesAndSelfTo<QueueLinkVisualizer>().AsSingle();
             Container.BindInterfacesTo<CameraController>().AsSingle();
             Container.BindInterfacesAndSelfTo<ConveyorManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<CustomerConsumeService>().AsSingle();
             Container.BindInterfacesTo<ConveyorEntryInput>().AsSingle();
 
+            Container.BindInstance(_trayDispenserRoot).AsSingle();
+            Container.BindInterfacesAndSelfTo<TrayDispenserAnchor>().AsSingle();
+
             // visual layer ticks after the logical one, flights last so they consume this frame's commands
             Container.BindInterfacesAndSelfTo<ConveyorVisualService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<TrayVisualService>().AsSingle();
             Container.BindInterfacesAndSelfTo<FoodFlightService>().AsSingle();
             Container.Bind<PowerUpService>().AsSingle();
 

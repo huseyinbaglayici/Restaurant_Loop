@@ -11,6 +11,10 @@ namespace RestaurantLoop.Runtime.Conveyor
     {
         public const int BaseSlotCount = 5;
 
+        // Foodrack.fbx authored length along local Z at scale 1 (measured from its mesh bounds).
+        // The single rack is scaled on Z to stretch across every slot instead of spawning one piece per slot.
+        private const float RackAuthoredLength = 7.59f;
+
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ConveyorTuning _tuning;
@@ -90,8 +94,20 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             if (SlotPositions.Length == 0) return; // ComputeSlotPositions already logged why
 
-            for (int i = 0; i < SlotPositions.Length; i++)
-                _spawnedFloors.Add(_exitSlotPool.Spawn(SlotPositions[i]));
+            SpawnRack(SlotPositions[0], SlotPositions[^1]);
+        }
+
+        // One rack piece spans every slot from firstSlot to lastSlot — food items still dock individually
+        // on top of it, only the visual floor underneath is now a single object instead of one per slot.
+        private void SpawnRack(Vector3 firstSlot, Vector3 lastSlot)
+        {
+            var center = (firstSlot + lastSlot) * 0.5f;
+            float spanWorldX = (lastSlot.x - firstSlot.x) + (lastSlot.x - firstSlot.x) / (SlotPositions.Length - 1);
+
+            var rack = _exitSlotPool.Spawn(center);
+            rack.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+            rack.transform.localScale = new Vector3(1f, 1f, spanWorldX / RackAuthoredLength);
+            _spawnedFloors.Add(rack);
         }
 
         public void Dispose()
@@ -181,7 +197,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             _occupants.CopyTo(newOccupants, 0);
             _occupants = newOccupants;
 
-            _spawnedFloors.Add(_exitSlotPool.Spawn(newSlotPosition));
+            // No extra floor spawn — the rack is one fixed-length piece; the extra slot only adds
+            // a dock point past its edge.
             HasExtraSlot = true;
             return true;
         }

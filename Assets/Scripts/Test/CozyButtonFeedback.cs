@@ -1,7 +1,9 @@
 using System.Collections;
+using RestaurantLoop.Audio;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Zenject;
 
 /// <summary>
 /// Hem UI Butonlarına hem de 3D sahne objelerine tatlı, elastik (cozy) bir basılma ve zıplama hissi katar.
@@ -26,6 +28,14 @@ public class CozyButtonFeedback : MonoBehaviour, IPointerDownHandler, IPointerUp
     private Vector3 targetScale;
     private Coroutine activeScaleRoutine;
     private bool isPointerDown = false;
+
+    private IAudioService _audioService;
+
+    [Inject]
+    public void Construct(IAudioService audioService)
+    {
+        _audioService = audioService;
+    }
 
     private void Awake()
     {
@@ -101,15 +111,7 @@ public class CozyButtonFeedback : MonoBehaviour, IPointerDownHandler, IPointerUp
     {
         if (clickSound == null) return;
 
-        AudioSource source = GetComponent<AudioSource>();
-        if (source == null)
-        {
-            source = gameObject.AddComponent<AudioSource>();
-            source.playOnAwake = false;
-            source.spatialBlend = 0f; // 2D Ses (Mesafeden etkilenmez, net duyulur)
-        }
-
-        source.PlayOneShot(clickSound, 0.2f);
+        _audioService?.PlaySfx(clickSound);
     }
 
     private IEnumerator AnimateScale()
