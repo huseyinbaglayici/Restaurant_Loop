@@ -31,6 +31,20 @@ namespace RestaurantLoop.Installers
             BindExitSlotPool();
             BindCustomerPool();
             BindTuning();
+            BindFeelSettings();
+        }
+
+        private void BindFeelSettings()
+        {
+            var feel = Resources.Load<ConveyorFeelSettings>("ConveyorFeelSettings");
+            if (feel == null)
+            {
+                Debug.LogError("[PoolInstaller] ConveyorFeelSettings.asset not found under Assets/Resources — " +
+                               "create it via RestaurantLoop/Conveyor Feel Settings, the conveyor visual layer needs it.");
+                return;
+            }
+
+            Container.BindInstance(feel).AsSingle();
         }
 
         private void BindTuning()
@@ -122,6 +136,28 @@ namespace RestaurantLoop.Installers
             }
 
             Container.BindInstance(customerSettings).AsSingle();
+
+            var appearanceSettings = Resources.Load<CustomerAppearanceSettings>("CustomerAppearanceSettings");
+            if (appearanceSettings == null)
+            {
+                Debug.LogError(
+                    "[PoolInstaller] CustomerAppearanceSettings.asset not found under Assets/Resources — " +
+                    "create it via RestaurantLoop/Customer Appearance Settings, customer pool not bound.");
+                return;
+            }
+
+            Container.BindInstance(appearanceSettings).AsSingle();
+
+            var animationSet = Resources.Load<CustomerAnimationSet>("CustomerAnimationSet");
+            if (animationSet == null)
+            {
+                Debug.LogError(
+                    "[PoolInstaller] CustomerAnimationSet.asset not found under Assets/Resources — " +
+                    "create it via RestaurantLoop/Customer Animation Set, customer pool not bound.");
+                return;
+            }
+
+            Container.BindInstance(animationSet).AsSingle();
 
             Container.BindMemoryPool<CustomerController, CustomerController.Pool>()
                 .WithInitialSize(_customerInitialSize)

@@ -87,10 +87,13 @@ namespace RestaurantLoop.Runtime.Data
         public List<Vector2Int> OrderedPath = new();
     }
 
+    public enum LevelDifficulty { None, Hard, SuperHard, Bonus }
+
     [CreateAssetMenu(menuName = "RestaurantLoop/Conveyor Level Data", fileName = "ConveyorLevel")]
     public class ConveyorLevelDataSO : ScriptableObject
     {
         public int LevelId;
+        public LevelDifficulty Difficulty;
 
         [Header("Conveyor Grid")]
         public int GridWidth = 8;

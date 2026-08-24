@@ -40,7 +40,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 for (int row = 0; row < entries.Count; row++)
                 {
                     var position = lanePosition + new Vector3(0f, 0f, -row * _tuning.QueueRowSpacing);
-                    laneVisuals.Add(_foodPool.Spawn(position, entries[row]));
+                    laneVisuals.Add(_foodPool.Spawn(position, entries[row], FoodVisualState.Closed));
                 }
 
                 _lanes.Add(laneVisuals);
@@ -79,13 +79,23 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void PopAt(int lane, int row)
         {
-            if (lane < 0 || lane >= _lanes.Count) return;
+            if (!TryDetachAt(lane, row, out var visual)) return;
+            _foodPool.Despawn(visual);
+        }
+
+        // Removes the entry from its lane but keeps the visual alive, so the caller can keep flying the
+        // very same object onto the belt instead of despawn + respawn (which would read as a teleport).
+        public bool TryDetachAt(int lane, int row, out FoodItemController visual)
+        {
+            visual = null;
+            if (lane < 0 || lane >= _lanes.Count) return false;
 
             var laneVisuals = _lanes[lane];
-            if (row < 0 || row >= laneVisuals.Count) return;
+            if (row < 0 || row >= laneVisuals.Count) return false;
 
-            _foodPool.Despawn(laneVisuals[row]);
+            visual = laneVisuals[row];
             laneVisuals.RemoveAt(row);
+            return true;
         }
 
         // Shuffle power-up: flattens every lane, shuffles, then redeals round-robin.

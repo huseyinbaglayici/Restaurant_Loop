@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Signals;
 using UnityEngine;
 using Zenject;
 
@@ -21,13 +22,14 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly RuntimeCustomerState _customerState;
         private readonly CustomerSpawner _customerSpawner;
         private readonly ExitStackAnchor _exitStackAnchor;
+        private readonly SignalBus _signalBus;
 
         // [pathIndex][direction] -> ray, in outward order.
         private List<RayEntry>[][] _raysByPathIndex;
 
         private bool _wasStackFull;
 
-        public event Action OnLevelFailed;
+        public event Action<bool> OnLevelEnded;
 
         private static readonly Vector2Int[] Directions =
         {
@@ -39,13 +41,15 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorManager conveyorManager,
             RuntimeCustomerState customerState,
             CustomerSpawner customerSpawner,
-            ExitStackAnchor exitStackAnchor)
+            ExitStackAnchor exitStackAnchor,
+            SignalBus signalBus)
         {
             _level = level;
             _conveyorManager = conveyorManager;
             _customerState = customerState;
             _customerSpawner = customerSpawner;
             _exitStackAnchor = exitStackAnchor;
+            _signalBus = signalBus;
         }
 
         public void Initialize()
@@ -100,8 +104,10 @@ namespace RestaurantLoop.Runtime.Conveyor
                     if (!TryFindCustomer(rays[d], type, out var coord)) continue;
                     if (!_customerState.TryGetCustomer(coord, out var customer)) break;
 
-                    int amountTaken = _conveyorManager.ConsumeFromItem(visual, customer.Order.Amount);
-                    if (amountTaken > 0) OnMatched(coord, amountTaken);
+                    int amountTaken = _conveyorManager.ConsumeFromItem(
+                        visual, 1, out int itemId, out bool itemFullyConsumed);
+
+                    if (amountTaken > 0) OnMatched(coord, amountTaken, itemId, visual, itemFullyConsumed);
                     break;
                 }
             }
@@ -122,7 +128,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             Debug.Log("[CustomerConsumeService] Exit stack full and no occupant is reachable — level failed.");
-            OnLevelFailed?.Invoke();
+            OnLevelEnded?.Invoke(false);
         }
 
         // could this type, injected at the belt entry right now, reach an unblocked matching customer?
@@ -170,22 +176,30 @@ namespace RestaurantLoop.Runtime.Conveyor
             return false;
         }
 
-        private void OnMatched(Vector2Int coord, int amountTaken)
+        // Decides and mutates state immediately; the cosmetic half (food flying to the customer, order UI
+        // refresh, serve reaction, despawn) is ConveyorVisualService's job, driven off FoodConsumedSignal.
+        private void OnMatched(
+            Vector2Int coord, int amountTaken, int itemId, FoodItemController visual, bool itemFullyConsumed)
         {
             var result = _customerState.Consume(coord, amountTaken);
-            switch (result)
-            {
-                case RuntimeCustomerState.ConsumeResult.Reduced:
-                case RuntimeCustomerState.ConsumeResult.Promoted:
-                    _customerState.TryGetCustomer(coord, out var updated);
-                    _customerSpawner.RefreshCustomerVisual(coord, updated);
-                    break;
+            if (result == RuntimeCustomerState.ConsumeResult.NotFound) return;
 
-                case RuntimeCustomerState.ConsumeResult.Served:
-                    _customerSpawner.DespawnCustomer(coord);
-                    RevealHiddenNeighbors(coord);
-                    break;
-            }
+            _signalBus.Fire(new FoodConsumedSignal
+            {
+                ItemId = itemId,
+                Visual = visual,
+                TakenStack = new FoodStackData { Type = visual.Stack.Type, Amount = amountTaken },
+                ItemFullyConsumed = itemFullyConsumed,
+                CustomerCoord = coord,
+                ServeResult = result
+            });
+
+            if (result != RuntimeCustomerState.ConsumeResult.Served) return;
+
+            // data is already gone from _customerState — the despawn happens once the happy reaction
+            // finishes, which the visual layer kicks off when the food lands.
+            RevealHiddenNeighbors(coord);
+            if (_customerState.RemainingCount == 0) OnLevelEnded?.Invoke(true);
         }
 
         private void RevealHiddenNeighbors(Vector2Int coord)

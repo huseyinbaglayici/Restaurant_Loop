@@ -1,3 +1,5 @@
+using System;
+using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
 using TMPro;
 using UnityEngine;
@@ -12,15 +14,26 @@ namespace RestaurantLoop.Runtime.Conveyor
         [SerializeField] private Image _foodImage;
         [SerializeField] private TMP_Text _amountText;
 
+        // World-space handoff point the consumed FoodItemController flies to (ConveyorVisualService).
+        // Should sit on the character's hand bone, not the UI canvas.
+        [SerializeField] private Transform _foodHandoffAnchor;
+
         [SerializeField] private GameObject _secondOrderHolder;
         [SerializeField] private Image _secondFoodImage;
         [SerializeField] private Image _secondBackgroundImage;
         [SerializeField] private TMP_Text _secondAmountText;
 
+        [SerializeField] private CustomerVisualRandomizer _visualRandomizer;
+        [SerializeField] private CustomerPlayableAnimator _playableAnimator;
+
         private float _secondFoodDimAlpha = 1f;
         private float _secondBackgroundDimAlpha = 1f;
         private float _secondAmountDimAlpha = 1f;
         private bool _dimAlphaCaptured;
+
+        private Tween _consumePunchTween;
+
+        public Transform FoodHandoffAnchor => _foodHandoffAnchor;
 
         public void OnSpawned(Vector3 position, float worldYRotation, FoodStackData order)
         {
@@ -29,11 +42,38 @@ namespace RestaurantLoop.Runtime.Conveyor
             ApplyOrder(order);
             ApplySecondOrder(false, default);
             gameObject.SetActive(true);
+
+            if (_visualRandomizer != null) _visualRandomizer.Randomize();
+            if (_playableAnimator != null) _playableAnimator.PlayIdleWithRandomOffset();
         }
 
         public void OnDespawned()
         {
+            _consumePunchTween?.Kill();
             gameObject.SetActive(false);
+        }
+
+        // Very small scale punch on the model root each time a food unit lands on this customer.
+        public void PlayConsumePunch(Vector3 strength, float duration, int vibrato, float elasticity)
+        {
+            if (_playableAnimator == null) return;
+
+            var target = _playableAnimator.transform;
+            _consumePunchTween?.Kill(true);
+            _consumePunchTween = target.DOPunchScale(strength, duration, vibrato, elasticity);
+        }
+
+        // hasSecondOrderRemaining == true: plays the "first order served" reaction, then returns to Idle.
+        // hasSecondOrderRemaining == false: plays a happy reaction, then invokes onComplete (caller despawns).
+        public void PlayServeReaction(bool hasSecondOrderRemaining, Action onComplete)
+        {
+            if (_playableAnimator == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            _playableAnimator.PlayServeReaction(hasSecondOrderRemaining, onComplete);
         }
 
         public void ApplyOrder(FoodStackData order)

@@ -2,15 +2,20 @@ using System;
 using System.Collections.Generic;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Signals;
 using UnityEngine;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
+    // Logical layer: owns where every item is on the baked path, who crosses which cell, and what gets
+    // consumed or docked. It never moves a transform — it fires signals and ConveyorVisualService plays
+    // them back a few frames later (see ConveyorFeelSettings.VisualLagSeconds).
     public class ConveyorManager : IInitializable, ITickable, IDisposable
     {
         private class BeltItem
         {
+            public int Id;
             public FoodItemController Visual;
             public float Progress;
         }
@@ -20,27 +25,33 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorTuning _tuning;
         private readonly FoodItemController.Pool _foodPool;
         private readonly ExitStackAnchor _exitStackAnchor;
+        private readonly SignalBus _signalBus;
 
         private readonly List<Vector3> _pathWorldPositions = new();
         private readonly List<BeltItem> _items = new();
-        
+
         private readonly List<(int PathIndex, FoodItemController Visual)> _crossingsThisFrame = new();
         public IReadOnlyList<(int PathIndex, FoodItemController Visual)> CrossingsThisFrame => _crossingsThisFrame;
 
+        private int _nextItemId;
+
         public int ItemCount => _items.Count;
+        public int PathLength => _pathWorldPositions.Count;
 
         public ConveyorManager(
             ConveyorLevelDataSO level,
             ConveyorPrefabSettings prefabSettings,
             ConveyorTuning tuning,
             FoodItemController.Pool foodPool,
-            ExitStackAnchor exitStackAnchor)
+            ExitStackAnchor exitStackAnchor,
+            SignalBus signalBus)
         {
             _level = level;
             _prefabSettings = prefabSettings;
             _tuning = tuning;
             _foodPool = foodPool;
             _exitStackAnchor = exitStackAnchor;
+            _signalBus = signalBus;
         }
 
         public void Initialize()
@@ -55,7 +66,11 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             float cellSize = _prefabSettings.CellWorldSize;
             foreach (var coord in orderedPath)
-                _pathWorldPositions.Add(ConveyorWorldUtil.ToWorldPosition(coord, cellSize));
+            {
+                var position = ConveyorWorldUtil.ToWorldPosition(coord, cellSize);
+                position.y = _tuning.BeltFoodHeight;
+                _pathWorldPositions.Add(position);
+            }
 
             foreach (var entity in _level.ConveyorEntities)
             {
@@ -66,18 +81,56 @@ namespace RestaurantLoop.Runtime.Conveyor
                     continue;
                 }
 
-                var visual = _foodPool.Spawn(_pathWorldPositions[index], entity.Stack);
-                _items.Add(new BeltItem { Visual = visual, Progress = index });
+                // Level-authored items start already on the belt: no entry flight, just a placed visual.
+                var visual = _foodPool.Spawn(_pathWorldPositions[index], entity.Stack, FoodVisualState.Opened);
+                AddItem(entity.Stack, visual, index, _pathWorldPositions[index], playEntryFlight: false);
             }
         }
 
+        // Spawns a fresh visual at the belt entry (no travel).
         public void AddItemAtEntry(FoodStackData stack)
         {
             if (_pathWorldPositions.Count == 0) return;
 
-            var visual = _foodPool.Spawn(_pathWorldPositions[0], stack);
-            _items.Add(new BeltItem { Visual = visual, Progress = 0f });
-            _crossingsThisFrame.Add((0, visual));
+            var visual = _foodPool.Spawn(_pathWorldPositions[0], stack, FoodVisualState.Opened);
+            AddItem(stack, visual, 0f, _pathWorldPositions[0], playEntryFlight: false);
+        }
+
+        // Reuses an existing visual (queue slot, exit-stack slot) and lets the visual layer fly it in
+        // from where it currently sits. Logically the item is on the belt entry right away.
+        public void AddItemAtEntry(FoodStackData stack, FoodItemController reusedVisual, Vector3 sourceWorldPosition)
+        {
+            if (_pathWorldPositions.Count == 0) return;
+
+            if (reusedVisual == null)
+            {
+                AddItemAtEntry(stack);
+                return;
+            }
+
+            AddItem(stack, reusedVisual, 0f, sourceWorldPosition, playEntryFlight: true);
+        }
+
+        // No entry-cell crossing is emitted here: the item becomes eligible for a consume match only
+        // once Tick() carries its Progress past cell 0, same as every other belt cell.
+        private void AddItem(
+            FoodStackData stack,
+            FoodItemController visual,
+            float startProgress,
+            Vector3 sourceWorldPosition,
+            bool playEntryFlight)
+        {
+            var item = new BeltItem { Id = _nextItemId++, Visual = visual, Progress = startProgress };
+            _items.Add(item);
+
+            _signalBus.Fire(new FoodEnteredBeltSignal
+            {
+                ItemId = item.Id,
+                Visual = visual,
+                SourceWorldPosition = sourceWorldPosition,
+                StartProgress = startProgress,
+                PlayEntryFlight = playEntryFlight
+            });
         }
 
         // cleared by ConsumeService, not here
@@ -90,6 +143,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _foodPool.Despawn(_items[i].Visual);
                 _items.RemoveAt(i);
             }
+
+            _signalBus.Fire(new BeltClearedSignal());
         }
 
         public void Tick()
@@ -107,7 +162,17 @@ namespace RestaurantLoop.Runtime.Conveyor
 
                 if (item.Progress >= lastIndex)
                 {
-                    if (!_exitStackAnchor.TryDock(item.Visual))
+                    if (_exitStackAnchor.TryDock(item.Visual, out int slotIndex))
+                    {
+                        _signalBus.Fire(new FoodDockedSignal
+                        {
+                            ItemId = item.Id,
+                            Visual = item.Visual,
+                            SlotIndex = slotIndex,
+                            SlotWorldPosition = _exitStackAnchor.GetFoodPosition(slotIndex)
+                        });
+                    }
+                    else
                     {
                         Debug.LogWarning("[ConveyorManager] Exit stack is full — item despawned.");
                         _foodPool.Despawn(item.Visual);
@@ -121,8 +186,6 @@ namespace RestaurantLoop.Runtime.Conveyor
                 int newIndex = Mathf.FloorToInt(item.Progress);
                 for (int idx = prevIndex + 1; idx <= newIndex; idx++)
                     _crossingsThisFrame.Add((idx, item.Visual));
-
-                item.Visual.transform.position = SampleWorldPosition(item.Progress);
             }
         }
 
@@ -142,36 +205,37 @@ namespace RestaurantLoop.Runtime.Conveyor
             return false;
         }
 
-        // by-reference, not by position
-        public int ConsumeFromItem(FoodItemController visual, int amountWanted)
+        // by-reference, not by position. On a full take the item leaves the belt but its visual is NOT
+        // despawned — ConveyorVisualService takes ownership and flies it to the customer.
+        public int ConsumeFromItem(FoodItemController visual, int amountWanted, out int itemId, out bool itemFullyConsumed)
         {
             for (int i = 0; i < _items.Count; i++)
             {
                 if (_items[i].Visual != visual) continue;
 
+                itemId = _items[i].Id;
                 int amountTaken = Mathf.Min(amountWanted, visual.Stack.Amount);
-                if (amountTaken >= visual.Stack.Amount)
-                {
-                    _foodPool.Despawn(visual);
-                    _items.RemoveAt(i);
-                }
-                else
-                {
-                    visual.ReduceAmount(amountTaken);
-                }
+                itemFullyConsumed = amountTaken >= visual.Stack.Amount;
+
+                if (itemFullyConsumed) _items.RemoveAt(i);
+                else visual.ReduceAmount(amountTaken);
 
                 return amountTaken;
             }
 
+            itemId = -1;
+            itemFullyConsumed = false;
             return 0;
         }
 
-        private Vector3 SampleWorldPosition(float progress)
+        public Vector3 SampleWorldPosition(float progress)
         {
             int count = _pathWorldPositions.Count;
-            int index = Mathf.FloorToInt(progress) % count;
+            if (count == 0) return Vector3.zero;
+
+            int index = Mathf.Clamp(Mathf.FloorToInt(progress), 0, count - 1);
             int nextIndex = (index + 1) % count;
-            float frac = progress - Mathf.Floor(progress);
+            float frac = Mathf.Clamp01(progress - Mathf.Floor(progress));
             return Vector3.Lerp(_pathWorldPositions[index], _pathWorldPositions[nextIndex], frac);
         }
 

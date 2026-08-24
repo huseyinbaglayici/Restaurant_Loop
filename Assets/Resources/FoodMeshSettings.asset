@@ -12,4 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98e81803ea4a89b4c9d3d85b49cb3150, type: 3}
   m_Name: FoodMeshSettings
   m_EditorClassIdentifier: 
-  _entries: []
+  _entries:
+  - Type: 0
+    OpenedMesh: {fileID: 246237887660379932, guid: 90d351bbc805fdb47a816790714a0d87,
+      type: 3}
+    OpenedMaterials:
+    - {fileID: -2813467912831258332, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
+    - {fileID: -6922793697723135513, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
+    - {fileID: 4874126678125670354, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
+    - {fileID: -6478536213147159724, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
+    - {fileID: -3846018093981099296, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
+    - {fileID: -6629797300637803691, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
+    - {fileID: -876546973899608171, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
+    - {fileID: 725804396391725484, guid: 90d351bbc805fdb47a816790714a0d87, type: 3}
+    ClosedMesh: {fileID: 4818487012807760169, guid: 4e7d2adbbfd60984c8d1529745325dbf,
+      type: 3}
+    ClosedMaterials:
+    - {fileID: 725804396391725484, guid: 4e7d2adbbfd60984c8d1529745325dbf, type: 3}

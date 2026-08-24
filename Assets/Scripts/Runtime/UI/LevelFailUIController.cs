@@ -37,7 +37,7 @@ namespace RestaurantLoop.Runtime.UI
 
         private void Start()
         {
-            _consumeService.OnLevelFailed += ShowKeepPlaying;
+            _consumeService.OnLevelEnded += HandleLevelEnded;
 
             _buttonPlayOn.onClick.AddListener(OnPlayOnClicked);
             _buttonKeepPlayingClose.onClick.AddListener(OnKeepPlayingCloseClicked);
@@ -47,7 +47,12 @@ namespace RestaurantLoop.Runtime.UI
 
         private void OnDestroy()
         {
-            _consumeService.OnLevelFailed -= ShowKeepPlaying;
+            _consumeService.OnLevelEnded -= HandleLevelEnded;
+        }
+
+        private void HandleLevelEnded(bool won)
+        {
+            if (!won) ShowKeepPlaying();
         }
 
         private void ShowKeepPlaying()

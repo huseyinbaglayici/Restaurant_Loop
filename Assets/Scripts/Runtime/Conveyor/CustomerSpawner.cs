@@ -35,6 +35,10 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
+        // peek-only
+        public bool TryGetVisual(Vector2Int coord, out CustomerController visual) =>
+            _spawned.TryGetValue(coord, out visual);
+
         public void RefreshCustomerVisual(Vector2Int coord, CustomerEntity customer)
         {
             if (!_spawned.TryGetValue(coord, out var visual)) return;
@@ -42,11 +46,27 @@ namespace RestaurantLoop.Runtime.Conveyor
             visual.ApplySecondOrder(customer.HasSecondOrder, customer.SecondOrder);
         }
 
+        public void PlayConsumePunch(Vector2Int coord, Vector3 strength, float duration, int vibrato, float elasticity)
+        {
+            if (!_spawned.TryGetValue(coord, out var visual)) return;
+            visual.PlayConsumePunch(strength, duration, vibrato, elasticity);
+        }
+
         public void DespawnCustomer(Vector2Int coord)
         {
             if (!_spawned.TryGetValue(coord, out var visual)) return;
             _customerPool.Despawn(visual);
             _spawned.Remove(coord);
+        }
+
+        // hasSecondOrderRemaining == true: customer stays (second order now active), just reacts.
+        // hasSecondOrderRemaining == false: customer is fully served — reacts, then despawns itself.
+        public void PlayServeReaction(Vector2Int coord, bool hasSecondOrderRemaining)
+        {
+            if (!_spawned.TryGetValue(coord, out var visual)) return;
+
+            Action onComplete = hasSecondOrderRemaining ? null : () => DespawnCustomer(coord);
+            visual.PlayServeReaction(hasSecondOrderRemaining, onComplete);
         }
 
         public void Dispose()

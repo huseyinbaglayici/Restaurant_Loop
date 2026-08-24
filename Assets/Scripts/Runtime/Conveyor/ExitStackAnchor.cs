@@ -107,18 +107,31 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        public bool TryDock(FoodItemController visual)
+        // Slot ownership is taken immediately; moving the visual into the slot is the visual layer's job
+        // (ConveyorVisualService flies it there on FoodDockedSignal).
+        public bool TryDock(FoodItemController visual, out int slotIndex)
         {
             for (int i = 0; i < _occupants.Length; i++)
             {
                 if (_occupants[i] != null) continue;
 
                 _occupants[i] = visual;
-                visual.transform.position = SlotPositions[i];
+                slotIndex = i;
                 return true;
             }
 
+            slotIndex = -1;
             return false;
+        }
+
+        // Where the food visual rests in a slot — the slot floor prefab keeps SlotPositions itself.
+        public Vector3 GetFoodPosition(int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= SlotPositions.Length) return Vector3.zero;
+
+            var position = SlotPositions[slotIndex];
+            position.y = _tuning.ExitStackFoodHeight;
+            return position;
         }
 
         // peek-only

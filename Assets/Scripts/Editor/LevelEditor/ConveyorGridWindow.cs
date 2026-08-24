@@ -22,7 +22,8 @@ namespace Editor.LevelEditor
         private ConveyorLevelDataSO _draft;
         private ConveyorGridCanvas _canvas;
         private QueueGridCanvas _queueCanvas;
-        private IntegerField _levelIdField, _widthField, _heightField, _queueDepthField, _amountField, _linkIdField;
+        private IntegerField _levelIdField, _widthField, _heightField, _queueDepthField, _amountField;
+        private EnumField _difficultyField;
         private Label _cellCountLabel;
         private readonly List<Button> _paletteButtons = new();
         private readonly Dictionary<CanvasMode, Button> _modeButtons = new();
@@ -32,6 +33,8 @@ namespace Editor.LevelEditor
         private VisualElement _customerSubModeRow;
         private Label _customerSubModeHint;
         private VisualElement _paletteRow;
+        private Button _linkModeButton;
+        private Label _linkModeHint;
 
         [MenuItem("RestaurantLoop/Conveyor Grid Tool")]
         public static void ShowWindow()
@@ -83,6 +86,7 @@ namespace Editor.LevelEditor
         private void RefreshUiFromDraft()
         {
             _levelIdField.SetValueWithoutNotify(_draft.LevelId);
+            _difficultyField.SetValueWithoutNotify(_draft.Difficulty);
             _widthField.SetValueWithoutNotify(_draft.GridWidth);
             _heightField.SetValueWithoutNotify(_draft.GridHeight);
 
@@ -106,6 +110,10 @@ namespace Editor.LevelEditor
             _levelIdField = CompactIntField("Level Id", 1);
             bar.Add(_levelIdField);
 
+            _difficultyField = new EnumField("Difficulty", LevelDifficulty.None);
+            _difficultyField.AddToClassList(Css.Num);
+            bar.Add(_difficultyField);
+
             var sep = new VisualElement();
             sep.AddToClassList(Css.TopbarSep);
             bar.Add(sep);
@@ -128,6 +136,7 @@ namespace Editor.LevelEditor
         {
             Undo.RecordObject(_draft, "New Level");
             _draft.LevelId = _levelIdField.value;
+            _draft.Difficulty = LevelDifficulty.None;
             _draft.GridWidth = 8;
             _draft.GridHeight = 8;
             _draft.ConveyorCells.Clear();
@@ -142,6 +151,7 @@ namespace Editor.LevelEditor
         {
             AssetFolderUtil.EnsureFolder(LevelFolder);
             _draft.LevelId = _levelIdField.value;
+            _draft.Difficulty = (LevelDifficulty)_difficultyField.value;
             string path = $"{LevelFolder}/ConveyorLevel_{_draft.LevelId}.asset";
 
             var asset = AssetDatabase.LoadAssetAtPath<ConveyorLevelDataSO>(path);
@@ -149,6 +159,7 @@ namespace Editor.LevelEditor
             if (isNew) asset = ScriptableObject.CreateInstance<ConveyorLevelDataSO>();
 
             asset.LevelId = _draft.LevelId;
+            asset.Difficulty = _draft.Difficulty;
             asset.GridWidth = _draft.GridWidth;
             asset.GridHeight = _draft.GridHeight;
             asset.ConveyorCells = new List<ConveyorCellData>(_draft.ConveyorCells);
@@ -188,6 +199,7 @@ namespace Editor.LevelEditor
 
             Undo.RecordObject(_draft, "Load Level");
             _draft.LevelId = loaded.LevelId;
+            _draft.Difficulty = loaded.Difficulty;
             _draft.GridWidth = loaded.GridWidth;
             _draft.GridHeight = loaded.GridHeight;
             _draft.ConveyorCells = new List<ConveyorCellData>(loaded.ConveyorCells);
@@ -391,6 +403,10 @@ namespace Editor.LevelEditor
             _cellCountLabel.AddToClassList(Css.StatusLabel);
             section.Add(_cellCountLabel);
 
+            var gateHint = new Label("Ctrl+Left Click: mark Gate cell (belt enter/exit, no piece placed)");
+            gateHint.AddToClassList(Css.StatusLabel);
+            section.Add(gateHint);
+
             SetMode(CanvasMode.Path);
             SelectBrush(ConveyorTileShape.Straight);
             SelectFoodType(FoodType.Hamburger);
@@ -424,17 +440,17 @@ namespace Editor.LevelEditor
                 _queueCanvas.Resize();
             }, Css.BtnPrimary));
             sizeBar.Add(MakeButton("Clear Queue", () => _queueCanvas.ClearQueues(), Css.BtnDanger));
+            sizeBar.Add(MakeButton("Generate From Customers", GenerateQueueFromCustomers, Css.BtnPrimary));
 
-            _linkIdField = CompactIntField("Link ID", 0);
-            _linkIdField.tooltip = "0 = unlinked. Matching nonzero ids pair two queue entries together.";
-            _linkIdField.RegisterValueChangedCallback(evt =>
-            {
-                int clamped = Mathf.Max(0, evt.newValue);
-                if (clamped != evt.newValue) _linkIdField.SetValueWithoutNotify(clamped);
-                if (_queueCanvas != null) _queueCanvas.SelectedLinkId = clamped;
-            });
-            sizeBar.Add(_linkIdField);
+            _linkModeButton = new Button(ToggleLinkMode) { text = "Link" };
+            _linkModeButton.AddToClassList(Css.Tool);
+            _linkModeButton.tooltip = "Click two queue entries to link them. Right-click an entry to unlink it.";
+            sizeBar.Add(_linkModeButton);
             section.Add(sizeBar);
+
+            _linkModeHint = new Label();
+            _linkModeHint.AddToClassList(Css.StatusLabel);
+            section.Add(_linkModeHint);
 
             var canvasHost = new VisualElement();
             canvasHost.AddToClassList(Css.CanvasHost);
@@ -444,8 +460,7 @@ namespace Editor.LevelEditor
                 Data = _draft,
                 Depth = _queueDepthField.value,
                 SelectedFoodType = _canvas.SelectedFoodType,
-                SelectedAmount = _canvas.SelectedAmount,
-                SelectedLinkId = _linkIdField.value
+                SelectedAmount = _canvas.SelectedAmount
             };
             _queueCanvas.AddToClassList(Css.Canvas);
             _queueCanvas.Resize();
@@ -454,6 +469,50 @@ namespace Editor.LevelEditor
             section.Add(canvasHost);
 
             return section;
+        }
+
+        private void ToggleLinkMode()
+        {
+            _queueCanvas.LinkMode = !_queueCanvas.LinkMode;
+            _linkModeButton.EnableInClassList(Css.ToolActive, _queueCanvas.LinkMode);
+            _linkModeHint.text = _queueCanvas.LinkMode
+                ? "Click two queue entries to link them. Right-click an entry to unlink it."
+                : "";
+        }
+
+        // color-total -> 3-5 random chunks -> round-robin across lanes
+        private void GenerateQueueFromCustomers()
+        {
+            Undo.RecordObject(_draft, "Generate Queue From Customers");
+
+            var totals = new Dictionary<FoodType, int>();
+            foreach (var customer in _draft.Customers)
+            {
+                totals[customer.Order.Type] = totals.GetValueOrDefault(customer.Order.Type) + customer.Order.Amount;
+                if (customer.HasSecondOrder)
+                    totals[customer.SecondOrder.Type] = totals.GetValueOrDefault(customer.SecondOrder.Type) + customer.SecondOrder.Amount;
+            }
+
+            foreach (var lane in _draft.Queues) lane.Entries.Clear();
+
+            int laneIndex = 0;
+            foreach (var kv in totals)
+            {
+                int remaining = kv.Value;
+                while (remaining > 0)
+                {
+                    int chunkSize = Random.Range(3, 6);
+                    if (remaining <= 5) chunkSize = remaining;
+                    else if (remaining - chunkSize < 3) chunkSize = remaining - 3;
+                    if (chunkSize < 3) chunkSize = remaining;
+
+                    remaining -= chunkSize;
+                    _draft.Queues[laneIndex % _draft.Queues.Count].Entries.Add(new FoodStackData { Type = kv.Key, Amount = chunkSize });
+                    laneIndex++;
+                }
+            }
+
+            RefreshUiFromDraft();
         }
 
         #endregion

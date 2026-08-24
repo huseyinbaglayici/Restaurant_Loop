@@ -1,0 +1,64 @@
+using RestaurantLoop.Runtime.Conveyor;
+using RestaurantLoop.Runtime.Data;
+using UnityEngine;
+
+namespace RestaurantLoop.Signals
+{
+    // Logical layer (ConveyorManager / CustomerConsumeService) fires these the frame a decision is made.
+    // The visual layer (ConveyorVisualService) replays them ConveyorFeelSettings.VisualLagSeconds later.
+    // Anything cosmetic added later — VFX, SFX, screen shake, DOTween flourishes — subscribes here too.
+
+    public class FoodEnteredBeltSignal
+    {
+        public int ItemId;
+        public FoodItemController Visual;
+
+        // Where the visual physically is right now (queue slot, exit-stack slot, or the belt entry itself).
+        public Vector3 SourceWorldPosition;
+
+        // Path progress the logical item was created at (0 for entry, cell index for pre-placed level items).
+        public float StartProgress;
+
+        // false for level-authored items that are already sitting on the belt at boot.
+        public bool PlayEntryFlight;
+    }
+
+    public class FoodDockedSignal
+    {
+        public int ItemId;
+        public FoodItemController Visual;
+        public int SlotIndex;
+        public Vector3 SlotWorldPosition;
+    }
+
+    public class FoodConsumedSignal
+    {
+        public int ItemId;
+        public FoodItemController Visual;
+
+        // What the customer took — not what is left on the belt item.
+        public FoodStackData TakenStack;
+
+        // true: the belt item is gone logically and its visual is handed over to the visual layer.
+        // false: the belt item stays on the belt with a reduced amount.
+        public bool ItemFullyConsumed;
+
+        public Vector2Int CustomerCoord;
+        public RuntimeCustomerState.ConsumeResult ServeResult;
+    }
+
+    // Fired by the visual layer once the food actually reaches the customer's handoff anchor.
+    // This is the hook point for consume VFX / SFX / customer dissolve.
+    public class FoodDeliveredToCustomerSignal
+    {
+        public Vector2Int CustomerCoord;
+        public FoodStackData DeliveredStack;
+        public Vector3 WorldPosition;
+        public RuntimeCustomerState.ConsumeResult ServeResult;
+    }
+
+    // Belt was wiped logically (level teardown / restart) — visual layer drops everything it still owns.
+    public class BeltClearedSignal
+    {
+    }
+}

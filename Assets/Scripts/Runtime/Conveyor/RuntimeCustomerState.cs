@@ -14,6 +14,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _customers[customer.Coord] = customer;
         }
 
+        public int RemainingCount => _customers.Count;
+
         public bool TryGetCustomer(Vector2Int coord, out CustomerEntity customer) =>
             _customers.TryGetValue(coord, out customer);
 

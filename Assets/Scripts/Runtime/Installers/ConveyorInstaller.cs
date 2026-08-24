@@ -36,6 +36,10 @@ namespace RestaurantLoop.Installers
             Container.BindInterfacesAndSelfTo<ConveyorManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<CustomerConsumeService>().AsSingle();
             Container.BindInterfacesTo<ConveyorEntryInput>().AsSingle();
+
+            // visual layer ticks after the logical one, flights last so they consume this frame's commands
+            Container.BindInterfacesAndSelfTo<ConveyorVisualService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<FoodFlightService>().AsSingle();
             Container.Bind<PowerUpService>().AsSingle();
 
             Container.BindInstance(_levelText).AsSingle();

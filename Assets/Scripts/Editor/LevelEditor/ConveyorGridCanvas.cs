@@ -96,7 +96,7 @@ namespace Editor.LevelEditor
             {
                 Vector2 center = CellCenterLocal(kv.Key);
                 _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(kv.Value.Type, center, CellSize));
-                if (kv.Value.Amount > 1)
+                if (kv.Value.Amount > 0)
                     _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(kv.Value.Amount, center, CellSize));
             }
 
@@ -113,18 +113,18 @@ namespace Editor.LevelEditor
                     float halfSize = CellSize * 0.6f;
 
                     _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(order.Type, leftCenter, halfSize));
-                    if (order.Amount > 1)
+                    if (order.Amount > 0)
                         _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(order.Amount, leftCenter, halfSize));
 
                     var second = kv.Value.SecondOrder;
                     _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(second.Type, rightCenter, halfSize));
-                    if (second.Amount > 1)
+                    if (second.Amount > 0)
                         _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(second.Amount, rightCenter, halfSize));
                 }
                 else
                 {
                     _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(order.Type, center, CellSize));
-                    if (order.Amount > 1)
+                    if (order.Amount > 0)
                         _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(order.Amount, center, CellSize));
                 }
 

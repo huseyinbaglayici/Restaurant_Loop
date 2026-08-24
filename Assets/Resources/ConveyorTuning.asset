@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: ConveyorTuning
   m_EditorClassIdentifier: 
   BeltSpeed: 5
+  BeltFoodHeight: 1
   QueueLaneSpacing: 1.2
   QueueZOffsetFromExitStack: 2.2
   QueueRowSpacing: 1.2
   QueueShiftSpeed: 4
   ExitStackZOffsetFromGrid: 1.5
+  ExitStackFoodHeight: 1
   ClickRadiusPixels: 80

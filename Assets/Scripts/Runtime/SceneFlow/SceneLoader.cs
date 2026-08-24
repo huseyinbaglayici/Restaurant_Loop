@@ -12,6 +12,11 @@ namespace RestaurantLoop.SceneFlow
         private readonly SignalBus _signalBus;
         private readonly CurrentLevelProvider _currentLevelProvider;
 
+        // Tracks an in-flight unload so a load requested while it's still running (e.g. Claim ->
+        // menu shown immediately -> player taps Play before the old scene is actually gone) waits
+        // for it instead of loading a second GameplayScene instance on top of the first.
+        private AsyncOperation _pendingUnload;
+
         public SceneLoader(SignalBus signalBus, CurrentLevelProvider currentLevelProvider)
         {
             _signalBus = signalBus;
@@ -29,27 +34,30 @@ namespace RestaurantLoop.SceneFlow
         {
             _signalBus.Fire<LoadingStartedSignal>();
 
+            if (_pendingUnload != null && !_pendingUnload.isDone)
+            {
+                _pendingUnload.completed += _ => BeginLoad();
+                return;
+            }
+
+            BeginLoad();
+        }
+
+        private void BeginLoad()
+        {
             var operation = SceneManager.LoadSceneAsync(GameplaySceneName, LoadSceneMode.Additive);
             operation.completed += OnGameplaySceneLoaded;
         }
 
         public void UnloadGameplayScene()
         {
-            SceneManager.UnloadSceneAsync(GameplaySceneName);
+            _pendingUnload = SceneManager.UnloadSceneAsync(GameplaySceneName);
         }
 
-        // waits for the old instance to fully unload before loading the new one — avoids two
-        // GameplayScene instances (and their scene-scoped singletons/EventSystems) overlapping
         private void OnRestartRequested(RestartLevelSignal signal)
         {
-            var operation = SceneManager.UnloadSceneAsync(GameplaySceneName);
-            if (operation == null)
-            {
-                LoadGameplayScene();
-                return;
-            }
-
-            operation.completed += _ => LoadGameplayScene();
+            UnloadGameplayScene();
+            LoadGameplayScene();
         }
 
         private void OnGameplaySceneLoaded(AsyncOperation operation)

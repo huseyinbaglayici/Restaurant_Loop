@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 using Zenject;
 using RestaurantLoop.Signals;
-using RestaurantLoop.SceneFlow;
 
 namespace RestaurantLoop.UI
 {
@@ -13,14 +12,12 @@ namespace RestaurantLoop.UI
         [SerializeField] private GameObject loadingRoot;
         [SerializeField] private GameObject menuRoot;
 
-        private ISceneLoader _sceneLoader;
         private SignalBus _signalBus;
         private float _loadingStartedAt;
 
         [Inject]
-        public void Construct(ISceneLoader sceneLoader, SignalBus signalBus)
+        public void Construct(SignalBus signalBus)
         {
-            _sceneLoader = sceneLoader;
             _signalBus = signalBus;
         }
 
@@ -29,8 +26,6 @@ namespace RestaurantLoop.UI
             _signalBus.Subscribe<LoadingStartedSignal>(ShowLoading);
             _signalBus.Subscribe<GameplaySceneReadySignal>(HideLoading);
             _signalBus.Subscribe<LevelEndedSignal>(ShowMenu);
-
-            _sceneLoader.LoadGameplayScene();
         }
 
         private void OnDestroy()

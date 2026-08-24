@@ -17,7 +17,7 @@ public class PowerUpUIBuilder : EditorWindow
         // Create Panel
         GameObject panelObj = new GameObject("PowerUpPanel", typeof(RectTransform), typeof(HorizontalLayoutGroup));
         panelObj.transform.SetParent(canvas.transform, false);
-        
+
         RectTransform panelRect = panelObj.GetComponent<RectTransform>();
         panelRect.anchorMin = new Vector2(0, 0);
         panelRect.anchorMax = new Vector2(1, 0);
@@ -47,7 +47,8 @@ public class PowerUpUIBuilder : EditorWindow
 
     private static void CreateButton(Transform parent, string name, System.Type scriptType)
     {
-        GameObject buttonObj = new GameObject("Button_" + name.Replace(" ", ""), typeof(RectTransform), typeof(Image), typeof(Button));
+        GameObject buttonObj = new GameObject("Button_" + name.Replace(" ", ""), typeof(RectTransform), typeof(Image),
+            typeof(Button));
         buttonObj.transform.SetParent(parent, false);
 
         // Add the powerup script
@@ -56,11 +57,11 @@ public class PowerUpUIBuilder : EditorWindow
         // Setup the button onClick (Editor-time persistent binding requires UnityEventTools, 
         // for simplicity we just instruct the user or let them add it, but since they have the script on the button,
         // it's easy for them to hook it up, or they can hook it via script at runtime).
-        
+
         // Add Text child
         GameObject textObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
         textObj.transform.SetParent(buttonObj.transform, false);
-        
+
         Text text = textObj.GetComponent<Text>();
         text.text = name;
         text.alignment = TextAnchor.MiddleCenter;
@@ -70,7 +71,7 @@ public class PowerUpUIBuilder : EditorWindow
         text.resizeTextForBestFit = true;
         text.resizeTextMinSize = 20;
         text.resizeTextMaxSize = 60;
-        
+
         RectTransform textRect = textObj.GetComponent<RectTransform>();
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;
