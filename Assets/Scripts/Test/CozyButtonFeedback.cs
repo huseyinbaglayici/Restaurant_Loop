@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -17,6 +17,10 @@ public class CozyButtonFeedback : MonoBehaviour, IPointerDownHandler, IPointerUp
 
     [Tooltip("Animasyon hızı")]
     public float animationSpeed = 16f;
+
+    [Header("Audio Settings")]
+    [Tooltip("Tıklandığında çalacak ses")]
+    public AudioClip clickSound;
 
     private Vector3 originalScale;
     private Vector3 targetScale;
@@ -84,11 +88,28 @@ public class CozyButtonFeedback : MonoBehaviour, IPointerDownHandler, IPointerUp
 
     private void StartPunchEffect()
     {
+        PlaySound();
+
         if (gameObject.activeInHierarchy)
         {
             if (activeScaleRoutine != null) StopCoroutine(activeScaleRoutine);
             activeScaleRoutine = StartCoroutine(PunchRoutine());
         }
+    }
+
+    private void PlaySound()
+    {
+        if (clickSound == null) return;
+
+        AudioSource source = GetComponent<AudioSource>();
+        if (source == null)
+        {
+            source = gameObject.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+            source.spatialBlend = 0f; // 2D Ses (Mesafeden etkilenmez, net duyulur)
+        }
+
+        source.PlayOneShot(clickSound, 0.2f);
     }
 
     private IEnumerator AnimateScale()

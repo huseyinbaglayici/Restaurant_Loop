@@ -16,15 +16,6 @@ public class TestPowerUpPickFromBottom : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        if (btn != null && TestGameManager.Instance != null)
-        {
-            // Özellik açıksa yeşil yan, kapalıysa eski rengine dön
-            btn.image.color = TestGameManager.Instance.allowPickFromBottom ? Color.green : originalColor;
-        }
-    }
-
     public void ActivatePowerUp()
     {
         if (TestGameManager.Instance != null && !TestGameManager.Instance.allowPickFromBottom)

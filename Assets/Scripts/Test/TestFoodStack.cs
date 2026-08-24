@@ -145,7 +145,7 @@ public class TestFoodStack : MonoBehaviour
             block = GameObject.CreatePrimitive(PrimitiveType.Cube);
             block.transform.SetParent(transform);
             block.transform.localPosition = new Vector3(0, index * yOffset, 0);
-            block.transform.localScale = Vector3.one;
+            block.transform.localScale = Vector3.one * 0.4f;
             Renderer rnd = block.GetComponent<Renderer>();
             if (rnd != null) rnd.material.color = foodColor;
         }
