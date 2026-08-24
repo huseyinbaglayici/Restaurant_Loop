@@ -45,6 +45,7 @@ namespace RestaurantLoop.Signals
 
         public Vector2Int CustomerCoord;
         public RuntimeCustomerState.ConsumeResult ServeResult;
+        public bool LevelWon;
     }
 
     // Fired by the visual layer once the food actually reaches the customer's handoff anchor.

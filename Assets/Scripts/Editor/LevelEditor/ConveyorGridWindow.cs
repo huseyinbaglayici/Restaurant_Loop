@@ -11,6 +11,7 @@ namespace Editor.LevelEditor
     {
         private const string UssPath = "Assets/Scripts/Editor/LevelEditor/LevelEditor.uss";
         private const string LevelFolder = "Assets/Data/Levels";
+        private const string LevelDatabasePath = "Assets/Resources/LevelDatabase.asset";
         private const int QueueLaneCount = 3;
 
         private static readonly FoodType[] Palette =
@@ -184,7 +185,45 @@ namespace Editor.LevelEditor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
+            RegisterInDatabase(asset);
+
             Debug.Log($"[ConveyorGridWindow] Saved level {asset.LevelId} to {path}");
+        }
+
+        private static void RegisterInDatabase(ConveyorLevelDataSO asset)
+        {
+            var database = AssetDatabase.LoadAssetAtPath<LevelDatabase>(LevelDatabasePath);
+            if (database == null)
+            {
+                Debug.LogWarning($"[ConveyorGridWindow] No LevelDatabase found at {LevelDatabasePath} — level not registered.");
+                return;
+            }
+
+            var so = new SerializedObject(database);
+            var levels = so.FindProperty("_levels");
+
+            for (int i = 0; i < levels.arraySize; i++)
+            {
+                var element = levels.GetArrayElementAtIndex(i);
+                var existing = element.objectReferenceValue as ConveyorLevelDataSO;
+
+                if (existing == asset) return;
+
+                if (existing != null && existing.LevelId == asset.LevelId)
+                {
+                    element.objectReferenceValue = asset;
+                    so.ApplyModifiedProperties();
+                    EditorUtility.SetDirty(database);
+                    AssetDatabase.SaveAssets();
+                    return;
+                }
+            }
+
+            levels.InsertArrayElementAtIndex(levels.arraySize);
+            levels.GetArrayElementAtIndex(levels.arraySize - 1).objectReferenceValue = asset;
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(database);
+            AssetDatabase.SaveAssets();
         }
 
         private void LoadLevel()

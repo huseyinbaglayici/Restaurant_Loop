@@ -184,6 +184,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             var result = _customerState.Consume(coord, amountTaken);
             if (result == RuntimeCustomerState.ConsumeResult.NotFound) return;
 
+            bool levelWon = result == RuntimeCustomerState.ConsumeResult.Served && _customerState.RemainingCount == 0;
+
             _signalBus.Fire(new FoodConsumedSignal
             {
                 ItemId = itemId,
@@ -191,7 +193,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 TakenStack = new FoodStackData { Type = visual.Stack.Type, Amount = amountTaken },
                 ItemFullyConsumed = itemFullyConsumed,
                 CustomerCoord = coord,
-                ServeResult = result
+                ServeResult = result,
+                LevelWon = levelWon
             });
 
             if (result != RuntimeCustomerState.ConsumeResult.Served) return;
@@ -199,8 +202,9 @@ namespace RestaurantLoop.Runtime.Conveyor
             // data is already gone from _customerState — the despawn happens once the happy reaction
             // finishes, which the visual layer kicks off when the food lands.
             RevealHiddenNeighbors(coord);
-            if (_customerState.RemainingCount == 0) OnLevelEnded?.Invoke(true);
         }
+
+        public void NotifyLevelWon() => OnLevelEnded?.Invoke(true);
 
         private void RevealHiddenNeighbors(Vector2Int coord)
         {

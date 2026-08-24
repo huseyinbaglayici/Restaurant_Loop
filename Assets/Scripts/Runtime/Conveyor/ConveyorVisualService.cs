@@ -42,6 +42,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly FoodItemController.Pool _foodPool;
         private readonly CustomerSpawner _customerSpawner;
         private readonly RuntimeCustomerState _customerState;
+        private readonly CustomerConsumeService _consumeService;
 
         // Belt items currently drawn by this service, keyed by the logical item id.
         private readonly Dictionary<int, BeltVisual> _beltVisuals = new();
@@ -59,7 +60,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             FoodFlightService flightService,
             FoodItemController.Pool foodPool,
             CustomerSpawner customerSpawner,
-            RuntimeCustomerState customerState)
+            RuntimeCustomerState customerState,
+            CustomerConsumeService consumeService)
         {
             _signalBus = signalBus;
             _conveyorManager = conveyorManager;
@@ -69,6 +71,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _foodPool = foodPool;
             _customerSpawner = customerSpawner;
             _customerState = customerState;
+            _consumeService = consumeService;
         }
 
         public void Initialize()
@@ -193,6 +196,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             bool fullyConsumed = signal.ItemFullyConsumed;
             var coord = signal.CustomerCoord;
             var serveResult = signal.ServeResult;
+            bool levelWon = signal.LevelWon;
 
             Defer(() =>
             {
@@ -205,7 +209,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                     flyer.transform,
                     () => ResolveCustomerHandoffPosition(coord, flyer.transform.position),
                     _feel.ConsumeToCustomer,
-                    () => OnConsumeFlightArrived(flyer, coord, takenStack, serveResult));
+                    () => OnConsumeFlightArrived(flyer, coord, takenStack, serveResult, levelWon));
             });
         }
 
@@ -230,7 +234,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             FoodItemController flyer,
             Vector2Int coord,
             FoodStackData takenStack,
-            RuntimeCustomerState.ConsumeResult serveResult)
+            RuntimeCustomerState.ConsumeResult serveResult,
+            bool levelWon)
         {
             var worldPosition = flyer != null ? flyer.transform.position : Vector3.zero;
 
@@ -253,6 +258,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 WorldPosition = worldPosition,
                 ServeResult = serveResult
             });
+
+            if (levelWon) _consumeService.NotifyLevelWon();
         }
 
         // The customer reacts when the food lands, not when the logical layer decided it would.

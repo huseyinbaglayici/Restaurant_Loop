@@ -28,6 +28,10 @@ namespace RestaurantLoop.SceneFlow
             _signalBus.Subscribe<LevelEndedSignal>(OnLevelEnded);
             _signalBus.Subscribe<PlayRequestedSignal>(OnPlayRequested);
             _signalBus.Subscribe<RestartLevelSignal>(OnRestartRequested);
+
+            // Cold boot only: MainMenuScene just finished loading. Continue straight on into
+            // GameplayScene under the same loading screen — the player never sees the menu.
+            _signalBus.Subscribe<MainMenuReadySignal>(LoadGameplayScene);
         }
 
         public void LoadGameplayScene()
@@ -68,9 +72,17 @@ namespace RestaurantLoop.SceneFlow
             _signalBus.Fire<GameplaySceneReadySignal>();
         }
 
+        // Claim: show the loading screen for the teardown too, then reveal the menu once
+        // GameplayScene is actually gone (not on the raw signal — the unload is still async).
         private void OnLevelEnded(LevelEndedSignal signal)
         {
+            _signalBus.Fire<LoadingStartedSignal>();
+
             UnloadGameplayScene();
+            if (_pendingUnload != null)
+                _pendingUnload.completed += _ => _signalBus.Fire<MenuReadySignal>();
+            else
+                _signalBus.Fire<MenuReadySignal>();
         }
 
         private void OnPlayRequested(PlayRequestedSignal signal)

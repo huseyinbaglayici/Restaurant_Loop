@@ -14,6 +14,9 @@ namespace RestaurantLoop.Runtime.UI
         [SerializeField] private UnityEngine.UI.Button _buttonNext;
 
         private CustomerConsumeService _consumeService;
+        private ConveyorManager _conveyorManager;
+        private ExitStackAnchor _exitStackAnchor;
+        private FoodItemController.Pool _foodPool;
         private SignalBus _signalBus;
         private ISaveManager _saveManager;
         private CurrentLevelProvider _currentLevelProvider;
@@ -22,12 +25,18 @@ namespace RestaurantLoop.Runtime.UI
         [Inject]
         public void Construct(
             CustomerConsumeService consumeService,
+            ConveyorManager conveyorManager,
+            ExitStackAnchor exitStackAnchor,
+            FoodItemController.Pool foodPool,
             SignalBus signalBus,
             ISaveManager saveManager,
             CurrentLevelProvider currentLevelProvider,
             LevelDatabase levelDatabase)
         {
             _consumeService = consumeService;
+            _conveyorManager = conveyorManager;
+            _exitStackAnchor = exitStackAnchor;
+            _foodPool = foodPool;
             _signalBus = signalBus;
             _saveManager = saveManager;
             _currentLevelProvider = currentLevelProvider;
@@ -61,9 +70,21 @@ namespace RestaurantLoop.Runtime.UI
             _panelCompleted.SetActive(false);
             Time.timeScale = 1f;
 
+            ClearRemainingEntities();
             AdvanceSavedLevel();
 
             _signalBus.Fire<LevelEndedSignal>();
+        }
+
+        private void ClearRemainingEntities()
+        {
+            _conveyorManager.ClearBelt();
+
+            for (int i = 0; i < _exitStackAnchor.SlotCount; i++)
+            {
+                if (!_exitStackAnchor.TryRemoveFromSlot(i, out var visual)) continue;
+                if (visual != null) _foodPool.Despawn(visual);
+            }
         }
 
         // Only commits if the next id actually exists — otherwise this was the last level, so

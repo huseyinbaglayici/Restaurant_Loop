@@ -20,6 +20,10 @@ namespace RestaurantLoop.Runtime.Conveyor
         private Vector3 _unitBaseScale = Vector3.one;
         private bool _unitBaseScaleCaptured;
 
+        private Mesh _unitBaseMesh;
+        private Material[] _unitBaseMaterials;
+        private bool _unitBaseVisualCaptured;
+
         // Last multiplier / spacing pushed onto the units — used to pick up live tweaks while playing.
         private float _appliedUnitScale = -1f;
         private float _appliedSpacing;
@@ -73,6 +77,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private void ApplyStack(FoodStackData stack)
         {
             CaptureUnitBaseScaleOnce();
+            CaptureUnitBaseVisualOnce();
 
             while (_units.Count < stack.Amount)
                 _units.Add(Instantiate(_unitPrefab, transform));
@@ -101,18 +106,18 @@ namespace RestaurantLoop.Runtime.Conveyor
 
                 if (renderer != null)
                 {
-                    // A model that ships its own materials keeps them; the flat colour is only the fallback
-                    // for meshes that render with the unit prefab's single material.
                     if (hasMesh && meshVisual.HasMaterials) renderer.sharedMaterials = meshVisual.Materials;
-                    else renderer.material.color = color;
+                    else
+                    {
+                        renderer.sharedMaterials = _unitBaseMaterials;
+                        renderer.material.color = color;
+                    }
                 }
 
                 _units[i].transform.localRotation = unitRotation;
 
-                if (!hasMesh) continue;
-
                 var meshFilter = _units[i].GetComponentInChildren<MeshFilter>();
-                if (meshFilter != null) meshFilter.sharedMesh = meshVisual.Mesh;
+                if (meshFilter != null) meshFilter.sharedMesh = hasMesh ? meshVisual.Mesh : _unitBaseMesh;
             }
 
             ApplyUnitLayout();
@@ -189,6 +194,19 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _unitBaseScaleCaptured = true;
             _unitBaseScale = _unitPrefab.transform.localScale;
+        }
+
+        private void CaptureUnitBaseVisualOnce()
+        {
+            if (_unitBaseVisualCaptured || _unitPrefab == null) return;
+
+            _unitBaseVisualCaptured = true;
+
+            var meshFilter = _unitPrefab.GetComponentInChildren<MeshFilter>();
+            _unitBaseMesh = meshFilter != null ? meshFilter.sharedMesh : null;
+
+            var renderer = _unitPrefab.GetComponentInChildren<Renderer>();
+            _unitBaseMaterials = renderer != null ? renderer.sharedMaterials : null;
         }
 
         public class Pool : MonoPoolableMemoryPool<Vector3, FoodStackData, FoodVisualState, FoodItemController>

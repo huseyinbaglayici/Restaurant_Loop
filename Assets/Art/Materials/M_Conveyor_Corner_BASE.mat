@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: 'XXASLDKJSAKL;WQ]'
+  m_Name: M_Conveyor_Corner_BASE
   m_Shader: {fileID: 4800000, guid: 181cffe3f832bf646839f6c6ecdbfd34, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -25,7 +25,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 2de1ad467d2acd84c85ef419e4b480d0, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 0, y: 1.5}
         m_Offset: {x: 0, y: 1.68}
     - _BumpMap:
@@ -118,7 +118,7 @@ Material:
     - _ZWrite: 1
     - __dummy__: 0
     m_Colors:
-    - _BaseColor: {r: 0.8679245, g: 0.27429688, b: 0.27429688, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _HColor: {r: 1, g: 1, b: 1, a: 1}

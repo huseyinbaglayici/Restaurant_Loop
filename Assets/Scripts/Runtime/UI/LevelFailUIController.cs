@@ -58,6 +58,7 @@ namespace RestaurantLoop.Runtime.UI
         private void ShowKeepPlaying()
         {
             _panelKeepPlaying.SetActive(true);
+            Time.timeScale = 0f;
         }
 
         private void OnPlayOnClicked()
@@ -67,6 +68,7 @@ namespace RestaurantLoop.Runtime.UI
             if (visual != null) _foodPool.Despawn(visual);
 
             _panelKeepPlaying.SetActive(false);
+            Time.timeScale = 1f;
         }
 
         private void OnKeepPlayingCloseClicked()
