@@ -99,3 +99,4 @@ MonoBehaviour:
   _renderer: {fileID: 344789369305884645}
   _texturePropertyName: _BaseMap
   _scrollSpeed: 0.5
+  _scrollDirection: 1
