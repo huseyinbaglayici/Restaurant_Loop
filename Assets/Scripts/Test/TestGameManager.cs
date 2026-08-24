@@ -118,6 +118,10 @@ public class TestGameManager : MonoBehaviour
     
     [Header("Customer Generation")]
     public Transform customerCenter; // Müşterilerin etrafında dizileceği merkez nokta
+    [Tooltip("Müşteriler arasındaki X ekseni boşluğu (aralığı)")]
+    public float customerSpacingX = 1.5f;
+    [Tooltip("Müşteriler arasındaki Z ekseni boşluğu (aralığı)")]
+    public float customerSpacingZ = 1.5f;
     [HideInInspector] public int outerCustomerCount = 18;
     [HideInInspector] public float custRectWidth = 6.5f; // Dış müşteri dikdörtgeninin genişliği
     [HideInInspector] public float custRectDepth = 9f; // Dış müşteri dikdörtgeninin derinliği
@@ -197,13 +201,12 @@ public class TestGameManager : MonoBehaviour
 
             int gridCols = levelData.gridSizeX;
             int gridRows = levelData.gridSizeY;
-            float gridSpacing = 1.5f;
-            float offsetX = (gridCols - 1) * gridSpacing / 2f;
-            float offsetY = (gridRows - 1) * gridSpacing / 2f;
+            float offsetX = (gridCols - 1) * customerSpacingX / 2f;
+            float offsetZ = (gridRows - 1) * customerSpacingZ / 2f;
 
             foreach (var cData in levelData.customers)
             {
-                Vector3 pos = new Vector3(cData.gridX * gridSpacing - offsetX, 0, cData.gridY * gridSpacing - offsetY);
+                Vector3 pos = new Vector3(cData.gridX * customerSpacingX - offsetX, 0, cData.gridY * customerSpacingZ - offsetZ);
                 pos += customerCenter.position;
 
                 GameObject obj;
@@ -359,7 +362,7 @@ public class TestGameManager : MonoBehaviour
                     if (chunk == null || chunk.color == TestCustomerData.CustomerColor.None) continue;
 
                     GameObject baseObj = new GameObject("FoodStack_" + chunk.color.ToString());
-                    baseObj.transform.localScale = Vector3.one * 0.4f;
+                    baseObj.transform.localScale = Vector3.one;
                     baseObj.AddComponent<BoxCollider>(); 
                     
                     TestFoodStack food = baseObj.AddComponent<TestFoodStack>();
@@ -428,7 +431,7 @@ public class TestGameManager : MonoBehaviour
                     remaining -= chunkSize;
 
                     GameObject baseObj = new GameObject("FoodStack_" + kvp.Key.ToString());
-                    baseObj.transform.localScale = Vector3.one * 0.4f;
+                    baseObj.transform.localScale = Vector3.one;
                     baseObj.AddComponent<BoxCollider>(); // Collider eklendi, boyutu script içinden ayarlanacak
                     
                     TestFoodStack food = baseObj.AddComponent<TestFoodStack>();
