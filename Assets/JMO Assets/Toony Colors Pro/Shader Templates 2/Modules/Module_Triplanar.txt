@@ -1,5 +1,5 @@
 // Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 // Shader Generator Module: Triplanar Mapping
 
@@ -203,7 +203,7 @@ sngl	lbl="Object Position Offset"		kw=TRIPLANAR_OBJ_POS_OFFSET													needs
 /// IF TRIPLANAR
 
 	/// IF TRIPLANAR_OBJ_POS_OFFSET
-			half3 objPositionInWorld = unity_ObjectToWorld._m03_m13_m23;
+			half3 objPositionInWorld = UNITY_MATRIX_M._m03_m13_m23;
 		/// IF !TERRAIN_SHADER || TRIPLANAR_CEILING
 			uv_ground.xy -= objPositionInWorld.xz;
 		///

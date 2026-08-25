@@ -17,7 +17,6 @@ using UnityEditor.AssetImporters;
 #else
 using UnityEditor.Experimental.AssetImporters;
 #endif
-using UnityEngine.Rendering;
 
 namespace ToonyColorsPro
 {
@@ -74,7 +73,13 @@ namespace ToonyColorsPro
                 LessOrEqual
             }
 
-#if UNITY_2022_2_OR_NEWER
+#if UNITY_6000_1_OR_NEWER
+            const int URP_VERSION = 171;
+#elif UNITY_6000_0_OR_NEWER
+            const int URP_VERSION = 170;
+#elif UNITY_2023_2_OR_NEWER
+            const int URP_VERSION = 16;
+#elif UNITY_2022_2_OR_NEWER
             const int URP_VERSION = 14;
 #elif UNITY_2021_2_OR_NEWER
             const int URP_VERSION = 12;
@@ -131,8 +136,8 @@ namespace ToonyColorsPro
             ShaderOption ParseOptionFromLine(string line, ref string singleLineOptionText)
             {
                 int tagStart = line.IndexOf("/***", StringComparison.Ordinal);
-                int firstQuote = line.IndexOf('"') + 1;
-                int lastQuote = line.LastIndexOf('"');
+                int firstQuote = line.IndexOf('"', tagStart) + 1;
+                int lastQuote = line.LastIndexOf('"', line.Length - 1, line.Length - tagStart);
 
                 singleLineOptionText = line.Substring(0, tagStart).TrimEnd();
 
@@ -286,7 +291,7 @@ namespace ToonyColorsPro
                     shaderErrors = System.Array.ConvertAll(errors, err => string.Format("{0} (line {1})", err.message, err.line));
                     foreach (ShaderMessage error in errors)
                     {
-                        string message = error.line <= 0 ?
+                        string message = error.line <= 0 || (error.line-1) >= shaderSourceLines.Length ?
                             string.Format("Shader Error in '{0}' (in file '{2}')\nError: {1}\n", shaderName, error.message, error.file) :
                             string.Format("Shader Error in '{0}' (line {2} in file '{3}')\nError: {1}\nLine: {4}\n", shaderName, error.message, error.line, error.file, shaderSourceLines[error.line-1]);
                         if (error.severity == ShaderCompilerMessageSeverity.Warning)

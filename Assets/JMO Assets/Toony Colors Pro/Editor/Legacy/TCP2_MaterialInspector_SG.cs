@@ -1,5 +1,5 @@
 // Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 //Enable this to display the default Inspector (in case the custom Inspector is broken)
 //#define SHOW_DEFAULT_INSPECTOR
@@ -9,6 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using ToonyColorsPro.Utilities;
 using ToonyColorsPro.Legacy;
+using UnityEngine.Rendering;
 
 // Custom material inspector for generated shader
 
@@ -83,7 +84,11 @@ public class TCP2_MaterialInspector_SG : ShaderGUI
 				else
 				{
 					//Draw regular property
-					if(visible && (p.flags & (MaterialProperty.PropFlags.PerRendererData | MaterialProperty.PropFlags.HideInInspector)) == MaterialProperty.PropFlags.None)
+#if UNITY_6000_1_OR_NEWER
+					if ((p.propertyFlags & ShaderPropertyFlags.HideInInspector) == 0)
+#else
+					if (visible && (p.flags & (MaterialProperty.PropFlags.PerRendererData | MaterialProperty.PropFlags.HideInInspector)) == MaterialProperty.PropFlags.None)
+#endif
 						mMaterialEditor.ShaderProperty(p, p.displayName);
 				}
 			}

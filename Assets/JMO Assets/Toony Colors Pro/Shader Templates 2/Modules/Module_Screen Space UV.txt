@@ -1,5 +1,5 @@
 // Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 // Shader Generator Module: Screen Space UV functions
 
@@ -36,7 +36,7 @@
 	//Get screen space UV with object offset taken into account
 	inline float2 GetScreenUV(float2 clipPos)
 	{
-		float4x4 mvpMatrix = mul(unity_MatrixVP, unity_ObjectToWorld);
+		float4x4 mvpMatrix = mul(unity_MatrixVP, UNITY_MATRIX_M);
 		float4 screenSpaceObjPos = float4(mvpMatrix[0][3],mvpMatrix[1][3],mvpMatrix[2][3],mvpMatrix[3][3]);
 		float2 screenUV = clipPos.xy;
 		screenUV.xy -= screenSpaceObjPos.xy / screenSpaceObjPos.ww;

@@ -11,11 +11,14 @@ namespace RestaurantLoop.Runtime.Conveyor
         // rendering — an uncapped stack reads as a tower instead of a pile of food.
         private const int MaxVisibleUnits = 5;
 
+        // Only reached when a unit's prefab has no MeshFilter bounds to measure a height from — should never
+        // happen for authored art, but keeps stacking sane instead of collapsing units on top of each other.
+        private const float FallbackStackSpacing = 1f;
+
         [SerializeField] private GameObject _unitPrefab;
-        [SerializeField] private float _stackSpacing = 1.05f;
 
         [Inject(Optional = true)] private FoodMeshSettings _foodMeshSettings;
-        [Inject(Optional = true)] private ConveyorFeelSettings _feel;
+        [Inject(Optional = true)] private FoodPlacementSettings _placement;
 
         // Stacked-units mode (most food types): one GameObject per visible unit. Only the top unit
         // (highest index) is ever Opened — and only while this whole item is Opened — everything below
@@ -50,8 +53,11 @@ namespace RestaurantLoop.Runtime.Conveyor
         private bool _baseRotationCaptured;
 
         private FoodVisualState _visualState;
+        private FoodLocation _location;
 
         public FoodStackData Stack { get; private set; }
+
+        public FoodLocation Location => _location;
 
         // e.g. a drink rack: several pre-placed single-item children under one shared base, instead of a
         // vertical stack of copies. Consume flights fly one of those children directly (see TakeFixedSlotChild)
@@ -75,6 +81,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             transform.SetPositionAndRotation(position, _baseRotation);
             Stack = stack;
             _visualState = visualState;
+            _location = FoodLocation.Queue;
             ApplyStack(stack);
             gameObject.SetActive(true);
         }
@@ -89,6 +96,16 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (_visualState == visualState) return;
 
             _visualState = visualState;
+            ApplyStack(Stack);
+        }
+
+        // Where this item currently sits (queue / exit stack / belt) — drives which of FoodPlacementSettings'
+        // per-location scales applies. Called by the systems that move a visual between those places.
+        public void SetLocation(FoodLocation location)
+        {
+            if (_location == location) return;
+
+            _location = location;
             ApplyStack(Stack);
         }
 
@@ -280,7 +297,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             return child;
         }
 
-        // Scale and stack spacing both come from the feel asset, so they are re-applied together.
+        // Scale and stack spacing both come from the placement asset, so they are re-applied together.
         private void ApplyUnitLayout(FoodType type)
         {
             float spacing = ResolveSpacing(type);
@@ -302,14 +319,13 @@ namespace RestaurantLoop.Runtime.Conveyor
         // doesn't jump around as the top unit's mesh changes.
         private float ResolveSpacing(FoodType type)
         {
-            if (_feel == null || _feel.StackSpacingFactor <= 0f) return _stackSpacing;
-            if (_units.Count == 0) return _stackSpacing;
+            if (_units.Count == 0 || _placement == null) return FallbackStackSpacing;
 
             float scale = ResolveScale(type, _unitIsOpened[0] ? FoodVisualState.Opened : FoodVisualState.Closed);
             float unitHeight = ResolveUnitHeight(_unitSourcePrefab[0], _unitAppliedRotation[0], _unitBaseScale[0] * scale);
-            if (unitHeight <= 0.0001f) return _stackSpacing;
+            if (unitHeight <= 0.0001f) return FallbackStackSpacing;
 
-            return unitHeight * _feel.StackSpacingFactor;
+            return unitHeight * _placement.ResolveStackSpacingFactor(type);
         }
 
         // Height along world Y after the unit's fixed orientation and scale are applied — a prefab laid
@@ -365,9 +381,10 @@ namespace RestaurantLoop.Runtime.Conveyor
             return combined;
         }
 
-        private float ResolveScale(FoodType type, FoodVisualState state) => _feel == null ? 1f : _feel.ResolveFoodScale(type, state);
+        private float ResolveScale(FoodType type, FoodVisualState state) =>
+            _placement == null ? 1f : _placement.ResolveScale(type, _location, state);
 
-        // Picks up scale / spacing tweaks made in the feel asset while the game is running.
+        // Picks up scale / spacing tweaks made in the placement asset while the game is running.
         private void LateUpdate()
         {
             if (_usesFixedChildSlots)

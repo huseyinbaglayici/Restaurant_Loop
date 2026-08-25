@@ -1,5 +1,5 @@
 ﻿// Toony Colors Pro 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 using System;
 using System.Collections.Generic;
@@ -266,7 +266,6 @@ namespace ToonyColorsPro
 						{
 							string keyword = line.Substring(line.IndexOf("/// IF_KEYWORD ") + "/// IF_KEYWORD ".Length);
 							bool condition = config.HasKeyword(keyword) && !string.IsNullOrEmpty(config.GetKeyword(keyword));
-							Debug.Log("Check keyword '" + keyword + "' = " + condition);
 							stack.Add(condition);
 							done.Add(condition);
 							depth++;

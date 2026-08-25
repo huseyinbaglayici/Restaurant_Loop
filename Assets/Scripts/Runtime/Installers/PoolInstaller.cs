@@ -32,6 +32,7 @@ namespace RestaurantLoop.Installers
             BindCustomerPool();
             BindTuning();
             BindFeelSettings();
+            BindPlacementSettings();
         }
 
         private void BindFeelSettings()
@@ -45,6 +46,19 @@ namespace RestaurantLoop.Installers
             }
 
             Container.BindInstance(feel).AsSingle();
+        }
+
+        private void BindPlacementSettings()
+        {
+            var placement = Resources.Load<FoodPlacementSettings>("FoodPlacementSettings");
+            if (placement == null)
+            {
+                Debug.LogError("[PoolInstaller] FoodPlacementSettings.asset not found under Assets/Resources — " +
+                                "create it via RestaurantLoop/Food Placement Settings, food scale/spacing needs it.");
+                return;
+            }
+
+            Container.BindInstance(placement).AsSingle();
         }
 
         private void BindTuning()

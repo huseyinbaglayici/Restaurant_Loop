@@ -1,0 +1,125 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e741e38b884f3124eb37ee95b3e3dec6, type: 3}
+  m_Name: FoodPlacementSettings
+  m_EditorClassIdentifier: 
+  _entries:
+  - Type: 0
+    Queue:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    FoodStack:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    Conveyor:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    StackSpacingFactor: 1
+  - Type: 1
+    Queue:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    FoodStack:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    Conveyor:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    StackSpacingFactor: 1
+  - Type: 2
+    Queue:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    FoodStack:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    Conveyor:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    StackSpacingFactor: 1
+  - Type: 3
+    Queue:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    FoodStack:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    Conveyor:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    StackSpacingFactor: 1
+  - Type: 4
+    Queue:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    FoodStack:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    Conveyor:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    StackSpacingFactor: 1
+  - Type: 5
+    Queue:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    FoodStack:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    Conveyor:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    StackSpacingFactor: 1
+  - Type: 6
+    Queue:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    FoodStack:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    Conveyor:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    StackSpacingFactor: 1
+  - Type: 7
+    Queue:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    FoodStack:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    Conveyor:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    StackSpacingFactor: 1
+  - Type: 8
+    Queue:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    FoodStack:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    Conveyor:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    StackSpacingFactor: 1
+  - Type: 9
+    Queue:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    FoodStack:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    Conveyor:
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    StackSpacingFactor: 1

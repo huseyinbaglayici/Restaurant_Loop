@@ -1,5 +1,5 @@
 // Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 using System;
 using System.Collections.Generic;
@@ -321,7 +321,11 @@ internal class TCP2_MaterialInspector_PBS_SG : ShaderGUI
 				//Shader Generator Properties
 				for(var i = 0; i < SGProperties.Count; i++)
 				{
+#if UNITY_6000_1_OR_NEWER
+					if (SGProperties[i].propertyType == ShaderPropertyType.Texture)
+#else
 					if (SGProperties[i].type == MaterialProperty.PropType.Texture)
+#endif
 					{
 						//Compensate margins so that texture slot looks square
 						var fw = EditorGUIUtility.fieldWidth;

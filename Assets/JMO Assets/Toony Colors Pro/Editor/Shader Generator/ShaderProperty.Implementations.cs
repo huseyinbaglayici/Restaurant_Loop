@@ -46,6 +46,7 @@ namespace ToonyColorsPro
 				[Serialization.SerializeAs("op")] public Operator @operator = Operator.Multiply;      //How this implementation is calculated compared to the previous one
 				[Serialization.SerializeAs("lbl"), ExcludeFromCopy] public string Label = "Property Label";
 				[Serialization.SerializeAs("gpu_inst")] public bool IsGpuInstanced = false;
+				[Serialization.SerializeAs("dots_inst")] public bool IsDotsInstanced = false;
 				[Serialization.SerializeAs("locked"), ExcludeFromCopy] public bool IsLocked = false;
 				[Serialization.SerializeAs("impl_index"), ExcludeFromCopy] public int DefaultImplementationIndex = -1; // if >= 0, then this is a default implementation
 
@@ -176,6 +177,7 @@ namespace ToonyColorsPro
 					this.@operator = from.@operator;
 					this.Label = from.Label;
 					this.IsGpuInstanced = from.IsGpuInstanced;
+					this.IsDotsInstanced = from.IsDotsInstanced;
 
 					var from_mp = from as Imp_MaterialProperty;
 					var this_mp = this as Imp_MaterialProperty;
@@ -514,9 +516,28 @@ namespace ToonyColorsPro
 					{
 						bool highlighted = !IsDefaultImplementation ? IsGpuInstanced : IsGpuInstanced != GetDefaultImplementation<Imp_MaterialProperty>().IsGpuInstanced;
 						SGUILayout.InlineLabel("GPU Instanced", "Tag this property as a possible variant for GPU instancing", highlighted);
+						EditorGUI.BeginChangeCheck();
 						IsGpuInstanced = SGUILayout.Toggle(IsGpuInstanced);
+						if (EditorGUI.EndChangeCheck())
+							if (IsDotsInstanced && IsGpuInstanced)
+								IsDotsInstanced = false;
 					}
 					EndHorizontal();
+
+					if (ShaderGenerator2.IsURP)
+					{
+						BeginHorizontal();
+						{
+							bool highlighted = !IsDefaultImplementation ? IsDotsInstanced : IsDotsInstanced != GetDefaultImplementation<Imp_MaterialProperty>().IsDotsInstanced;
+							SGUILayout.InlineLabel("DOTS/BRG Instanced", "Tag this property as supporting BatchRendererGroup instancing (DOTS, GPU Resident Drawer). BRG Instancing must also be enabled in the FEATURES tab.", highlighted);
+							EditorGUI.BeginChangeCheck();
+							IsDotsInstanced = SGUILayout.Toggle(IsDotsInstanced);
+							if (EditorGUI.EndChangeCheck())
+								if (IsDotsInstanced && IsGpuInstanced)
+									IsGpuInstanced = false;
+						}
+						EndHorizontal();
+					}
 
 					BeginHorizontal();
 					GUILayout.Space(2);
@@ -539,6 +560,22 @@ namespace ToonyColorsPro
 				{
 					return MaterialDrawers + " ";
 				}
+
+				internal override string PrintVariableDeclare(string indent)
+				{
+					if (IsGlobalVariable)
+						return null;
+					return PrintVariableInternal(indent);
+				}
+
+				internal override string PrintVariableDeclareOutsideCBuffer(string indent)
+				{
+					if (!IsGlobalVariable)
+						return null;
+					return PrintVariableInternal(indent);
+				}
+
+				protected abstract string PrintVariableInternal(string indent);
 			}
 
 			[Serialization.SerializeAs("imp_mp_float")]
@@ -559,7 +596,7 @@ namespace ToonyColorsPro
 
 				internal override string PrintVariableFixedFunction() { return string.Format("[{0}]", PropertyName); }
 				internal override string PrintPropertyInternal(string indent) { return base.PrintPropertyInternal(indent) + string.Format(CultureInfo.InvariantCulture, "{0} (\"{1}\", Float) = {2}", PropertyName, Label, DefaultValue); }
-				internal override string PrintVariableDeclare(string indent) { return string.Format("{0}float {1};", indent, PropertyName); }
+				protected override string PrintVariableInternal(string indent) { return string.Format("{0}float {1};", indent, PropertyName); }
 				internal override string PrintVariableFragment(string inputSource, string outputSource, string arguments) { return FetchVariable(PropertyName, true); }
 
 				internal override void NewLineGUI(bool usedByCustomCode)
@@ -596,7 +633,7 @@ namespace ToonyColorsPro
 
 				internal override string PrintVariableFixedFunction() { return string.Format("[{0}]", PropertyName); }
 				internal override string PrintPropertyInternal(string indent) { return base.PrintPropertyInternal(indent) + string.Format(CultureInfo.InvariantCulture, "{0} (\"{1}\", Range({3},{4})) = {2}", PropertyName, Label, DefaultValue, Min, Max); }
-				internal override string PrintVariableDeclare(string indent) { return string.Format("{0}float {1};", indent, PropertyName); }
+				protected override string PrintVariableInternal(string indent) { return string.Format("{0}float {1};", indent, PropertyName); }
 				internal override string PrintVariableFragment(string inputSource, string outputSource, string arguments) { return FetchVariable(PropertyName, true); }
 
 				internal override void NewLineGUI(bool usedByCustomCode)
@@ -683,7 +720,7 @@ namespace ToonyColorsPro
 				}
 
 				internal override string PrintPropertyInternal(string indent) { return base.PrintPropertyInternal(indent) + string.Format(CultureInfo.InvariantCulture, "{0} (\"{1}\", Vector) = ({2},{3},{4},{5})", PropertyName, Label, DefaultValue.x, DefaultValue.y, DefaultValue.z, DefaultValue.w); }
-				internal override string PrintVariableDeclare(string indent)
+				protected override string PrintVariableInternal(string indent)
 				{
 					// Always declare a float4, even if all channels aren't necessarily used, as they could still be used for custom code
 					//var channels = ChannelsCount > 1 ? ChannelsCount.ToString() : "";
@@ -796,7 +833,7 @@ namespace ToonyColorsPro
 				}
 
 				internal override string PrintPropertyInternal(string indent) { return base.PrintPropertyInternal(indent) + string.Format(CultureInfo.InvariantCulture, "{7}{6}{0} (\"{1}\", Color) = ({2},{3},{4},{5})", PropertyName, Label, DefaultValue.r, DefaultValue.g, DefaultValue.b, DefaultValue.a, Hdr ? "[HDR] " : "", ChannelsCount < 4 ? "[TCP2ColorNoAlpha] " : ""); }
-				internal override string PrintVariableDeclare(string indent)
+				protected override string PrintVariableInternal(string indent)
 				{
 					// Always declare a float4, even if all channels aren't necessarily used, as they could still be used for custom code
 					//var channels = ChannelsCount > 1 ? ChannelsCount.ToString() : "";
@@ -1693,6 +1730,12 @@ namespace ToonyColorsPro
 					properties = properties.TrimEnd('\n');
 					return string.IsNullOrEmpty(properties) ? null : properties;
 				}
+
+				protected override string PrintVariableInternal(string indent)
+				{
+					return null;
+				}
+
 				internal override string PrintVariableFragment(string inputSource, string outputSource, string arguments)
 				{
 					var tilingOffsetVariable = UseCustomTilingOffsetVariable() ? TilingOffsetVariable : GetDefaultTilingOffsetVariable();
@@ -2810,6 +2853,7 @@ namespace ToonyColorsPro
 				[Serialization.SerializeAs("cc")] public int ChannelsCount = 3;
 				[Serialization.SerializeAs("chan")] public string Channels = "RGB";
 				string DefaultChannels = "RGB";
+				[Serialization.SerializeAs("linear")] public bool ConvertToLinearSpace = false;
 
 				public Imp_VertexColor(ShaderProperty shaderProperty) : base(shaderProperty)
 				{
@@ -2853,7 +2897,15 @@ namespace ToonyColorsPro
 				{
 					var hideChannels = TryGetArgument("hide_channels", arguments);
 					var channels = string.IsNullOrEmpty(hideChannels) ? "." + Channels.ToLowerInvariant() : "";
-					return string.Format("{0}.vertexColor{1}", inputSource, channels);
+					var vertexColorsVariable = $"{inputSource}.vertexColor";
+					if (ConvertToLinearSpace)
+					{
+						if (ShaderGenerator2.IsURP)
+							vertexColorsVariable = $"SRGBToLinear({vertexColorsVariable})";
+						else
+							vertexColorsVariable = $"half4(GammaToLinearSpace({vertexColorsVariable}.rgb), {vertexColorsVariable}.a)";
+					}
+					return string.Format($"{vertexColorsVariable}{channels}");
 				}
 
 				internal override void NewLineGUI(bool usedByCustomCode)
@@ -2881,6 +2933,14 @@ namespace ToonyColorsPro
 							else
 								Channels = SGUILayout.RGBASwizzle(Channels, ChannelsCount);
 						}
+					}
+					EndHorizontal();
+
+					BeginHorizontal();
+					{
+						bool highlighted = !IsDefaultImplementation ? ConvertToLinearSpace : ConvertToLinearSpace != GetDefaultImplementation<Imp_VertexColor>().ConvertToLinearSpace;
+						SGUILayout.InlineLabel(TCP2_GUI.TempContent("Convert to Linear Space", "Convert the vertex colors to linear color space if the project is in linear color space."), highlighted);
+						ConvertToLinearSpace = SGUILayout.Toggle(ConvertToLinearSpace);
 					}
 					EndHorizontal();
 				}
@@ -2938,8 +2998,7 @@ namespace ToonyColorsPro
 
 				internal override string PrintVariableVertex(string inputSource, string outputSource, string arguments)
 				{
-					string coord = ShaderGenerator2.VariablesManager.GetVariable("texcoord" + TexcoordChannel);
-					return string.Format("{0}.{1}.xy", inputSource, string.IsNullOrEmpty(coord) ? "texcoord" + TexcoordChannel : coord);
+					return $"{inputSource}.{"texcoord" + TexcoordChannel}.{Channels.ToLowerInvariant()}";
 				}
 
 				internal override string PrintVariableFragment(string inputSource, string outputSource, string arguments)
@@ -2952,7 +3011,11 @@ namespace ToonyColorsPro
 					}
 					else
 					{
-						return string.Format("{0}.{1}.xy", inputSource, coord);
+						bool usedByCustomCode = this.ParentShaderProperty.IsImplementationUsedInCustomCode(this);
+						if (usedByCustomCode)
+							return $"{inputSource}.{coord}";
+						else
+							return $"{inputSource}.{coord}.{Channels.ToLowerInvariant()}";
 					}
 
 					//var hideChannels = TryGetArgument("hide_channels", arguments);
@@ -3194,11 +3257,105 @@ namespace ToonyColorsPro
 				}
 			}
 
+			[Serialization.SerializeAs("imp_objworldpos")]
+			public class Imp_ObjectWorldPosition : Implementation
+			{
+				public static VariableType VariableCompatibility { get { return VariableTypeAll; } }
+				public static string MenuLabel { get { return "Vertex/Mesh World Position"; } }
+				internal override string GUILabel() { return MenuLabel; }
+				internal override OptionFeatures[] NeededFeatures() { return new OptionFeatures[0]; }
+
+				[Serialization.SerializeAs("cc")] public int ChannelsCount = 3;
+				[Serialization.SerializeAs("chan")] public string Channels = "XYZ";
+				string DefaultChannels = "XYZ";
+
+				public Imp_ObjectWorldPosition(ShaderProperty shaderProperty) : base(shaderProperty)
+				{
+					InitChannelsCount();
+					InitChannelsSwizzle();
+				}
+
+				void InitChannelsCount()
+				{
+					switch (ParentShaderProperty.Type)
+					{
+						case VariableType.@float: ChannelsCount = 1; break;
+						case VariableType.float2: ChannelsCount = 2; break;
+						case VariableType.color:
+						case VariableType.float3: ChannelsCount = 3; break;
+						case VariableType.color_rgba:
+						case VariableType.float4: ChannelsCount = 4; break;
+					}
+				}
+
+				void InitChannelsSwizzle()
+				{
+					switch (ParentShaderProperty.Type)
+					{
+						case VariableType.@float: Channels = "X"; break;
+						case VariableType.float2: Channels = "XY"; break;
+						case VariableType.color:
+						case VariableType.float3: Channels = "XYZ"; break;
+						case VariableType.color_rgba:
+						case VariableType.float4: Channels = "XYZW"; break;
+					}
+					DefaultChannels = Channels;
+				}
+
+				public override void OnPasted()
+				{
+					InitChannelsCount();
+				}
+
+				internal override string PrintVariableVertex(string inputSource, string outputSource, string arguments)
+				{
+					var hideChannels = TryGetArgument("hide_channels", arguments);
+					var channels = string.IsNullOrEmpty(hideChannels) ? "." + Channels.ToLowerInvariant() : "";
+					return string.Format("unity_ObjectToWorld._m03_m13_m23{1}", inputSource, channels);
+				}
+
+				internal override string PrintVariableFragment(string inputSource, string outputSource, string arguments)
+				{
+					var hideChannels = TryGetArgument("hide_channels", arguments);
+					var channels = string.IsNullOrEmpty(hideChannels) ? "." + Channels.ToLowerInvariant() : "";
+					return $"unity_ObjectToWorld._m03_m13_m23{channels}";
+				}
+
+				internal override void NewLineGUI(bool usedByCustomCode)
+				{
+					BeginHorizontal();
+					ShaderGenerator2.ContextualHelpBox("The world space position for the whole mesh.");
+					EndHorizontal();
+
+					BeginHorizontal();
+					{
+						bool highlighted = !IsDefaultImplementation ? Channels != DefaultChannels : Channels != GetDefaultImplementation<Imp_ObjectWorldPosition>().Channels;
+						SGUILayout.InlineLabel("Swizzle", highlighted);
+
+						if (usedByCustomCode)
+						{
+							using (new EditorGUI.DisabledScope(true))
+							{
+								GUILayout.Label(TCP2_GUI.TempContent("Defined in Custom Code"), SGUILayout.Styles.ShurikenValue, GUILayout.Height(16), GUILayout.ExpandWidth(false));
+							}
+						}
+						else
+						{
+							if (ChannelsCount == 1)
+								Channels = SGUILayout.XYZSelector(Channels);
+							else
+								Channels = SGUILayout.XYZSwizzle(Channels, ChannelsCount);
+						}
+					}
+					EndHorizontal();
+				}
+			}
+
 			[Serialization.SerializeAs("imp_localnorm")]
 			public class Imp_LocalNormal: Implementation
 			{
 				public static VariableType VariableCompatibility { get { return VariableTypeAll; } }
-				public static string MenuLabel { get { return "Vertex/Object Normal"; } }
+				public static string MenuLabel { get { return "Vertex/Local Normal"; } }
 				internal override string GUILabel() { return MenuLabel; }
 				internal override OptionFeatures[] NeededFeatures()
 				{
@@ -4178,7 +4335,7 @@ namespace ToonyColorsPro
 					}
 				}
 
-				// Used to show the properties in the Features tab directy
+				// Used to show the properties in the Features tab directly
 				internal void EmbeddedGUI(float indent = 0, float labelWidth = 130)
 				{
 					// Embedded through the "mult_fs" UIFeature
@@ -4195,7 +4352,7 @@ namespace ToonyColorsPro
 					GUILayout.BeginHorizontal();
 					{
 						GUILayout.Space(indent);
-						bool highlighted = EnumValue != GetDefaultImplementation<Imp_Enum>().EnumValue;
+						bool highlighted = !IsDefaultImplementation || EnumValue != GetDefaultImplementation<Imp_Enum>().EnumValue;
 						TCP2_GUI.SubHeader(IsConstant() ? "Value" : "Default Value", null, highlighted, labelWidth + 4);
 						GUILayout.Space(-4); // hack to align the highlighted part with the regular UIFeatures
 						EnumValue = EditorGUILayout.Popup(EnumValue, enumDisplayNames);

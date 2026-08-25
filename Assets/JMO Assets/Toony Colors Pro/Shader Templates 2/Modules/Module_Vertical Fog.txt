@@ -1,5 +1,5 @@
 // Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 // Shader Generator Module: Vertical Fog
 
@@ -97,7 +97,7 @@ sngl	lbl="Make Optional"					kw=VERTICAL_FOG_SHADER_FEATURE					needs=VERTICAL_F
 		vertFogThreshold -= _WorldSpaceCameraPos.y;
 	///
 	/// IF VERTICAL_FOG_POS_OFFSET
-		vertFogThreshold -= unity_ObjectToWorld._m13;
+		vertFogThreshold -= UNITY_MATRIX_M._m13;
 	///
 		half verticalFogThreshold = [[VALUE:Vertical Fog Threshold]];
 		half verticalFogSmooothness = [[VALUE:Vertical Fog Smoothness]];

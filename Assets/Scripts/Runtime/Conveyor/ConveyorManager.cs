@@ -87,6 +87,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
                 // Level-authored items start already on the belt: no entry flight, just a placed visual.
                 var visual = _foodPool.Spawn(_pathWorldPositions[index], entity.Stack, FoodVisualState.Opened);
+                visual.SetLocation(FoodLocation.Conveyor);
                 AddItem(entity.Stack, visual, index, _pathWorldPositions[index], playEntryFlight: false);
             }
         }
@@ -97,6 +98,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (_pathWorldPositions.Count == 0) return;
 
             var visual = _foodPool.Spawn(_pathWorldPositions[0], stack, FoodVisualState.Opened);
+            visual.SetLocation(FoodLocation.Conveyor);
             AddItem(stack, visual, 0f, _pathWorldPositions[0], playEntryFlight: false);
         }
 

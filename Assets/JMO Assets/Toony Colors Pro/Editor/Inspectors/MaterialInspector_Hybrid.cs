@@ -1,5 +1,5 @@
 // Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 //Enable this to display the default Inspector (in case the custom Inspector is broken)
 //#define SHOW_DEFAULT_INSPECTOR
@@ -400,7 +400,11 @@ namespace ToonyColorsPro
 				MaterialProperty outlineProp = null;
 				for (int i = 0; i < properties.Length; i++)
 				{
+#if UNITY_6000_1_OR_NEWER
+					if (properties[i].propertyType == ShaderPropertyType.Float)
+#else
 					if (properties[i].type == MaterialProperty.PropType.Float)
+#endif
 					{
 						EditorGUIUtility.labelWidth = labelWidth - 50;
 					}
@@ -426,7 +430,11 @@ namespace ToonyColorsPro
 						}
 						else
 						{
-							if ((properties[i].flags & (MaterialProperty.PropFlags.HideInInspector | MaterialProperty.PropFlags.PerRendererData)) == MaterialProperty.PropFlags.None)
+#if UNITY_6000_1_OR_NEWER
+							if ((properties[i].propertyFlags & ShaderPropertyFlags.HideInInspector) == 0)
+#else
+							if ((properties[i].flags & (MaterialProperty.PropFlags.PerRendererData | MaterialProperty.PropFlags.HideInInspector)) == MaterialProperty.PropFlags.None)
+#endif
 							{
 								string displayName = splitLabels.ContainsKey(i) ? splitLabels[i][_isMobile ? 1 : 0] : properties[i].displayName;
 								DisplayProperty(properties[i], displayName, materialEditor);

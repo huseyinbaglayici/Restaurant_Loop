@@ -275,13 +275,26 @@ Shader "Toony Colors Pro 2/Hybrid Shader 2"
 			#pragma multi_compile_fog    /*** OPTION: "Fog" ***/
 			#pragma multi_compile_instancing    /*** OPTION: "GPU Instancing" ***/
 
+/*** URP_VERSION >= 14 ***/
+			#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"    /*** OPTION: "DOTS Instancing (Entities Graphics)" ***/
+/*** END URP_VERSION ***/
+/*** URP_VERSION >= 16 ***/
+			#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ProbeVolumeVariants.hlsl"    /*** OPTION: "Adaptive Probe Volumes (URP 16+)" ***/
+/*** END URP_VERSION ***/
+
 			// -------------------------------------
 			// Material keywords
 			#pragma shader_feature_local _ _RECEIVE_SHADOWS_OFF
 
 			// -------------------------------------
 			// Universal Render Pipeline keywords
+/*** URP_VERSION >= 11 ***/
 			#pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN     /*** OPTION: "Main Light Shadows (URP)" ***/
+/*** END URP_VERSION ***/
+/*** URP_VERSION < 11 ***/
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS             /*** OPTION: "Main Light Shadows (URP)" ***/
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE     /*** OPTION: "Main Light Shadows (URP)" ***/
+/*** END URP_VERSION ***/
 			#pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS     /*** OPTION: "Additional Lights (URP)" ***/
 			#pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS    /*** OPTION: "Additional Lights Shadows" ***/
 			#pragma multi_compile_fragment _ _SHADOWS_SOFT    /*** OPTION: "Soft Shadows (URP)" ***/
@@ -299,8 +312,15 @@ Shader "Toony Colors Pro 2/Hybrid Shader 2"
 /*** URP_VERSION >= 14 ***/
 			// URP 14:
 			#pragma multi_compile_fragment _ _WRITE_RENDERING_LAYERS    /*** OPTION: "Rendering Layers (URP 14+)" ***/
-			#pragma multi_compile _ _FORWARD_PLUS    /*** OPTION: "Forward+ Support (URP 14+)" ***/
 			#pragma multi_compile_fragment _ DEBUG_DISPLAY    /*** OPTION: "Rendering Debugger Support (URP 14+)" ***/
+/*** END URP_VERSION ***/
+/*** URP_VERSION >= 14 ***/
+/*** URP_VERSION >= 171 ***/
+			#pragma multi_compile _ _CLUSTER_LIGHT_LOOP    /*** OPTION: "Forward+ Support (URP 14+)" ***/
+/*** END URP_VERSION ***/
+/*** URP_VERSION < 171 ***/
+			#pragma multi_compile _ _FORWARD_PLUS    /*** OPTION: "Forward+ Support (URP 14+)" ***/
+/*** END URP_VERSION ***/
 /*** END URP_VERSION ***/
 
 			// -------------------------------------
@@ -309,7 +329,10 @@ Shader "Toony Colors Pro 2/Hybrid Shader 2"
 			#pragma multi_compile _ SHADOWS_SHADOWMASK        /*** OPTION_OFF: "Lightmap" ***/
 			#pragma multi_compile _ DIRLIGHTMAP_COMBINED    /*** OPTION_OFF: "Lightmap" ***/
 			#pragma multi_compile _ LIGHTMAP_ON    /*** OPTION_OFF: "Lightmap" ***/
+			#pragma multi_compile _ DYNAMICLIGHTMAP_ON    /*** OPTION_OFF: "Lightmap" ***/
 			#pragma multi_compile_fragment _ LOD_FADE_CROSSFADE    /*** OPTION: "LOD Crossfading"|"Toggle LOD Crossfading support with dithering" ***/
+			#pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING    /*** OPTION: "Reflection Probes Blending" ***/
+			#pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION    /*** OPTION: "Reflection Probes Box Projection" ***/
 
 			//--------------------------------------
 			// Toony Colors Pro 2 keywords
@@ -360,6 +383,10 @@ Shader "Toony Colors Pro 2/Hybrid Shader 2"
 			#pragma fragment ShadowPassFragment
 
 			#pragma multi_compile_instancing    /*** OPTION: "GPU Instancing" ***/
+/*** URP_VERSION >= 14 ***/
+			#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"    /*** OPTION: "DOTS Instancing (Entities Graphics)" ***/
+/*** END URP_VERSION ***/
+
 			#pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW    /*** OPTION: "Additional Lights Shadows" ***/
 			#pragma multi_compile_fragment _ LOD_FADE_CROSSFADE    /*** OPTION: "LOD Crossfading"|"Toggle LOD Crossfading support with dithering" ***/
 
@@ -463,6 +490,10 @@ Shader "Toony Colors Pro 2/Hybrid Shader 2"
 			#pragma fragment DepthOnlyFragment
 
 			#pragma multi_compile_instancing    /*** OPTION: "GPU Instancing" ***/
+/*** URP_VERSION >= 14 ***/
+			#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"    /*** OPTION: "DOTS Instancing (Entities Graphics)" ***/
+/*** END URP_VERSION ***/
+
 			#pragma multi_compile_fragment _ LOD_FADE_CROSSFADE    /*** OPTION: "LOD Crossfading"|"Toggle LOD Crossfading support with dithering" ***/
 
 			#pragma shader_feature_local_fragment _ALPHATEST_ON
@@ -543,6 +574,10 @@ Shader "Toony Colors Pro 2/Hybrid Shader 2"
 			#pragma fragment DepthNormalsFragment
 
 			#pragma multi_compile_instancing    /*** OPTION: "GPU Instancing" ***/
+/*** URP_VERSION >= 14 ***/
+			#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"    /*** OPTION: "DOTS Instancing (Entities Graphics)" ***/
+/*** END URP_VERSION ***/
+
 			#pragma multi_compile_fragment _ LOD_FADE_CROSSFADE    /*** OPTION: "LOD Crossfading"|"Toggle LOD Crossfading support with dithering" ***/
 /*** URP_VERSION >= 14 ***/
 			#pragma multi_compile_fragment _ _WRITE_RENDERING_LAYERS    /*** OPTION: "Rendering Layers (URP 14+)" ***/
@@ -587,7 +622,11 @@ Shader "Toony Colors Pro 2/Hybrid Shader 2"
 			half4 DepthNormalsFragment(
 				Varyings_Depth input
 #ifdef _WRITE_RENDERING_LAYERS
+	#if UNITY_VERSION >= 60020000
+				, out uint outRenderingLayers : SV_Target1
+	#else
 				, out float4 outRenderingLayers : SV_Target1
+	#endif
 #endif
 				) : SV_TARGET
 			{
@@ -609,8 +648,11 @@ Shader "Toony Colors Pro 2/Hybrid Shader 2"
 				#endif
 
 				#if URP_VERSION >= 14 && defined(_WRITE_RENDERING_LAYERS)
-					uint meshRenderingLayers = GetMeshRenderingLayer();
-					outRenderingLayers = float4(EncodeMeshRenderingLayer(meshRenderingLayers), 0, 0, 0);
+					#if UNITY_VERSION >= 60020000
+						outRenderingLayers = EncodeMeshRenderingLayer();
+					#else
+						outRenderingLayers = float4(EncodeMeshRenderingLayer(GetMeshRenderingLayer()), 0, 0, 0);
+					#endif
 				#endif
 
 				#if URP_VERSION >= 12
@@ -891,6 +933,8 @@ Shader "Toony Colors Pro 2/Hybrid Shader 2"
 		{
 			Name "Meta"
 			Tags { "LightMode"="Meta" }
+
+			Cull Off
 
 			CGPROGRAM
 			// Required to compile gles 2.0 with standard SRP library

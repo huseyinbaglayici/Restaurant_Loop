@@ -155,12 +155,14 @@ namespace RestaurantLoop.Runtime.Conveyor
                 {
                     visual.transform.position = _conveyorManager.SampleWorldPosition(beltVisual.Progress);
                     visual.SetVisualState(FoodVisualState.Opened);
+                    visual.SetLocation(FoodLocation.Conveyor);
                     return;
                 }
 
                 beltVisual.IsEnteringBelt = true;
                 visual.transform.position = sourcePosition;
                 visual.SetVisualState(FoodVisualState.Opened);
+                visual.SetLocation(FoodLocation.Conveyor);
 
                 _flightService.Launch(
                     visual.transform,
@@ -181,6 +183,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _beltVisuals.Remove(id);
                 if (visual == null) return;
 
+                visual.SetLocation(FoodLocation.FoodStack);
                 _flightService.Launch(visual.transform, slotPosition, _feel.BeltToStack);
             });
         }
@@ -273,7 +276,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return sourceVisual;
             }
 
-            return _foodPool.Spawn(sourceVisual.TopUnitWorldPosition, takenStack, FoodVisualState.Opened);
+            var flyer = _foodPool.Spawn(sourceVisual.TopUnitWorldPosition, takenStack, FoodVisualState.Opened);
+            flyer.SetLocation(sourceVisual.Location);
+            return flyer;
         }
 
         private void OnConsumeFlightArrived(

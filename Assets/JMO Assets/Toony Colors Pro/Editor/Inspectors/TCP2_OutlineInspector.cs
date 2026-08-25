@@ -1,5 +1,5 @@
 ﻿// Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 //#define SHOW_DEFAULT_INSPECTOR
 
@@ -232,6 +232,50 @@ public class TCP2_OutlineInspector : MaterialEditor
 		}
 
 		//GUI
+#if UNITY_6000_1_OR_NEWER
+		switch(property.propertyType)
+		{
+			case ShaderPropertyType.Color:
+				ColorProperty(property, displayName);
+				break;
+
+			case ShaderPropertyType.Float:
+				FloatProperty(property, displayName);
+				break;
+
+			case ShaderPropertyType.Range:
+				EditorGUILayout.BeginHorizontal();
+
+				//Add float field to Range parameters
+#if UNITY_4 || UNITY_4_3 || UNITY_4_5 || UNITY_4_6
+			float value = RangeProperty(property, displayName);
+			Rect r = GUILayoutUtility.GetLastRect();
+			r.x = r.width - 160f;
+			r.width = 65f;
+			value = EditorGUI.FloatField(r, value);
+			if(property.floatValue != value)
+			{
+				property.floatValue = value;
+			}
+#else
+				RangeProperty(property, displayName);
+#endif
+				EditorGUILayout.EndHorizontal();
+				break;
+
+			case ShaderPropertyType.Texture:
+				TextureProperty(property, displayName);
+				break;
+
+			case ShaderPropertyType.Vector:
+				VectorProperty(property, displayName);
+				break;
+
+			default:
+				EditorGUILayout.LabelField("Unknown Material Property Type: " + property.propertyType);
+				break;
+		}
+#else
 		switch(property.type)
 		{
 		case MaterialProperty.PropType.Color:
@@ -274,6 +318,7 @@ public class TCP2_OutlineInspector : MaterialEditor
 			EditorGUILayout.LabelField("Unknown Material Property Type: " + property.type);
 			break;
 		}
+#endif
 
 		return true;
 	}

@@ -1,5 +1,5 @@
 // Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 #define WRITE_UNCOMPRESSED_SERIALIZED_DATA
 
@@ -665,7 +665,7 @@ namespace ToonyColorsPro
 			//This method is executed twice because of an ordering problem:
 			// - first run: it needs to fetch the template used from TCP_DATA
 			// - then it loads that template and generate the serialized properties
-			// - second run: now that the serialized properties exist, replace their implementations with the ones in TPC2_DATA
+			// - second run: now that the serialized properties exist, replace their implementations with the ones in TCP_DATA
 			internal bool ParseSerializedDataAndHash(ShaderImporter importer, Template template, bool dontRebuildCustomTextures)
 			{
 				//try to find serialized TCP2 data
@@ -1522,6 +1522,16 @@ namespace ToonyColorsPro
 #if UNITY_2022_2_OR_NEWER
 				Utils.AddIfMissing(this.Features, "UNITY_2022_2");
 #endif
+#if UNITY_6000_0_OR_NEWER
+				Utils.AddIfMissing(this.Features, "UNITY_6000_2");
+#endif
+#if UNITY_6000_1_OR_NEWER
+				Utils.AddIfMissing(this.Features, "UNITY_6000_1");
+#endif
+#if UNITY_6000_2_OR_NEWER
+				Utils.AddIfMissing(this.Features, "UNITY_6000_0");
+#endif
+
 				var parsedLines = template.GetParsedLinesFromConditions(this, null, null);
 
 				//Clear arrays: will be refilled with the template's shader properties

@@ -1,5 +1,5 @@
 // Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 using UnityEngine;
 #if UNITY_EDITOR
@@ -284,11 +284,11 @@ namespace ToonyColorsPro
 								var sineCountProperty = serializedObject.FindProperty("sineCount");
 								if (mat.shader != null)
 								{
-									int count = ShaderUtil.GetPropertyCount(mat.shader);
+									int count = mat.shader.GetPropertyCount();
 									sineCountProperty.intValue = 1;
 									for (int i = 0; i < count; i++)
 									{
-										string name = ShaderUtil.GetPropertyName(mat.shader, i);
+										string name = mat.shader.GetPropertyName(i);
 										if (name == "_SineCount8")
 										{
 											sineCountProperty.intValue = 8;

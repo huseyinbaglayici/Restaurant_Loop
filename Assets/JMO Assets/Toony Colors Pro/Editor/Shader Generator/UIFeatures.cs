@@ -1,5 +1,5 @@
 // Toony Colors Pro 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 using System;
 using System.Collections.Generic;
@@ -19,7 +19,7 @@ namespace ToonyColorsPro
 
 		internal class UIFeature
 		{
-			const float LABEL_WIDTH = 240f;
+			const float LABEL_WIDTH = 290f;
 			static Rect LastPositionInline;
 			static float LastLowerBoundY;
 			static float LastIndentY;
@@ -407,6 +407,7 @@ namespace ToonyColorsPro
 			readonly bool negative;
 			string keyword;
 			string[] toggles;    //features forced to be toggled when this feature is enabled
+			bool enabledByDefault;
 
 			internal UIFeature_Single(List<KeyValuePair<string, string>> list, bool negative) : base(list)
 			{
@@ -415,12 +416,62 @@ namespace ToonyColorsPro
 
 			protected override void ProcessProperty(string key, string value)
 			{
-				if(key == "kw")
+				if (key == "kw")
 					keyword = value;
-				else if(key == "toggles")
+				else if (key == "toggles")
 					toggles = value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+				else if (key == "enabled_for")
+				{
+					var editorVersion = GetUnityVersion(Application.unityVersion);
+					var targetVersion = GetUnityVersion(value.Trim('\"'));
+					if (IsVersionMoreOrEqual(editorVersion, targetVersion))
+					{
+						enabledByDefault = true;
+					}
+				}
 				else
 					base.ProcessProperty(key, value);
+
+				(int, int, int) GetUnityVersion(string input)
+				{
+					string[] parts = input.Split('.');
+
+					string parts2 = "";
+					for (int i = 0; i < parts[2].Length; i++)
+					{
+						if (!char.IsDigit(parts[2][i])) break;
+						parts2 += parts[2][i];
+					}
+					parts[2] = parts2;
+
+					int.TryParse(parts[0], out int major);
+					int.TryParse(parts[1], out int minor);
+					int.TryParse(parts[2], out int patch);
+
+					return (major, minor, patch);
+				}
+
+				bool IsVersionMoreOrEqual((int, int, int) v1, (int, int, int) v2)
+				{
+					if (v1.Item1 < v2.Item1) return false;
+					if (v1.Item1 > v2.Item1) return true;
+					// major are equal
+
+					if (v1.Item2 < v2.Item2) return false;
+					if (v1.Item2 > v2.Item2) return true;
+					// minor are equal
+
+					return v1.Item3 >= v2.Item3;
+				}
+			}
+
+			internal override void ForceValue(Config config)
+			{
+				if (enabledByDefault)
+				{
+					Utils.AddIfMissing(ShaderGenerator2.CurrentConfig.Features, keyword);
+					enabledByDefault = false;
+				}
 			}
 
 			protected override void DrawGUI(Rect position, Config config, bool labelClicked)

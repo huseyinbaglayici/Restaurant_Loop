@@ -1,5 +1,5 @@
 // Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 // Shader Generator Module: MatCap
 
@@ -81,7 +81,7 @@ sngl	lbl="Make Optional"				kw=MATCAP_SHADER_FEATURE													needsOr=MATCAP_
 	#if defined(TCP2_MATCAP)
 	///
 	//MatCap
-	float3 worldNorm = normalize(unity_WorldToObject[0].xyz * normal.x + unity_WorldToObject[1].xyz * normal.y + unity_WorldToObject[2].xyz * normal.z);
+	float3 worldNorm = normalize(UNITY_MATRIX_I_M[0].xyz * normal.x + UNITY_MATRIX_I_M[1].xyz * normal.y + UNITY_MATRIX_I_M[2].xyz * normal.z);
 	worldNorm = mul((float3x3)UNITY_MATRIX_V, worldNorm);
 	/// IF MATCAP_PERSPECTIVE_CORRECTION
 	float3 perspectiveOffset = (screenPos.xyz / screenPos.w) - 0.5;

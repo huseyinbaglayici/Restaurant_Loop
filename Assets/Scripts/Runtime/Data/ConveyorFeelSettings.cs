@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
@@ -72,52 +71,6 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Overshoot on the punchier version of the vanish/reappear pop, played when a tray's food was " +
                  "fully eaten mid-belt (vs. the calmer pop when it completed its lap and docked instead).")]
         public float TrayVanishPunchOvershoot = 1.7f;
-
-        // Runtime-only display scale. Nothing here is ever written back to the food prefab, the unit prefab or
-        // the source mesh — the multiplier is applied to the spawned units every time the visual is rebuilt,
-        // so a mesh that was authored at a different import scale can be normalized without touching art data.
-        [System.Serializable]
-        public class FoodScaleOverride
-        {
-            public FoodType Type;
-
-            [Tooltip("Multiplier for the unpacked (belt / customer) mesh. 0 or less is read as 1.")]
-            public float OpenedScale = 1f;
-
-            [Tooltip("Multiplier for the packaged (queue) mesh. 0 or less is read as 1.")]
-            public float ClosedScale = 1f;
-        }
-
-        [Header("Food display scale (runtime only)")]
-        [Tooltip("Applied to every food type that has no override below.")]
-        public float DefaultOpenedScale = 1f;
-
-        public float DefaultClosedScale = 1f;
-
-        [Tooltip("Per-type multipliers, for meshes whose import scale doesn't match the rest.")]
-        public List<FoodScaleOverride> FoodScaleOverrides = new();
-
-        [Tooltip("Gap between stacked units, as a fraction of one unit's actual rendered height. 1 = units touch, " +
-                 "below 1 = they overlap, above 1 = they float apart. 0 or less falls back to the food prefab's own " +
-                 "Stack Spacing value.")]
-        public float StackSpacingFactor = 1f;
-
-        public float ResolveFoodScale(FoodType type, FoodVisualState state)
-        {
-            bool isOpened = state == FoodVisualState.Opened;
-
-            for (int i = 0; i < FoodScaleOverrides.Count; i++)
-            {
-                var entry = FoodScaleOverrides[i];
-                if (entry == null || entry.Type != type) continue;
-
-                return Normalize(isOpened ? entry.OpenedScale : entry.ClosedScale);
-            }
-
-            return Normalize(isOpened ? DefaultOpenedScale : DefaultClosedScale);
-        }
-
-        private static float Normalize(float scale) => scale > 0f ? scale : 1f;
 
         [Header("Belt ride")]
         [Tooltip("Degrees per second spun around world Y while riding the belt. 0 = no spin.")]

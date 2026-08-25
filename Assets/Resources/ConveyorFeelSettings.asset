@@ -37,8 +37,4 @@ MonoBehaviour:
     SpinYDegreesPerSecond: 0
     ResetRotationOnArrive: 1
     Ease: 6
-  DefaultOpenedScale: 1.18
-  DefaultClosedScale: 1.18
-  FoodScaleOverrides: []
-  StackSpacingFactor: 1
   BeltSpinYDegreesPerSecond: 0

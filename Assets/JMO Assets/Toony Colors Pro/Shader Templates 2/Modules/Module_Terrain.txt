@@ -1,5 +1,5 @@
 // Toony Colors Pro+Mobile 2
-// (c) 2014-2023 Jean Moreno
+// (c) 2014-2026 Jean Moreno
 
 // Shader Generator Module: Terrain
 
@@ -738,7 +738,7 @@ keyword	lbl="Slot E BaseMap Size"						kw=BASEGEN_MASKMAPREMAPMIN_DOWNSCALE				n
 		#if defined(UNITY_INSTANCING_ENABLED) && !defined(SHADER_API_D3D11_9X) && defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
 			float2 terrainNormalCoords = (terrainTexcoord0.xy / _TerrainHeightmapRecipSize.zw + 0.5f) * _TerrainHeightmapRecipSize.xy;
 			normalWS = normalize(TCP2_TEX2D_SAMPLE(_TerrainNormalmapTexture, _TerrainNormalmapTexture, terrainNormalCoords.xy).rgb * 2 - 1);
-			normalWS = mul(float4(normalWS, 0), unity_ObjectToWorld).xyz;
+			normalWS = mul(float4(normalWS, 0), UNITY_MATRIX_M).xyz;
 		/// IF BUMP
 
 			// take terrain normal into account when converting normal maps to world space:
