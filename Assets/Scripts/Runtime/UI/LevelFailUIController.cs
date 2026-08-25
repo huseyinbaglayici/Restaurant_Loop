@@ -19,6 +19,7 @@ namespace RestaurantLoop.Runtime.UI
         private ExitStackAnchor _exitStackAnchor;
         private FoodItemController.Pool _foodPool;
         private SignalBus _signalBus;
+        private PowerUpService _powerUpService;
 
         [Inject]
         public void Construct(
@@ -26,13 +27,15 @@ namespace RestaurantLoop.Runtime.UI
             ConveyorManager conveyorManager,
             ExitStackAnchor exitStackAnchor,
             FoodItemController.Pool foodPool,
-            SignalBus signalBus)
+            SignalBus signalBus,
+            PowerUpService powerUpService)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;
             _exitStackAnchor = exitStackAnchor;
             _foodPool = foodPool;
             _signalBus = signalBus;
+            _powerUpService = powerUpService;
         }
 
         private void Start()
@@ -64,6 +67,7 @@ namespace RestaurantLoop.Runtime.UI
         private void OnPlayOnClicked()
         {
             _conveyorManager.ClearBelt();
+            _powerUpService.ActivateExtraTray(); // Extra Tray power-up: adds another slot each time Keep Playing is used.
             _exitStackAnchor.TryRemoveFromSlot(_exitStackAnchor.SlotCount - 1, out var visual);
             if (visual != null) _foodPool.Despawn(visual);
 

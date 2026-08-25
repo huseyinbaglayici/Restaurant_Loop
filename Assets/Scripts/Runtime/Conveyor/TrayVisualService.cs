@@ -7,11 +7,11 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // Visual-only companion to ConveyorVisualService: pairs a pooled TrayController with every belt item
-    // (same ItemId), keeping it directly under the food for the ride, then returning it to the dispenser
-    // either with a shrink punch (food fully eaten) or without one (food completed its lap and docked).
-    // Subscribes to the same signals ConveyorVisualService does, on the same visual lag, so both layers
-    // react in the same frame.
+    // Visual-only companion to ConveyorVisualService: pairs one of the dispenser's 5 tray children with
+    // every belt item (same ItemId), keeping it directly under the food for the ride, then releasing it
+    // back to the dispenser either with a shrink punch (food fully eaten) or without one (food completed
+    // its lap and docked). Subscribes to the same signals ConveyorVisualService does, on the same visual
+    // lag, so both layers react in the same frame.
     public class TrayVisualService : IInitializable, ITickable, IDisposable
     {
         private class TrayRide
@@ -38,7 +38,6 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorTuning _tuning;
         private readonly ConveyorFeelSettings _feel;
         private readonly FoodFlightService _flightService;
-        private readonly TrayController.Pool _trayPool;
         private readonly TrayDispenserAnchor _trayAnchor;
 
         private readonly Dictionary<int, TrayRide> _rides = new();
@@ -50,7 +49,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorTuning tuning,
             ConveyorFeelSettings feel,
             FoodFlightService flightService,
-            TrayController.Pool trayPool,
             TrayDispenserAnchor trayAnchor)
         {
             _signalBus = signalBus;
@@ -58,7 +56,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             _tuning = tuning;
             _feel = feel;
             _flightService = flightService;
-            _trayPool = trayPool;
             _trayAnchor = trayAnchor;
         }
 
@@ -78,7 +75,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _signalBus.TryUnsubscribe<BeltClearedSignal>(OnBeltCleared);
 
             _deferred.Clear();
-            DespawnAllRides();
+            ReleaseAllRidesImmediately();
         }
 
         public void Tick()
@@ -106,9 +103,15 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             foreach (var ride in _rides.Values)
             {
-                if (ride.IsEntering || ride.Tray == null) continue;
+                if (ride.Tray == null) continue;
 
+                // Progress keeps advancing during the entry flight too (matching ConveyorVisualService's
+                // BeltVisual exactly) — otherwise the tray falls a whole flight's worth of frames behind
+                // its food the instant the flight ends. Only the position write is skipped while entering;
+                // the flight owns the transform until it arrives.
                 ride.Progress = Mathf.Min(ride.Progress + delta, lastProgress);
+                if (ride.IsEntering) continue;
+
                 var position = _conveyorManager.SampleWorldPosition(ride.Progress);
                 position.y = _tuning.TrayBeltHeight;
                 ride.Tray.Follow(position);
@@ -122,7 +125,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             Defer(() =>
             {
-                var tray = _trayPool.Spawn(_trayAnchor.SpawnPosition, _trayAnchor.SpawnRotation);
+                if (!_trayAnchor.TryAcquire(out var tray)) return; // no tray free — item rides without one
+
                 var ride = new TrayRide { Tray = tray, Progress = startProgress, IsEntering = true };
                 _rides[id] = ride;
 
@@ -133,7 +137,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                         position.y = _tuning.TrayBeltHeight;
                         return position;
                     },
-                    tray.ResolveFlatRotation(),
+                    tray.ResolveFlatLocalRotation(),
                     _feel.TrayRotateDuration,
                     _feel.DispenserToBelt,
                     _flightService,
@@ -158,34 +162,28 @@ namespace RestaurantLoop.Runtime.Conveyor
                 if (ride.Tray == null) return;
 
                 var tray = ride.Tray;
-                tray.ReturnToAnchor(
-                    _trayAnchor.SpawnPosition,
-                    _trayAnchor.SpawnRotation,
-                    _feel.TrayRotateDuration,
-                    _feel.BeltToDispenser,
-                    _flightService,
+                tray.ReturnToInitialPose(
                     withPunch,
-                    _feel.TrayConsumePunchStrength,
-                    _feel.TrayConsumePunchDuration,
-                    _feel.TrayConsumePunchVibrato,
-                    _feel.TrayConsumePunchElasticity,
-                    () => _trayPool.Despawn(tray));
+                    _feel.TrayVanishDuration,
+                    _feel.TrayVanishPunchOvershoot,
+                    () => _trayAnchor.Release(tray));
             });
         }
 
         private void OnBeltCleared()
         {
             _deferred.Clear();
-            DespawnAllRides();
+            ReleaseAllRidesImmediately();
         }
 
-        private void DespawnAllRides()
+        private void ReleaseAllRidesImmediately()
         {
             foreach (var ride in _rides.Values)
             {
                 if (ride.Tray == null) continue;
                 _flightService.Cancel(ride.Tray.transform);
-                _trayPool.Despawn(ride.Tray);
+                ride.Tray.SnapToInitialPose();
+                _trayAnchor.Release(ride.Tray);
             }
 
             _rides.Clear();

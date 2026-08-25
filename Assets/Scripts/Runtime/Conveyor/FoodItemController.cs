@@ -73,7 +73,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             gameObject.SetActive(false);
         }
 
-        // Closed -> Opened when a queue item finishes flying onto the belt.
+        // Closed -> Opened when a queue item starts flying onto the belt.
         public void SetVisualState(FoodVisualState visualState)
         {
             if (_visualState == visualState) return;

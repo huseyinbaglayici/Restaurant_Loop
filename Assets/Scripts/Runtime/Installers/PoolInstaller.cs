@@ -28,7 +28,6 @@ namespace RestaurantLoop.Installers
             BindConveyorPiecePool(ConveyorTileShape.Corner, settings.ConveyorCornerPrefab);
 
             BindFoodItemPool();
-            BindTrayPool();
             BindExitSlotPool();
             BindCustomerPool();
             BindTuning();
@@ -104,25 +103,7 @@ namespace RestaurantLoop.Installers
                 .NonLazy();
         }
 
-        private void BindTrayPool()
-        {
-            var traySettings = Resources.Load<TrayPrefabSettings>("TrayPrefabSettings");
-            if (traySettings == null || traySettings.TrayPrefab == null)
-            {
-                Debug.LogError(
-                    "[PoolInstaller] TrayPrefabSettings.asset missing or has no TrayPrefab assigned " +
-                    "under Assets/Resources — tray pool not bound.");
-                return;
-            }
-
-            Container.BindMemoryPool<TrayController, TrayController.Pool>()
-                .WithInitialSize(_foodItemInitialSize)
-                .FromComponentInNewPrefab(traySettings.TrayPrefab)
-                .UnderTransformGroup("Trays")
-                .NonLazy();
-        }
-
-        // base size: ExitStackAnchor.BaseSlotCount (pool auto-expands if the Extra Tray power-up adds a slot)
+        // ExitStackAnchor spawns one rack piece total (spans every slot) — pool only ever needs one instance.
         private void BindExitSlotPool()
         {
             var exitSlotSettings = Resources.Load<ExitSlotPrefabSettings>("ExitSlotPrefabSettings");
@@ -137,7 +118,7 @@ namespace RestaurantLoop.Installers
             Container.BindInstance(exitSlotSettings).AsSingle();
 
             Container.BindMemoryPool<ExitSlotController, ExitSlotController.Pool>()
-                .WithInitialSize(ExitStackAnchor.BaseSlotCount)
+                .WithInitialSize(1)
                 .FromComponentInNewPrefab(exitSlotSettings.ExitSlotPrefab)
                 .UnderTransformGroup("ExitSlots")
                 .NonLazy();

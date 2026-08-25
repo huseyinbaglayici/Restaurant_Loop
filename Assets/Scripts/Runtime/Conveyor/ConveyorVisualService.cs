@@ -160,16 +160,15 @@ namespace RestaurantLoop.Runtime.Conveyor
 
                 beltVisual.IsEnteringBelt = true;
                 visual.transform.position = sourcePosition;
+                // Swap Closed -> Opened right as the flight starts, not on arrival — otherwise the mesh
+                // pops mid-flight, right when the item starts walking the belt, which reads as laggy.
+                visual.SetVisualState(FoodVisualState.Opened);
 
                 _flightService.Launch(
                     visual.transform,
                     () => _conveyorManager.SampleWorldPosition(beltVisual.Progress),
                     _feel.QueueToBelt,
-                    () =>
-                    {
-                        beltVisual.IsEnteringBelt = false;
-                        visual.SetVisualState(FoodVisualState.Opened);
-                    });
+                    () => beltVisual.IsEnteringBelt = false);
             });
         }
 
@@ -277,6 +276,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                     break;
 
                 case RuntimeCustomerState.ConsumeResult.Served:
+                    // Order UI goes seamless-instant; the reaction animation is just the character's
+                    // exit performance before despawn, not something the UI should wait on.
+                    _customerSpawner.HideOrderUI(coord);
                     _customerSpawner.PlayServeReaction(coord, hasSecondOrderRemaining: false);
                     break;
             }

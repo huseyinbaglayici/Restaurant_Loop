@@ -16,7 +16,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void ActivatePickFromBottom() => _queueSpawner.PickFromBottomEnabled = true;
 
-        // Returns false if the extra slot was already used this level.
+        // Repeatable — every call adds another slot.
         public bool ActivateExtraTray() => _exitStackAnchor.TryAddExtraSlot();
     }
 }

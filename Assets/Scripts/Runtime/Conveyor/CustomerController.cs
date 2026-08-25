@@ -76,6 +76,13 @@ namespace RestaurantLoop.Runtime.Conveyor
             _playableAnimator.PlayServeReaction(hasSecondOrderRemaining, onComplete);
         }
 
+        // Fully served: the order UI should read as "done" the instant it happens, not linger through
+        // the reaction animation until the whole customer despawns.
+        public void HideOrderUI()
+        {
+            if (_canvasRoot != null) _canvasRoot.gameObject.SetActive(false);
+        }
+
         public void ApplyOrder(FoodStackData order)
         {
             ApplyFoodSprite(_foodImage, order.Type);

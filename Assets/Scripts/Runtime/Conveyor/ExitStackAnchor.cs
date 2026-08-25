@@ -20,14 +20,16 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorTuning _tuning;
         private readonly ExitSlotController.Pool _exitSlotPool;
         private readonly FoodItemController.Pool _foodPool;
+        private readonly ExitSlotPrefabSettings _exitSlotPrefabSettings;
         private readonly List<ExitSlotController> _spawnedFloors = new();
+        private readonly List<GameObject> _extraRackVisuals = new();
 
-        // null = empty. Index matches SlotPositions. Grows by one if an Extra Tray power-up is used.
+        // null = empty. Index matches SlotPositions. Grows by one every time the Extra Tray power-up is used.
         private FoodItemController[] _occupants = new FoodItemController[BaseSlotCount];
 
         public Vector3[] SlotPositions { get; private set; }
         public int SlotCount => SlotPositions.Length;
-        public bool HasExtraSlot { get; private set; }
+        public int ExtraSlotsAdded { get; private set; }
 
         public int OccupiedCount
         {
@@ -45,13 +47,15 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorPrefabSettings prefabSettings,
             ConveyorTuning tuning,
             ExitSlotController.Pool exitSlotPool,
-            FoodItemController.Pool foodPool)
+            FoodItemController.Pool foodPool,
+            ExitSlotPrefabSettings exitSlotPrefabSettings)
         {
             _level = level;
             _prefabSettings = prefabSettings;
             _tuning = tuning;
             _exitSlotPool = exitSlotPool;
             _foodPool = foodPool;
+            _exitSlotPrefabSettings = exitSlotPrefabSettings;
 
             SlotPositions = ComputeSlotPositions();
         }
@@ -106,7 +110,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             var rack = _exitSlotPool.Spawn(center);
             rack.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
-            rack.transform.localScale = new Vector3(1f, 1f, spanWorldX / RackAuthoredLength);
+            var prefabScale = rack.transform.localScale; // preserve prefab-authored X/Y, only stretch Z
+            rack.transform.localScale = new Vector3(prefabScale.x, prefabScale.y, spanWorldX / RackAuthoredLength);
             _spawnedFloors.Add(rack);
         }
 
@@ -114,6 +119,10 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             foreach (var floor in _spawnedFloors) _exitSlotPool.Despawn(floor);
             _spawnedFloors.Clear();
+
+            foreach (var visual in _extraRackVisuals)
+                if (visual != null) UnityEngine.Object.Destroy(visual);
+            _extraRackVisuals.Clear();
 
             for (int i = 0; i < _occupants.Length; i++)
             {
@@ -177,10 +186,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         }
 
         // Extra Tray power-up: appends one slot, following the same spacing as the last two.
-        // Capped at once per level — call with HasExtraSlot already true is a no-op.
+        // Repeatable — every call adds another slot (and another decorative rack visual) past the last one.
         public bool TryAddExtraSlot()
         {
-            if (HasExtraSlot) return false;
             if (SlotPositions.Length == 0) return false;
 
             Vector3 delta = SlotPositions.Length > 1
@@ -197,9 +205,23 @@ namespace RestaurantLoop.Runtime.Conveyor
             _occupants.CopyTo(newOccupants, 0);
             _occupants = newOccupants;
 
-            // No extra floor spawn — the rack is one fixed-length piece; the extra slot only adds
-            // a dock point past its edge.
-            HasExtraSlot = true;
+            // The base rack is one fixed-length piece that doesn't cover the extra slot —
+            // drop the dedicated Foodrack_extra visual over it so the new dock point reads as furniture too.
+            if (_exitSlotPrefabSettings.ExtraRackPrefab != null)
+            {
+                var visual = UnityEngine.Object.Instantiate(
+                    _exitSlotPrefabSettings.ExtraRackPrefab,
+                    newSlotPosition + _tuning.ExtraRackVisualOffset,
+                    Quaternion.Euler(_tuning.ExtraRackVisualRotation));
+                _extraRackVisuals.Add(visual);
+            }
+            else
+            {
+                Debug.LogWarning("[ExitStackAnchor] ExitSlotPrefabSettings.ExtraRackPrefab is unassigned — " +
+                                  "Extra Tray power-up won't show its decorative rack visual.");
+            }
+
+            ExtraSlotsAdded++;
             return true;
         }
     }

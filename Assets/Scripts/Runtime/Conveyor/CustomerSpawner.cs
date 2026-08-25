@@ -46,6 +46,12 @@ namespace RestaurantLoop.Runtime.Conveyor
             visual.ApplySecondOrder(customer.HasSecondOrder, customer.SecondOrder);
         }
 
+        public void HideOrderUI(Vector2Int coord)
+        {
+            if (!_spawned.TryGetValue(coord, out var visual)) return;
+            visual.HideOrderUI();
+        }
+
         public void PlayConsumePunch(Vector2Int coord, Vector3 strength, float duration, int vibrato, float elasticity)
         {
             if (!_spawned.TryGetValue(coord, out var visual)) return;

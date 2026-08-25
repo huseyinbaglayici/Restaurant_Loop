@@ -49,11 +49,11 @@ MonoBehaviour:
     ClosedRotationEuler: {x: 0, y: 0, z: 0}
     Icon: {fileID: 21300000, guid: 4849446053d29bc42b15ae58d65afb5b, type: 3}
     FixedChildSlots: 1
-  - Type: 9
-    OpenedPrefab: {fileID: 2830045199475947193, guid: 708750d9452a2bd46ad9c9e64b758990,
+  - Type: 2
+    OpenedPrefab: {fileID: 7714696736389709273, guid: 4d4b6691bebdbac4dacf809b05fb4275,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
-    ClosedPrefab: {fileID: 7714696736389709273, guid: 4d4b6691bebdbac4dacf809b05fb4275,
+    ClosedPrefab: {fileID: 2830045199475947193, guid: 708750d9452a2bd46ad9c9e64b758990,
       type: 3}
     ClosedRotationEuler: {x: 0, y: 0, z: 0}
     Icon: {fileID: 21300000, guid: 5a7c14afca9e15e498e0c170d23a89ff, type: 3}

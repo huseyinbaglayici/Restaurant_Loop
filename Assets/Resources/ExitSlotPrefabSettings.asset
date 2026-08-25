@@ -14,3 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ExitSlotPrefab: {fileID: 2873491433116362623, guid: 019425c39655e0a45bc6810e2026cbbd,
     type: 3}
+  ExtraRackPrefab: {fileID: 9092361612512851365, guid: d76342b568bb1734a973c351f83e61be,
+    type: 3}

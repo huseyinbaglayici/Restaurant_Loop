@@ -58,18 +58,20 @@ namespace RestaurantLoop.Runtime.Data
         public FlightTuning ConsumeToCustomer = new() { Speed = 14f, ArcHeight = 0.8f };
 
         [Header("Serving tray")]
+        [Tooltip("Dispenser -> belt entry flight (tray leaving its resting spot to catch up with its food).")]
         public FlightTuning DispenserToBelt = new() { Speed = 12f, ArcHeight = 0.3f };
-        public FlightTuning BeltToDispenser = new() { Speed = 10f, ArcHeight = 0.3f };
 
-        [Tooltip("Seconds for the tray's upright <-> flat rotation, played alongside the Dispenser<->Belt flight.")]
+        [Tooltip("Seconds for the tray's upright <-> flat rotation, played alongside the Dispenser->Belt flight.")]
         public float TrayRotateDuration = 0.25f;
 
-        [Tooltip("Small scale punch played on a tray the moment its food is fully eaten, before it flies back.")]
-        public Vector3 TrayConsumePunchStrength = new(0.15f, 0.15f, 0.15f);
+        [Tooltip("Seconds for each half (shrink, then grow back) of the tray's return-to-dispenser pop — " +
+                 "it shrinks away where it stands, teleports to its resting pose, then grows back in. No " +
+                 "flight across the belt for the return trip.")]
+        public float TrayVanishDuration = 0.18f;
 
-        public float TrayConsumePunchDuration = 0.2f;
-        public int TrayConsumePunchVibrato = 6;
-        [Range(0f, 1f)] public float TrayConsumePunchElasticity = 0.6f;
+        [Tooltip("Overshoot on the punchier version of the vanish/reappear pop, played when a tray's food was " +
+                 "fully eaten mid-belt (vs. the calmer pop when it completed its lap and docked instead).")]
+        public float TrayVanishPunchOvershoot = 1.7f;
 
         // Runtime-only display scale. Nothing here is ever written back to the food prefab, the unit prefab or
         // the source mesh — the multiplier is applied to the spawned units every time the visual is rebuilt,

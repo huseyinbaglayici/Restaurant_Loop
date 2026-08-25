@@ -23,6 +23,7 @@ namespace Editor.LevelEditor
         private ConveyorLevelDataSO _draft;
         private ConveyorGridCanvas _canvas;
         private QueueGridCanvas _queueCanvas;
+        [SerializeField] private int _queueDepthValue = 6;
         private IntegerField _levelIdField, _widthField, _heightField, _queueDepthField, _amountField;
         private EnumField _difficultyField;
         private Label _cellCountLabel;
@@ -82,7 +83,18 @@ namespace Editor.LevelEditor
             Undo.undoRedoPerformed -= OnUndoRedo;
         }
 
-        private void OnUndoRedo() => RefreshUiFromDraft();
+        private void OnUndoRedo()
+        {
+            RefreshUiFromDraft();
+            ApplyQueueDepth();
+        }
+
+        private void ApplyQueueDepth()
+        {
+            _queueDepthField.SetValueWithoutNotify(_queueDepthValue);
+            _queueCanvas.Depth = _queueDepthValue;
+            _queueCanvas.Resize();
+        }
 
         private void RefreshUiFromDraft()
         {
@@ -471,15 +483,17 @@ namespace Editor.LevelEditor
 
             var sizeBar = new VisualElement();
             sizeBar.AddToClassList(Css.Row);
-            _queueDepthField = CompactIntField("Depth", 6);
+            _queueDepthField = CompactIntField("Depth", _queueDepthValue);
             sizeBar.Add(_queueDepthField);
             sizeBar.Add(MakeButton("Resize", () =>
             {
-                _queueCanvas.Depth = Mathf.Max(1, _queueDepthField.value);
-                _queueCanvas.Resize();
+                Undo.RecordObject(this, "Resize Queue Depth");
+                _queueDepthValue = Mathf.Max(1, _queueDepthField.value);
+                ApplyQueueDepth();
             }, Css.BtnPrimary));
             sizeBar.Add(MakeButton("Clear Queue", () => _queueCanvas.ClearQueues(), Css.BtnDanger));
             sizeBar.Add(MakeButton("Generate From Customers", GenerateQueueFromCustomers, Css.BtnPrimary));
+            sizeBar.Add(MakeButton("Shuffle Queue", ShuffleQueue, Css.Btn));
 
             _linkModeButton = new Button(ToggleLinkMode) { text = "Link" };
             _linkModeButton.AddToClassList(Css.Tool);
@@ -491,13 +505,16 @@ namespace Editor.LevelEditor
             _linkModeHint.AddToClassList(Css.StatusLabel);
             section.Add(_linkModeHint);
 
+            var scroll = new ScrollView(ScrollViewMode.VerticalAndHorizontal);
+            scroll.style.height = 340;
+
             var canvasHost = new VisualElement();
             canvasHost.AddToClassList(Css.CanvasHost);
 
             _queueCanvas = new QueueGridCanvas
             {
                 Data = _draft,
-                Depth = _queueDepthField.value,
+                Depth = _queueDepthValue,
                 SelectedFoodType = _canvas.SelectedFoodType,
                 SelectedAmount = _canvas.SelectedAmount
             };
@@ -505,7 +522,8 @@ namespace Editor.LevelEditor
             _queueCanvas.Resize();
 
             canvasHost.Add(_queueCanvas);
-            section.Add(canvasHost);
+            scroll.Add(canvasHost);
+            section.Add(scroll);
 
             return section;
         }
@@ -550,6 +568,30 @@ namespace Editor.LevelEditor
                     laneIndex++;
                 }
             }
+
+            RefreshUiFromDraft();
+        }
+
+        // flattens every lane (preserving each entry's LinkId), shuffles, then redeals round-robin
+        private void ShuffleQueue()
+        {
+            Undo.RecordObject(_draft, "Shuffle Queue");
+
+            var all = new List<FoodStackData>();
+            foreach (var lane in _draft.Queues)
+            {
+                all.AddRange(lane.Entries);
+                lane.Entries.Clear();
+            }
+
+            for (int i = 0; i < all.Count; i++)
+            {
+                int j = Random.Range(i, all.Count);
+                (all[i], all[j]) = (all[j], all[i]);
+            }
+
+            for (int i = 0; i < all.Count; i++)
+                _draft.Queues[i % _draft.Queues.Count].Entries.Add(all[i]);
 
             RefreshUiFromDraft();
         }

@@ -38,6 +38,10 @@ namespace RestaurantLoop.Runtime.Conveyor
         public int ItemCount => _items.Count;
         public int PathLength => _pathWorldPositions.Count;
 
+        // Mirrors QueueSpawner.TryGetVisual so callers (e.g. QueueLinkVisualizer) can enumerate belt
+        // items the same way they enumerate queue items, without exposing the BeltItem type itself.
+        public FoodItemController GetVisualAt(int index) => _items[index].Visual;
+
         public ConveyorManager(
             ConveyorLevelDataSO level,
             ConveyorPrefabSettings prefabSettings,
@@ -98,7 +102,9 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         // Reuses an existing visual (queue slot, exit-stack slot) and lets the visual layer fly it in
         // from where it currently sits. Logically the item is on the belt entry right away.
-        public void AddItemAtEntry(FoodStackData stack, FoodItemController reusedVisual, Vector3 sourceWorldPosition)
+        // entryProgress lets two items entering together (linked pair) land a grid apart instead of
+        // stacking on the same cell — pass a small negative value to place an item behind the entry.
+        public void AddItemAtEntry(FoodStackData stack, FoodItemController reusedVisual, Vector3 sourceWorldPosition, float entryProgress = 0f)
         {
             if (_pathWorldPositions.Count == 0) return;
 
@@ -108,7 +114,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return;
             }
 
-            AddItem(stack, reusedVisual, 0f, sourceWorldPosition, playEntryFlight: true);
+            AddItem(stack, reusedVisual, entryProgress, sourceWorldPosition, playEntryFlight: true);
         }
 
         // No entry-cell crossing is emitted here: the item becomes eligible for a consume match only
@@ -182,9 +188,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                     continue;
                 }
 
-                // lag-skip guard
+                // lag-skip guard (items can start at a negative entryProgress — skip crossings before cell 0)
                 int newIndex = Mathf.FloorToInt(item.Progress);
-                for (int idx = prevIndex + 1; idx <= newIndex; idx++)
+                for (int idx = Mathf.Max(0, prevIndex + 1); idx <= newIndex; idx++)
                     _crossingsThisFrame.Add((idx, item.Visual));
             }
         }
@@ -232,6 +238,14 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             int count = _pathWorldPositions.Count;
             if (count == 0) return Vector3.zero;
+
+            // Before cell 0 (entryProgress < 0, e.g. the trailing half of a linked pair): extrapolate
+            // backward along the entry direction instead of clamping to cell 0, so it doesn't overlap it.
+            if (progress < 0f && count > 1)
+            {
+                Vector3 entryDir = _pathWorldPositions[0] - _pathWorldPositions[1];
+                return _pathWorldPositions[0] + entryDir * -progress;
+            }
 
             int index = Mathf.Clamp(Mathf.FloorToInt(progress), 0, count - 1);
             int nextIndex = (index + 1) % count;

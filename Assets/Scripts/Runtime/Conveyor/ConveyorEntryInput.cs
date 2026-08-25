@@ -89,8 +89,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _queueSpawner.PickFromBottomEnabled = false;
 
                 // The queue visuals themselves fly onto the belt — no despawn + respawn snap.
+                // Partner enters one grid cell behind so the linked pair doesn't spawn stacked on the same cell.
                 _conveyorManager.AddItemAtEntry(stack, linkedVisual, linkedVisual.transform.position);
-                _conveyorManager.AddItemAtEntry(partnerVisual.Stack, linkedPartnerVisual, linkedPartnerVisual.transform.position);
+                _conveyorManager.AddItemAtEntry(partnerVisual.Stack, linkedPartnerVisual, linkedPartnerVisual.transform.position, -1f);
                 return true;
             }
 

@@ -35,9 +35,20 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("World Y a tray sits at while riding the belt — kept slightly under BeltFoodHeight so the tray reads as underneath the food.")]
         public float TrayBeltHeight = 0.9f;
 
+        [Tooltip("Extra offset applied on top of the Gate cell's position, in the dispenser's own local space " +
+                 "(X = sideways, Z = forward/back relative to its facing) — pushes the prop clear of the belt " +
+                 "loop instead of sitting dead-center on the Gate cell.")]
+        public Vector3 TrayDispenserOffset = Vector3.zero;
+
         [Header("Exit Stack (ExitStackAnchor)")]
         [Tooltip("World units 'below' (negative Z) the belt's own closest (minimum-Y) row.")]
         public float ExitStackZOffsetFromGrid = 1.5f;
+
+        [Tooltip("Extra Tray power-up: local offset from the leftmost exit slot for the decorative extra rack visual.")]
+        public Vector3 ExtraRackVisualOffset = new Vector3(-0.8f, 0.6f, -0.8f);
+
+        [Tooltip("Extra Tray power-up: Euler rotation applied to the decorative extra rack visual.")]
+        public Vector3 ExtraRackVisualRotation = new Vector3(0f, 90f, 0f);
 
         [Tooltip("World Y a docked food item sits at. The slot floor itself stays at Y 0 — this only lifts the food " +
                  "so it rests on top of the slot instead of inside it.")]
