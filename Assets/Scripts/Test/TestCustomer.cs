@@ -38,6 +38,16 @@ public class TestCustomer : MonoBehaviour
     public string firstOrderServedTrigger = "FirstOrderServed";
     public float serveAnimDelay = 0.8f;
 
+    [Header("UI Bubble Settings")]
+    [Tooltip("Baloncuk boyutu (1.2x büyütüldü: 1.44f)")]
+    public float bubbleSize = 1.44f;
+    [Tooltip("Karaktere göre baloncuğun konumu (Dünya uzayında - daha yukarıda)")]
+    public Vector3 bubbleOffset = new Vector3(0.25f, 1.45f, 0.05f);
+    [Tooltip("Baloncuk rotasyon açısı (Dünya uzayında X = 55.88)")]
+    public Vector3 bubbleRotationEuler = new Vector3(55.88f, 0f, 0f);
+    [Tooltip("Karakterin dönüşünden bağımsız olarak baloncuk hep kameraya / sabit dünya rotasyonuna kilitlensin")]
+    public bool lockWorldRotation = true;
+
     private GameObject canvasObj;
     private Image bubbleImage;
     private Image bubbleImage2; // İkinci baloncuk
@@ -49,6 +59,24 @@ public class TestCustomer : MonoBehaviour
         UpdateVisuals();
         RandomizeHair();
         InitializeAnimation();
+    }
+
+    private void LateUpdate()
+    {
+        if (canvasObj != null)
+        {
+            if (lockWorldRotation)
+            {
+                // Karakter hangi yöne dönerse dönsün (0, 90, 180), baloncuk hep kameraya doğru X=55.88 bakar
+                canvasObj.transform.position = transform.position + bubbleOffset;
+                canvasObj.transform.rotation = Quaternion.Euler(bubbleRotationEuler);
+            }
+            else
+            {
+                canvasObj.transform.localPosition = bubbleOffset;
+                canvasObj.transform.localRotation = Quaternion.Euler(bubbleRotationEuler);
+            }
+        }
     }
 
     private void InitializeAnimation()
@@ -121,60 +149,92 @@ public class TestCustomer : MonoBehaviour
     
     private void CreateUI()
     {
+        if (canvasObj != null) return;
+
         // Dinamik olarak Canvas UI oluşturuyoruz
         canvasObj = new GameObject("OrderCanvas");
         canvasObj.transform.SetParent(transform);
-        // Bedene daha yakın (omuz hizası X=0.35, Y=1.1, Z=0.25):
-        canvasObj.transform.localPosition = new Vector3(0.35f, 1.1f, 0.25f);
-        canvasObj.transform.rotation = Quaternion.identity;
+        canvasObj.transform.localPosition = bubbleOffset;
+        canvasObj.transform.localRotation = Quaternion.Euler(bubbleRotationEuler);
         
         Canvas canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
-        canvasObj.GetComponent<RectTransform>().sizeDelta = new Vector2(2f, 2f);
-        
-        float bubbleSize = 0.25f; // Daha küçük ve kompakt baloncuk boyutu
+        canvasObj.GetComponent<RectTransform>().sizeDelta = new Vector2(4f, 4f);
 
         // 1. Baloncuk (Alt sipariş)
         GameObject bgObj = new GameObject("Bubble");
         bgObj.transform.SetParent(canvasObj.transform);
         bgObj.transform.localPosition = Vector3.zero;
         bubbleImage = bgObj.AddComponent<Image>();
+        bubbleImage.preserveAspect = true;
         bgObj.GetComponent<RectTransform>().sizeDelta = new Vector2(bubbleSize, bubbleSize);
-        bubbleImage.color = orderColor;
-        
+
+        Sprite sp1 = null;
+        if (TestGameManager.Instance != null)
+        {
+            sp1 = orderColorEnum != TestCustomerData.CustomerColor.None
+                ? TestGameManager.Instance.GetBubbleSprite(orderColorEnum)
+                : TestGameManager.Instance.GetBubbleSprite(orderColor);
+        }
+
+        if (sp1 != null)
+        {
+            bubbleImage.sprite = sp1;
+            bubbleImage.color = isServeable ? Color.white : new Color(0.4f, 0.4f, 0.4f, 0.7f);
+        }
+        else
+        {
+            bubbleImage.color = isServeable ? orderColor : Color.gray;
 #if UNITY_EDITOR
-        // Editörde yuvarlak görünmesi için Unity'nin varsayılan Knob sprite'ını atıyoruz
-        bubbleImage.sprite = UnityEditor.AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+            bubbleImage.sprite = UnityEditor.AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
 #endif
+        }
 
         // 2. Baloncuk (Eğer Type3 / İkinci sipariş varsa - Yan yana DEĞİL, ÜST ÜSTE)
         if (hasSecondOrder)
         {
             GameObject bgObj2 = new GameObject("Bubble2");
             bgObj2.transform.SetParent(canvasObj.transform);
-            // Üst üste durması için Y ekseninde yukarı offset (0, 0.28f, 0)
-            bgObj2.transform.localPosition = new Vector3(0, bubbleSize + 0.04f, 0); 
+            // Üst üste durması için Y ekseninde yukarı offset
+            bgObj2.transform.localPosition = new Vector3(0, bubbleSize + 0.1f, 0); 
             bubbleImage2 = bgObj2.AddComponent<Image>();
+            bubbleImage2.preserveAspect = true;
             bgObj2.GetComponent<RectTransform>().sizeDelta = new Vector2(bubbleSize, bubbleSize);
-            bubbleImage2.color = orderColor2;
-            
+
+            Sprite sp2 = null;
+            if (TestGameManager.Instance != null)
+            {
+                sp2 = orderColor2Enum != TestCustomerData.CustomerColor.None
+                    ? TestGameManager.Instance.GetBubbleSprite(orderColor2Enum)
+                    : TestGameManager.Instance.GetBubbleSprite(orderColor2);
+            }
+
+            if (sp2 != null)
+            {
+                bubbleImage2.sprite = sp2;
+                bubbleImage2.color = isServeable ? Color.white : new Color(0.4f, 0.4f, 0.4f, 0.7f);
+            }
+            else
+            {
+                bubbleImage2.color = isServeable ? orderColor2 : Color.gray;
 #if UNITY_EDITOR
-            bubbleImage2.sprite = UnityEditor.AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+                bubbleImage2.sprite = UnityEditor.AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
 #endif
+            }
         }
 
         // Soru işareti için Text objesi (Şu anlık kapalı olacak)
         GameObject textObj = new GameObject("QuestionMark");
         textObj.transform.SetParent(canvasObj.transform);
-        textObj.transform.localPosition = hasSecondOrder ? new Vector3(0, (bubbleSize + 0.04f) / 2f, 0) : Vector3.zero;
+        textObj.transform.localPosition = hasSecondOrder ? new Vector3(0, (bubbleSize + 0.1f) / 2f, 0) : Vector3.zero;
         questionMarkText = textObj.AddComponent<Text>();
         questionMarkText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         questionMarkText.text = "?";
-        questionMarkText.fontSize = 24;
+        questionMarkText.fontSize = 36;
         questionMarkText.alignment = TextAnchor.MiddleCenter;
         questionMarkText.color = Color.black; 
         textObj.GetComponent<RectTransform>().sizeDelta = new Vector2(bubbleSize, bubbleSize);
-        textObj.transform.localScale = Vector3.one * 0.05f; 
+        textObj.transform.localScale = Vector3.one * 0.1f; 
         
         Outline outline = textObj.AddComponent<Outline>();
         outline.effectColor = Color.white;
@@ -295,16 +355,56 @@ public class TestCustomer : MonoBehaviour
     
     public void UpdateVisuals()
     {
+        if (canvasObj == null)
+        {
+            CreateUI();
+        }
+
         if (bubbleImage != null)
         {
-            // Servis edilebilir ise sipariş rengi, Hidden/beklemede ise renksiz (gri) baloncuk
             bubbleImage.enabled = true;
-            bubbleImage.color = isServeable ? orderColor : Color.gray;
+
+            Sprite sp1 = null;
+            if (TestGameManager.Instance != null)
+            {
+                sp1 = (orderColorEnum != TestCustomerData.CustomerColor.None)
+                    ? TestGameManager.Instance.GetBubbleSprite(orderColorEnum)
+                    : TestGameManager.Instance.GetBubbleSprite(orderColor);
+            }
+
+            if (sp1 != null)
+            {
+                bubbleImage.sprite = sp1;
+                bubbleImage.color = isServeable ? Color.white : new Color(0.4f, 0.4f, 0.4f, 0.7f);
+            }
+            else
+            {
+                bubbleImage.color = isServeable ? orderColor : Color.gray;
+            }
             
             if (bubbleImage2 != null)
             {
                 bubbleImage2.enabled = hasSecondOrder;
-                bubbleImage2.color = isServeable ? orderColor2 : Color.gray;
+                if (hasSecondOrder)
+                {
+                    Sprite sp2 = null;
+                    if (TestGameManager.Instance != null)
+                    {
+                        sp2 = (orderColor2Enum != TestCustomerData.CustomerColor.None)
+                            ? TestGameManager.Instance.GetBubbleSprite(orderColor2Enum)
+                            : TestGameManager.Instance.GetBubbleSprite(orderColor2);
+                    }
+
+                    if (sp2 != null)
+                    {
+                        bubbleImage2.sprite = sp2;
+                        bubbleImage2.color = isServeable ? Color.white : new Color(0.4f, 0.4f, 0.4f, 0.7f);
+                    }
+                    else
+                    {
+                        bubbleImage2.color = isServeable ? orderColor2 : Color.gray;
+                    }
+                }
             }
             
             if (questionMarkText != null)

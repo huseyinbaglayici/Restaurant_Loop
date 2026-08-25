@@ -9,7 +9,27 @@ public class TestGameManager : MonoBehaviour
     public List<TestCustomer> customers = new List<TestCustomer>();
     
     [Header("Level Data (Data-Driven - Optional)")]
+    [Tooltip("Unified Level Data (Eski veya Birleşik Level Yapısı)")]
     public TestLevelDataSO levelData;
+
+    [Header("Conveyor Grid Level Data (ConveyorLevel_1 gibi hazır level verisi)")]
+    [Tooltip("Doğrudan ConveyorLevelDataSO (ConveyorLevel_1 vb.) bağlamak için")]
+    public RestaurantLoop.Runtime.Data.ConveyorLevelDataSO conveyorLevelData;
+    [Tooltip("Grid hücre aralığı / dünya boyutu")]
+    public float conveyorCellSize = 1f;
+
+    [Header("Level UI Display")]
+    [Tooltip("Level numarasını gösterecek UI Text (UnityEngine.UI.Text)")]
+    public UnityEngine.UI.Text levelText;
+    [Tooltip("İsteğe bağlı: TextMeshPro kullanıyorsanız TextMeshProUGUI")]
+    public TMPro.TextMeshProUGUI levelTextTMP;
+
+    public RestaurantLoop.Runtime.Data.ConveyorLevelDataSO GetActiveConveyorData()
+    {
+        if (conveyorLevelData != null) return conveyorLevelData;
+        if (levelData != null && levelData.conveyorData != null) return levelData.conveyorData;
+        return null;
+    }
     
     [Header("Prefabs & Food Visuals (Global)")]
     public GameObject customerPrefab;
@@ -19,6 +39,18 @@ public class TestGameManager : MonoBehaviour
     public FoodPrefabData whiteFood;
     public FoodPrefabData blueFood;
     public FoodPrefabData pinkFood;
+
+    [Header("UI Bubble Sprites (5 Colors)")]
+    [Tooltip("Kırmızı sipariş baloncuğu görseli")]
+    public Sprite redBubbleSprite;
+    [Tooltip("Sarı sipariş baloncuğu görseli")]
+    public Sprite yellowBubbleSprite;
+    [Tooltip("Beyaz sipariş baloncuğu görseli")]
+    public Sprite whiteBubbleSprite;
+    [Tooltip("Mavi sipariş baloncuğu görseli")]
+    public Sprite blueBubbleSprite;
+    [Tooltip("Pembe sipariş baloncuğu görseli")]
+    public Sprite pinkBubbleSprite;
 
     [Header("Customer 5-Material Color Palettes")]
     [Tooltip("Customer prefabindeki 5 farklı materyal için ayrı ayrı rastgele renk listeleri")]
@@ -128,6 +160,50 @@ public class TestGameManager : MonoBehaviour
     [HideInInspector] public float innerOffset = 1.2f; // İç müşterilerin ne kadar içeride duracağı
     [HideInInspector] public Color[] possibleColors = new Color[] { Color.red, Color.blue, Color.yellow, Color.green };
     
+    public Sprite GetBubbleSprite(TestCustomerData.CustomerColor color)
+    {
+        switch (color)
+        {
+            case TestCustomerData.CustomerColor.Red: return redBubbleSprite;
+            case TestCustomerData.CustomerColor.Yellow: return yellowBubbleSprite;
+            case TestCustomerData.CustomerColor.White: return whiteBubbleSprite;
+            case TestCustomerData.CustomerColor.Blue: return blueBubbleSprite;
+            case TestCustomerData.CustomerColor.Pink: return pinkBubbleSprite;
+            default: return null;
+        }
+    }
+
+    public Sprite GetBubbleSprite(Color color)
+    {
+        if (color == Color.red) return redBubbleSprite;
+        if (color == Color.yellow) return yellowBubbleSprite;
+        if (color == Color.white) return whiteBubbleSprite;
+        if (color == Color.blue) return blueBubbleSprite;
+        if (Mathf.Abs(color.r - 1f) < 0.15f && Mathf.Abs(color.g - 0.4f) < 0.25f) return pinkBubbleSprite;
+        return null;
+    }
+
+#if UNITY_EDITOR
+    private void AutoAssignDefaultBubbleSprites()
+    {
+        if (redBubbleSprite == null)
+            redBubbleSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI Elements/baloncuklar/foods/hamburger_red_bubble.png");
+        if (yellowBubbleSprite == null)
+            yellowBubbleSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI Elements/baloncuklar/foods/patates_yellow_bubble.png");
+        if (whiteBubbleSprite == null)
+            whiteBubbleSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI Elements/baloncuklar/foods/et_white_bubble.png");
+        if (blueBubbleSprite == null)
+            blueBubbleSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI Elements/baloncuklar/foods/içecek_blue_bubble.png");
+        if (pinkBubbleSprite == null)
+            pinkBubbleSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI Elements/baloncuklar/foods/donut_pembe bubble.png");
+    }
+
+    private void Reset()
+    {
+        AutoAssignDefaultBubbleSprites();
+    }
+#endif
+
     protected virtual void Awake() 
     { 
         Instance = this; 
@@ -142,12 +218,77 @@ public class TestGameManager : MonoBehaviour
         {
             customerMaterialColorGroups = GetDefaultMaterialColorGroups();
         }
+
+#if UNITY_EDITOR
+        if (redBubbleSprite == null || yellowBubbleSprite == null || whiteBubbleSprite == null || blueBubbleSprite == null || pinkBubbleSprite == null)
+        {
+            AutoAssignDefaultBubbleSprites();
+        }
+#endif
     }
     
+    public static TestCustomerData.CustomerColor FoodTypeToCustomerColor(RestaurantLoop.Runtime.Data.FoodType type)
+    {
+        switch (type)
+        {
+            case RestaurantLoop.Runtime.Data.FoodType.Hamburger:
+            case RestaurantLoop.Runtime.Data.FoodType.Pizza:
+            case RestaurantLoop.Runtime.Data.FoodType.Kebab:
+                return TestCustomerData.CustomerColor.Red;
+            case RestaurantLoop.Runtime.Data.FoodType.Fries:
+            case RestaurantLoop.Runtime.Data.FoodType.Croissant:
+                return TestCustomerData.CustomerColor.Yellow;
+            case RestaurantLoop.Runtime.Data.FoodType.Meat:
+            case RestaurantLoop.Runtime.Data.FoodType.Sushi:
+            case RestaurantLoop.Runtime.Data.FoodType.Steak:
+                return TestCustomerData.CustomerColor.White;
+            case RestaurantLoop.Runtime.Data.FoodType.Drink:
+                return TestCustomerData.CustomerColor.Blue;
+            case RestaurantLoop.Runtime.Data.FoodType.Donut:
+                return TestCustomerData.CustomerColor.Pink;
+            default:
+                return TestCustomerData.CustomerColor.Red;
+        }
+    }
+
     protected virtual void Start()
     {
+        UpdateLevelUI();
+        InitConveyorVisualsAndPath();
         GenerateCustomers();
         GenerateQueues();
+    }
+
+    public void UpdateLevelUI()
+    {
+        string levelStr = "LEVEL 1";
+
+        var cData = GetActiveConveyorData();
+        if (cData != null)
+        {
+            int lvl = cData.LevelId > 0 ? cData.LevelId : 1;
+            levelStr = $"LEVEL {lvl}";
+        }
+        else if (levelData != null)
+        {
+            string cleanName = levelData.name.Replace("Level_", "").Replace("Level", "").Replace("level_", "").Replace("level", "").Trim();
+            if (string.IsNullOrEmpty(cleanName)) cleanName = "1";
+            levelStr = $"LEVEL {cleanName}";
+        }
+
+        if (levelText != null) levelText.text = levelStr;
+        if (levelTextTMP != null) levelTextTMP.text = levelStr;
+    }
+
+    public void InitConveyorVisualsAndPath()
+    {
+        var activeCData = GetActiveConveyorData();
+        if (activeCData != null && TestConveyorBelt.Instance != null)
+        {
+            Vector3 centerPos = customerCenter != null ? customerCenter.position : transform.position;
+            TestConveyorBelt.Instance.conveyorCellSize = conveyorCellSize;
+            TestConveyorBelt.Instance.BuildPathFromConveyorData(activeCData, centerPos);
+        }
     }
     
     private Vector3 GetPositionOnRect(float distance, float w, float d)
@@ -182,14 +323,28 @@ public class TestGameManager : MonoBehaviour
 
     private void GenerateCustomers()
     {
-        if (customerCenter == null) return;
+        if (customerCenter == null)
+        {
+            if (customers != null && customers.Count > 0)
+            {
+                foreach (var c in customers)
+                {
+                    if (c != null)
+                    {
+                        c.gameObject.SetActive(true);
+                        c.UpdateVisuals();
+                    }
+                }
+            }
+            return;
+        }
         
         customers.Clear();
 
         GameObject prefabToUse = customerPrefab != null ? customerPrefab : (levelData != null ? levelData.customerPrefab : null);
         Quaternion customerRotation = Quaternion.Euler(0f, 180f, 0f);
 
-        // Eğer levelData atanmışsa, müşterileri levelData'dan üret
+        // 1. Durum: levelData (Unified Level Data) atanmışsa
         if (levelData != null)
         {
             for (int i = customerCenter.childCount - 1; i >= 0; i--)
@@ -217,6 +372,7 @@ public class TestGameManager : MonoBehaviour
                     obj = Instantiate(prefabToUse, pos, customerRotation);
                     obj.name = $"Customer_{cData.gridX}_{cData.gridY}";
                     obj.transform.SetParent(customerCenter);
+                    obj.SetActive(true);
                     cst = obj.GetComponent<TestCustomer>();
                     if (cst == null) cst = obj.AddComponent<TestCustomer>();
                 }
@@ -228,6 +384,7 @@ public class TestGameManager : MonoBehaviour
                     obj.transform.rotation = customerRotation;
                     obj.transform.localScale = Vector3.one * 0.7f;
                     obj.transform.SetParent(customerCenter);
+                    obj.SetActive(true);
                     cst = obj.AddComponent<TestCustomer>();
                 }
 
@@ -248,6 +405,77 @@ public class TestGameManager : MonoBehaviour
 
                 // Parçalar için rastgele renkleri uygula
                 cst.ApplyMaterialGroupColors(customerMaterialColorGroups);
+                cst.UpdateVisuals();
+
+                customers.Add(cst);
+            }
+            return;
+        }
+
+        // 2. Durum: Doğrudan ConveyorLevelDataSO (ConveyorLevel_1 gibi) atanmışsa
+        var activeCData = GetActiveConveyorData();
+        if (activeCData != null && activeCData.Customers != null && activeCData.Customers.Count > 0)
+        {
+            for (int i = customerCenter.childCount - 1; i >= 0; i--)
+            {
+                Transform child = customerCenter.GetChild(i);
+                if (Application.isPlaying) Destroy(child.gameObject);
+                else DestroyImmediate(child.gameObject);
+            }
+
+            int gridCols = activeCData.GridWidth;
+            int gridRows = activeCData.GridHeight;
+            float offsetX = (gridCols - 1) * conveyorCellSize / 2f;
+            float offsetZ = (gridRows - 1) * conveyorCellSize / 2f;
+
+            foreach (var cEntity in activeCData.Customers)
+            {
+                Vector3 pos = new Vector3(cEntity.Coord.x * conveyorCellSize - offsetX, 0, cEntity.Coord.y * conveyorCellSize - offsetZ);
+                pos += customerCenter.position;
+
+                GameObject obj;
+                TestCustomer cst;
+
+                if (prefabToUse != null)
+                {
+                    obj = Instantiate(prefabToUse, pos, customerRotation);
+                    obj.name = $"Customer_{cEntity.Coord.x}_{cEntity.Coord.y}";
+                    obj.transform.SetParent(customerCenter);
+                    obj.SetActive(true);
+                    cst = obj.GetComponent<TestCustomer>();
+                    if (cst == null) cst = obj.AddComponent<TestCustomer>();
+                }
+                else
+                {
+                    obj = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                    obj.name = $"Customer_{cEntity.Coord.x}_{cEntity.Coord.y}";
+                    obj.transform.position = pos;
+                    obj.transform.rotation = customerRotation;
+                    obj.transform.localScale = Vector3.one * 0.7f;
+                    obj.transform.SetParent(customerCenter);
+                    obj.SetActive(true);
+                    cst = obj.AddComponent<TestCustomer>();
+                }
+
+                var colorEnum1 = FoodTypeToCustomerColor(cEntity.Order.Type);
+                cst.orderColor = GetUnityColor(colorEnum1);
+                cst.orderColorEnum = colorEnum1;
+
+                if (cEntity.HasSecondOrder)
+                {
+                    var colorEnum2 = FoodTypeToCustomerColor(cEntity.SecondOrder.Type);
+                    cst.orderColor2 = GetUnityColor(colorEnum2);
+                    cst.orderColor2Enum = colorEnum2;
+                    cst.hasSecondOrder = true;
+                }
+
+                cst.gridX = cEntity.Coord.x;
+                cst.gridY = cEntity.Coord.y;
+                cst.behaviorType = cEntity.IsHidden ? 1 : (cEntity.HasSecondOrder ? 2 : 0);
+                cst.isServeable = !cEntity.IsHidden;
+
+                cst.ApplyMaterialGroupColors(customerMaterialColorGroups);
+                cst.UpdateVisuals();
 
                 customers.Add(cst);
             }
@@ -292,10 +520,12 @@ public class TestGameManager : MonoBehaviour
             innerObj.transform.rotation = customerRotation;
             if (prefabToUse == null) innerObj.transform.localScale = Vector3.one * 0.5f;
             innerObj.transform.SetParent(customerCenter);
+            innerObj.SetActive(true);
             TestCustomer innerCst = innerObj.GetComponent<TestCustomer>() ?? innerObj.AddComponent<TestCustomer>();
             innerCst.isServeable = false;
             innerCst.orderColor = possibleColors[Random.Range(0, possibleColors.Length)];
             innerCst.ApplyMaterialGroupColors(customerMaterialColorGroups);
+            innerCst.UpdateVisuals();
             
             // Dış Müşteri (Renkli)
             GameObject outerObj = prefabToUse != null ? Instantiate(prefabToUse, outerPos, customerRotation) : GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -304,10 +534,12 @@ public class TestGameManager : MonoBehaviour
             outerObj.transform.rotation = customerRotation;
             if (prefabToUse == null) outerObj.transform.localScale = Vector3.one * 0.5f;
             outerObj.transform.SetParent(customerCenter);
+            outerObj.SetActive(true);
             TestCustomer outerCst = outerObj.GetComponent<TestCustomer>() ?? outerObj.AddComponent<TestCustomer>();
             outerCst.isServeable = true;
             outerCst.orderColor = possibleColors[Random.Range(0, possibleColors.Length)];
             outerCst.ApplyMaterialGroupColors(customerMaterialColorGroups);
+            outerCst.UpdateVisuals();
             
             // Bağlantı
             outerCst.innerCustomer = innerCst;
@@ -344,6 +576,20 @@ public class TestGameManager : MonoBehaviour
                     }
                 }
                 if (hasValidQueueData) break;
+            }
+        }
+
+        var activeCData = GetActiveConveyorData();
+        bool hasConveyorQueues = false;
+        if (levelData == null && activeCData != null && activeCData.Queues != null && activeCData.Queues.Count > 0)
+        {
+            foreach (var qLane in activeCData.Queues)
+            {
+                if (qLane != null && qLane.Entries != null && qLane.Entries.Count > 0)
+                {
+                    hasConveyorQueues = true;
+                    break;
+                }
             }
         }
 
@@ -391,6 +637,51 @@ public class TestGameManager : MonoBehaviour
                         }
                     }
                     
+                    queues[q].Add(food);
+                }
+            }
+        }
+        else if (hasConveyorQueues)
+        {
+            Dictionary<int, TestFoodStack> unlinkedStacks = new Dictionary<int, TestFoodStack>();
+            for (int q = 0; q < Mathf.Min(3, activeCData.Queues.Count); q++)
+            {
+                var lane = activeCData.Queues[q];
+                if (lane == null || lane.Entries == null) continue;
+
+                foreach (var entry in lane.Entries)
+                {
+                    var cEnum = FoodTypeToCustomerColor(entry.Type);
+                    GameObject baseObj = new GameObject("FoodStack_" + cEnum.ToString());
+                    baseObj.transform.localScale = Vector3.one;
+                    baseObj.AddComponent<BoxCollider>();
+                    
+                    TestFoodStack food = baseObj.AddComponent<TestFoodStack>();
+                    food.foodColor = GetUnityColor(cEnum);
+                    food.foodColorEnum = cEnum;
+                    food.amount = entry.Amount;
+                    food.state = TestFoodStack.FoodState.InQueue;
+                    food.queueIndex = q;
+                    food.isClickable = false;
+
+                    if (entry.LinkId > 0)
+                    {
+                        if (unlinkedStacks.ContainsKey(entry.LinkId))
+                        {
+                            TestFoodStack partner = unlinkedStacks[entry.LinkId];
+                            if (partner != null && partner.queueIndex != q)
+                            {
+                                food.linkedStack = partner;
+                                partner.linkedStack = food;
+                            }
+                            unlinkedStacks.Remove(entry.LinkId);
+                        }
+                        else
+                        {
+                            unlinkedStacks[entry.LinkId] = food;
+                        }
+                    }
+
                     queues[q].Add(food);
                 }
             }

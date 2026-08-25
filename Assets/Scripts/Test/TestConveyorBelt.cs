@@ -11,8 +11,23 @@ public class TestConveyorBelt : MonoBehaviour
     public float width = 8f; // Dikdörtgenin genişliği
     public float depth = 6f; // Dikdörtgenin yüksekliği (derinliği)
     public float speed = 5f; // Saniyede ilerleme hızı (birim)
+
+    [Header("Conveyor Visual & Path from Data")]
+    [Tooltip("Düz bant prefabı (Örn: conveyor_normal)")]
+    public GameObject conveyorStraightPrefab;
+    [Tooltip("Köşe bant prefabı (Örn: conveyor_corner)")]
+    public GameObject conveyorCornerPrefab;
+    [Tooltip("Hücre dünya boyutu")]
+    public float conveyorCellSize = 1f;
+    [Tooltip("Bant prefablarının toplanacağı parent Transform")]
+    public Transform conveyorVisualsParent;
     
-    private float Perimeter => 2f * width + 2f * depth;
+    private List<Vector3> pathWaypoints = new List<Vector3>();
+    private List<float> waypointCumulativeDistances = new List<float>();
+    private float customPathLength = 0f;
+    private bool hasCustomPath = false;
+    
+    public float Perimeter => hasCustomPath ? customPathLength : (2f * width + 2f * depth);
     
     private class BeltItem
     {
@@ -26,7 +41,12 @@ public class TestConveyorBelt : MonoBehaviour
     private void Awake() 
     { 
         Instance = this; 
-        // GenerateVisuals(); // Kendi modellerinizi kullandığınız için kapatıldı
+#if UNITY_EDITOR
+        if (conveyorStraightPrefab == null)
+            conveyorStraightPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/conveyor_normal.prefab");
+        if (conveyorCornerPrefab == null)
+            conveyorCornerPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/conveyor_corner.prefab");
+#endif
         CreateUI();
     }
     
@@ -203,9 +223,9 @@ public class TestConveyorBelt : MonoBehaviour
             // Konum hesaplama
             Vector3 pos = GetPositionOnBelt(item.distance);
             
-            // Yumuşak geçiş için Lerp
-            Vector3 targetPos = transform.position + pos;
-            item.food.transform.position = Vector3.Lerp(item.food.transform.position, targetPos, Time.deltaTime * 5f);
+            // Yumuşak geçiş için Lerp (Custom yol zaten dünya koordinatındadır)
+            Vector3 targetPos = hasCustomPath ? pos : (transform.position + pos);
+            item.food.transform.position = Vector3.Lerp(item.food.transform.position, targetPos, Time.deltaTime * 8f);
             
             // Bant hareket ederken müşterilerle eşleşmeyi kontrol et
             CheckServe(item, i);
@@ -215,8 +235,199 @@ public class TestConveyorBelt : MonoBehaviour
         items.RemoveAll(x => x == null || x.food == null);
     }
     
+    public void BuildPathFromConveyorData(RestaurantLoop.Runtime.Data.ConveyorLevelDataSO data, Vector3 centerPos)
+    {
+        if (data == null) return;
+
+        // 1. Görsel Bant Parçalarını Oluştur
+        SpawnConveyorTiles(data, centerPos);
+
+        // 2. Yol Noktalarını (Waypoints) Çıkar
+        pathWaypoints.Clear();
+        waypointCumulativeDistances.Clear();
+        customPathLength = 0f;
+
+        List<Vector2Int> orderedCoords = null;
+        if (data.BakedPath != null && data.BakedPath.OrderedPath != null && data.BakedPath.OrderedPath.Count > 0)
+        {
+            orderedCoords = data.BakedPath.OrderedPath;
+        }
+        else if (data.ConveyorCells != null && data.ConveyorCells.Count > 0)
+        {
+            orderedCoords = new List<Vector2Int>();
+            foreach (var c in data.ConveyorCells)
+            {
+                if (!c.IsGate) orderedCoords.Add(c.Coord);
+            }
+        }
+
+        if (orderedCoords != null && orderedCoords.Count > 0)
+        {
+            float offsetX = (data.GridWidth - 1) * conveyorCellSize / 2f;
+            float offsetZ = (data.GridHeight - 1) * conveyorCellSize / 2f;
+
+            foreach (var coord in orderedCoords)
+            {
+                Vector3 wp = centerPos + new Vector3(coord.x * conveyorCellSize - offsetX, 0.4f, coord.y * conveyorCellSize - offsetZ);
+                pathWaypoints.Add(wp);
+            }
+
+            waypointCumulativeDistances.Add(0f);
+            for (int i = 0; i < pathWaypoints.Count; i++)
+            {
+                Vector3 p1 = pathWaypoints[i];
+                Vector3 p2 = pathWaypoints[(i + 1) % pathWaypoints.Count];
+                float dist = Vector3.Distance(p1, p2);
+                customPathLength += dist;
+                waypointCumulativeDistances.Add(customPathLength);
+            }
+
+            hasCustomPath = pathWaypoints.Count > 1 && customPathLength > 0.01f;
+        }
+    }
+
+    public void SpawnConveyorTiles(RestaurantLoop.Runtime.Data.ConveyorLevelDataSO data, Vector3 centerPos)
+    {
+        if (data == null || data.ConveyorCells == null || data.ConveyorCells.Count == 0) return;
+
+#if UNITY_EDITOR
+        if (conveyorStraightPrefab == null)
+            conveyorStraightPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/conveyor_normal.prefab");
+        if (conveyorCornerPrefab == null)
+            conveyorCornerPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/conveyor_corner.prefab");
+#endif
+
+        if (conveyorVisualsParent == null)
+        {
+            GameObject parentObj = new GameObject("ConveyorVisuals");
+            parentObj.transform.SetParent(transform);
+            parentObj.transform.localPosition = Vector3.zero;
+            conveyorVisualsParent = parentObj.transform;
+        }
+        else
+        {
+            for (int i = conveyorVisualsParent.childCount - 1; i >= 0; i--)
+            {
+                var child = conveyorVisualsParent.GetChild(i);
+                if (Application.isPlaying) Destroy(child.gameObject);
+                else DestroyImmediate(child.gameObject);
+            }
+        }
+
+        float offsetX = (data.GridWidth - 1) * conveyorCellSize / 2f;
+        float offsetZ = (data.GridHeight - 1) * conveyorCellSize / 2f;
+
+        // Yol koordinatlarının sırasını ve yönlerini haritalandır
+        var orderedPath = data.BakedPath != null ? data.BakedPath.OrderedPath : null;
+        var pathIndexByCoord = new Dictionary<Vector2Int, int>();
+        if (orderedPath != null)
+        {
+            for (int i = 0; i < orderedPath.Count; i++)
+            {
+                pathIndexByCoord[orderedPath[i]] = i;
+            }
+        }
+
+        foreach (var cell in data.ConveyorCells)
+        {
+            if (cell.IsGate) continue; // Kapı hücreleri fiziki bant parçası taşımaz
+
+            Vector3 worldPos = centerPos + new Vector3(cell.Coord.x * conveyorCellSize - offsetX, 0f, cell.Coord.y * conveyorCellSize - offsetZ);
+            float rotY = RestaurantLoop.Runtime.Conveyor.ConveyorWorldUtil.ToWorldYRotation(cell.Shape, cell.Rotation);
+
+            GameObject prefabToSpawn = cell.Shape == RestaurantLoop.Runtime.Data.ConveyorTileShape.Straight 
+                ? conveyorStraightPrefab 
+                : conveyorCornerPrefab;
+
+            if (prefabToSpawn != null)
+            {
+                // Sadece X eksenindeki prefab rotasyonu korunur, Y eksenine grid açısı (rotY) atanır
+                float prefabXRot = prefabToSpawn.transform.eulerAngles.x;
+                Quaternion worldRot = Quaternion.Euler(prefabXRot, rotY, 0f);
+                GameObject piece = Instantiate(prefabToSpawn, worldPos, worldRot, conveyorVisualsParent);
+                piece.transform.localScale = prefabToSpawn.transform.localScale;
+                piece.name = $"Conveyor_{cell.Coord.x}_{cell.Coord.y}";
+                piece.SetActive(true);
+
+                // 1. Düz Bant: Hareket yönünü Level Data yoluna göre belirle ve TestConveyorVisual'a uygula
+                if (cell.Shape == RestaurantLoop.Runtime.Data.ConveyorTileShape.Straight)
+                {
+                    var visual = piece.GetComponent<TestConveyorVisual>() ?? piece.GetComponentInChildren<TestConveyorVisual>();
+                    if (visual != null)
+                    {
+                        bool isForward = true;
+                        if (orderedPath != null && pathIndexByCoord.TryGetValue(cell.Coord, out int idx))
+                        {
+                            Vector2Int nextCoord = orderedPath[(idx + 1) % orderedPath.Count];
+                            Vector2Int pathMoveDir = nextCoord - cell.Coord;
+                            Vector2Int arrowDir = RotateCoord(Vector2Int.right, cell.Rotation);
+                            isForward = (pathMoveDir == arrowDir);
+                        }
+
+                        // Yatay (90/270 derece) ve Dikey (0/180 derece) UV eksen farkını düzeltir
+                        float axisSign = Mathf.Cos(2f * rotY * Mathf.Deg2Rad);
+                        float baseSpeed = Mathf.Abs(visual.scrollSpeedY) > 0.001f ? Mathf.Abs(visual.scrollSpeedY) : 1.0f;
+                        visual.scrollSpeedY = (isForward ? 1f : -1f) * axisSign * baseSpeed;
+                    }
+                }
+                // 2. Köşe Bant: Dönüş yönünü (CW/CCW) Level Data yoluna göre ayarla
+                else if (cell.Shape == RestaurantLoop.Runtime.Data.ConveyorTileShape.Corner)
+                {
+                    var cornerVisual = piece.GetComponent<TestConveyorVisualCorner>() ?? piece.GetComponentInChildren<TestConveyorVisualCorner>();
+                    if (cornerVisual != null)
+                    {
+                        cornerVisual.repeatAngle = 90f; // 90 derecede periyot tamamlanır, ters dönme olmaz
+                        if (orderedPath != null && pathIndexByCoord.TryGetValue(cell.Coord, out int idx))
+                        {
+                            int count = orderedPath.Count;
+                            Vector2Int prevCoord = orderedPath[(idx - 1 + count) % count];
+                            Vector2Int nextCoord = orderedPath[(idx + 1) % count];
+                            Vector2Int dirIn = cell.Coord - prevCoord;
+                            Vector2Int dirOut = nextCoord - cell.Coord;
+                            int cross = dirIn.x * dirOut.y - dirIn.y * dirOut.x;
+                            cornerVisual.isClockwise = (cross < 0);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static Vector2Int RotateCoord(Vector2Int dir, float degrees)
+    {
+        int steps = Mathf.RoundToInt(degrees / 90f) % 4;
+        if (steps < 0) steps += 4;
+        for (int i = 0; i < steps; i++) dir = new Vector2Int(-dir.y, dir.x);
+        return dir;
+    }
+    
     private Vector3 GetPositionOnBelt(float d)
     {
+        if (hasCustomPath && pathWaypoints.Count > 1)
+        {
+            float total = customPathLength;
+            if (total <= 0f) return pathWaypoints[0];
+
+            d = Mathf.Repeat(d, total);
+
+            for (int i = 0; i < pathWaypoints.Count; i++)
+            {
+                float dStart = waypointCumulativeDistances[i];
+                float dEnd = waypointCumulativeDistances[i + 1];
+
+                if (d >= dStart && d <= dEnd)
+                {
+                    float segLen = dEnd - dStart;
+                    float t = segLen > 0.0001f ? (d - dStart) / segLen : 0f;
+                    Vector3 p1 = pathWaypoints[i];
+                    Vector3 p2 = pathWaypoints[(i + 1) % pathWaypoints.Count];
+                    return Vector3.Lerp(p1, p2, t);
+                }
+            }
+
+            return pathWaypoints[0];
+        }
+
         Vector3 bl = new Vector3(-width / 2f, 0, -depth / 2f); // Sol Alt (Başlangıç)
         Vector3 br = new Vector3(width / 2f, 0, -depth / 2f);  // Sağ Alt
         Vector3 tr = new Vector3(width / 2f, 0, depth / 2f);   // Sağ Üst
