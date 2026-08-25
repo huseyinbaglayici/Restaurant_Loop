@@ -39,12 +39,14 @@ public class TestCustomer : MonoBehaviour
     public float serveAnimDelay = 0.8f;
 
     [Header("UI Bubble Settings")]
-    [Tooltip("Baloncuk boyutu (1.2x büyütüldü: 1.44f)")]
+    [Tooltip("Baloncuk boyutu (1.2x: 1.44f)")]
     public float bubbleSize = 1.44f;
-    [Tooltip("Karaktere göre baloncuğun konumu (Dünya uzayında - daha yukarıda)")]
-    public Vector3 bubbleOffset = new Vector3(0.25f, 1.45f, 0.05f);
-    [Tooltip("Baloncuk rotasyon açısı (Dünya uzayında X = 55.88)")]
+    [Tooltip("Karaktere göre baloncuğun konumu (Daha da yukarı taşındı: Y = 2.1f)")]
+    public Vector3 bubbleOffset = new Vector3(0.25f, 2.1f, 0.05f);
+    [Tooltip("Hedef Kamera atanmazsa kullanılacak sabit dünya rotasyon açısı")]
     public Vector3 bubbleRotationEuler = new Vector3(55.88f, 0f, 0f);
+    [Tooltip("Baloncuğun bakacağı kamera. Atanırsa doğrudan bu kameranın açısına kilitlenir.")]
+    public Camera targetCamera;
     [Tooltip("Karakterin dönüşünden bağımsız olarak baloncuk hep kameraya / sabit dünya rotasyonuna kilitlensin")]
     public bool lockWorldRotation = true;
 
@@ -55,6 +57,7 @@ public class TestCustomer : MonoBehaviour
     
     private void Start()
     {
+        if (targetCamera == null) targetCamera = Camera.main;
         CreateUI();
         UpdateVisuals();
         RandomizeHair();
@@ -67,9 +70,19 @@ public class TestCustomer : MonoBehaviour
         {
             if (lockWorldRotation)
             {
-                // Karakter hangi yöne dönerse dönsün (0, 90, 180), baloncuk hep kameraya doğru X=55.88 bakar
                 canvasObj.transform.position = transform.position + bubbleOffset;
-                canvasObj.transform.rotation = Quaternion.Euler(bubbleRotationEuler);
+                if (targetCamera != null)
+                {
+                    canvasObj.transform.rotation = targetCamera.transform.rotation;
+                }
+                else if (Camera.main != null)
+                {
+                    canvasObj.transform.rotation = Camera.main.transform.rotation;
+                }
+                else
+                {
+                    canvasObj.transform.rotation = Quaternion.Euler(bubbleRotationEuler);
+                }
             }
             else
             {

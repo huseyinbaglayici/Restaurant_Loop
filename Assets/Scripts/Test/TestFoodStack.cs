@@ -197,28 +197,78 @@ public class TestFoodStack : MonoBehaviour
         textMesh.fontSize = 60;
         textMesh.color = Color.white;
         textMesh.fontStyle = FontStyle.Bold;
+
+        // TitanOne-Regular fontunu yükle
+        Font titanFont = Resources.Load<Font>("Fonts/TitanOne-Regular");
+        if (titanFont == null)
+        {
+#if UNITY_EDITOR
+            titanFont = UnityEditor.AssetDatabase.LoadAssetAtPath<Font>("Assets/Art/Fonts/TitanOne-Regular.ttf");
+#endif
+        }
+        if (titanFont != null)
+        {
+            textMesh.font = titanFont;
+            MeshRenderer mr = textMesh.GetComponent<MeshRenderer>();
+            if (mr != null && titanFont.material != null)
+            {
+                mr.material = titanFont.material;
+            }
+        }
+
         textMesh.text = amount.ToString();
         
-        // Siyah baloncuk için basit bir Quad
-        bubbleBgObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        bubbleBgObj.name = "BubbleBG";
+        // Yuvarlak (Circle) Arka Plan Oluştur
+        bubbleBgObj = new GameObject("BubbleCircleBG");
         bubbleBgObj.transform.SetParent(textObj.transform);
-        // Text'in hemen altında dursun (yerel Z ekseninde)
-        bubbleBgObj.transform.localPosition = new Vector3(0, 0, 0.01f); 
+        bubbleBgObj.transform.localPosition = new Vector3(0, 0, 0.01f);
         bubbleBgObj.transform.localRotation = Quaternion.identity;
-        bubbleBgObj.transform.localScale = new Vector3(0.5f, 0.5f, 1f); // Baloncuk boyutu
-        
-        Destroy(bubbleBgObj.GetComponent<Collider>());
-        
-        Renderer bgRnd = bubbleBgObj.GetComponent<Renderer>();
-        if (bgRnd != null)
-        {
-            Material bgMat = new Material(Shader.Find("Sprites/Default"));
-            bgMat.color = new Color(0, 0, 0, 0.7f);
-            bgRnd.material = bgMat;
-        }
+
+        MeshFilter mf = bubbleBgObj.AddComponent<MeshFilter>();
+        MeshRenderer bgRnd = bubbleBgObj.AddComponent<MeshRenderer>();
+        mf.mesh = CreateCircleMesh(0.28f, 32);
+
+        Material bgMat = new Material(Shader.Find("Sprites/Default"));
+        bgMat.color = new Color(0, 0, 0, 0.75f);
+        bgRnd.material = bgMat;
         
         UpdateUI();
+    }
+
+    private Mesh CreateCircleMesh(float radius, int segments)
+    {
+        Mesh mesh = new Mesh();
+        mesh.name = "CircleMesh";
+
+        Vector3[] vertices = new Vector3[segments + 1];
+        Vector2[] uvs = new Vector2[segments + 1];
+        int[] triangles = new int[segments * 3];
+
+        vertices[0] = Vector3.zero;
+        uvs[0] = new Vector2(0.5f, 0.5f);
+
+        float angleStep = 360f / segments;
+        for (int i = 0; i < segments; i++)
+        {
+            float rad = Mathf.Deg2Rad * (i * angleStep);
+            float x = Mathf.Cos(rad) * radius;
+            float y = Mathf.Sin(rad) * radius;
+
+            vertices[i + 1] = new Vector3(x, y, 0);
+            uvs[i + 1] = new Vector2((x / radius + 1f) * 0.5f, (y / radius + 1f) * 0.5f);
+
+            int triIndex = i * 3;
+            triangles[triIndex] = 0;
+            triangles[triIndex + 1] = i + 1;
+            triangles[triIndex + 2] = (i + 1) % segments + 1;
+        }
+
+        mesh.vertices = vertices;
+        mesh.uv = uvs;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+
+        return mesh;
     }
     
     public void UpdateUI()
