@@ -68,27 +68,26 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return Array.Empty<Vector3>();
             }
 
-            int minX = int.MaxValue, maxX = int.MinValue, minY = int.MaxValue;
+            int minY = int.MaxValue;
             foreach (var cell in _level.ConveyorCells)
             {
-                if (cell.Coord.x < minX) minX = cell.Coord.x;
-                if (cell.Coord.x > maxX) maxX = cell.Coord.x;
                 if (cell.Coord.y < minY) minY = cell.Coord.y;
             }
 
             float cellSize = _prefabSettings.CellWorldSize;
-            float spanWorldX = (maxX - minX + 1) * cellSize;
-            float slotSpacing = spanWorldX / BaseSlotCount;
-            float startX = minX * cellSize - cellSize * 0.5f;
+            float slotSpacing = cellSize;
+            // Manual X placement — no longer derived from the grid's width, so slots stop re-centering
+            // themselves whenever a level's grid changes shape. Tweak ExitStackXOffset instead.
+            float startX = _tuning.WorldOrigin.x + _tuning.ExitStackXOffset - slotSpacing * BaseSlotCount * 0.5f;
 
-            float nearestRowEdgeZ = minY * cellSize - cellSize * 0.5f;
+            float nearestRowEdgeZ = minY * cellSize - cellSize * 0.5f + _tuning.WorldOrigin.z;
             float z = nearestRowEdgeZ - _tuning.ExitStackZOffsetFromGrid;
 
             var positions = new Vector3[BaseSlotCount];
             for (int i = 0; i < BaseSlotCount; i++)
             {
                 float x = startX + slotSpacing * (i + 0.5f);
-                positions[i] = new Vector3(x, 0f, z);
+                positions[i] = new Vector3(x, _tuning.ExitStackGroundHeight + _tuning.WorldOrigin.y, z);
             }
 
             return positions;

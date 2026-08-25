@@ -40,7 +40,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 for (int row = 0; row < entries.Count; row++)
                 {
                     var position = lanePosition + new Vector3(0f, 0f, -row * _tuning.QueueRowSpacing);
-                    laneVisuals.Add(_foodPool.Spawn(position, entries[row], FoodVisualState.Closed));
+                    laneVisuals.Add(_foodPool.Spawn(position, entries[row], FoodVisualState.Opened));
                 }
 
                 _lanes.Add(laneVisuals);

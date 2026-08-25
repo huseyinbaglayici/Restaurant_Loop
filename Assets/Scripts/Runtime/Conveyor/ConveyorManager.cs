@@ -71,7 +71,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             float cellSize = _prefabSettings.CellWorldSize;
             foreach (var coord in orderedPath)
             {
-                var position = ConveyorWorldUtil.ToWorldPosition(coord, cellSize);
+                var position = ConveyorWorldUtil.ToWorldPosition(coord, cellSize, 0f, _tuning.WorldOrigin); // Y overwritten below
                 position.y = _tuning.BeltFoodHeight;
                 _pathWorldPositions.Add(position);
             }

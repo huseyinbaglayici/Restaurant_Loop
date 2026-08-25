@@ -65,7 +65,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return;
             }
 
-            var position = ConveyorWorldUtil.ToWorldPosition(gateCell.Coord, _prefabSettings.CellWorldSize);
+            var position = ConveyorWorldUtil.ToWorldPosition(gateCell.Coord, _prefabSettings.CellWorldSize, 0f, _tuning.WorldOrigin); // Y overwritten below
             position.y = _tuning.TrayDispenserHeight;
 
             float yaw = ConveyorWorldUtil.ToWorldYRotation(gateCell.Shape, gateCell.Rotation);

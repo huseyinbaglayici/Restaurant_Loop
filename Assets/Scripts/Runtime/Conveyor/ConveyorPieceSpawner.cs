@@ -12,6 +12,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorPieceController.Pool _straightPool;
         private readonly ConveyorPieceController.Pool _cornerPool;
         private readonly ConveyorPrefabSettings _prefabSettings;
+        private readonly ConveyorTuning _tuning;
 
         private readonly List<ConveyorPieceController> _spawnedStraight = new();
         private readonly List<ConveyorPieceController> _spawnedCorner = new();
@@ -22,12 +23,14 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorPieceController.Pool straightPool,
             [Inject(Id = ConveyorTileShape.Corner)]
             ConveyorPieceController.Pool cornerPool,
-            ConveyorPrefabSettings prefabSettings)
+            ConveyorPrefabSettings prefabSettings,
+            ConveyorTuning tuning)
         {
             _level = level;
             _straightPool = straightPool;
             _cornerPool = cornerPool;
             _prefabSettings = prefabSettings;
+            _tuning = tuning;
         }
 
         public void Initialize()
@@ -39,7 +42,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 // gate: no physical piece
                 if (cell.IsGate) continue;
 
-                var position = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize);
+                var position = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize, _tuning.BeltTrackHeight, _tuning.WorldOrigin);
                 var worldYRotation = ConveyorWorldUtil.ToWorldYRotation(cell.Shape, cell.Rotation);
 
                 if (cell.Shape == ConveyorTileShape.Straight)

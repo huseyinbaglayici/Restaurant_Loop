@@ -5,17 +5,31 @@ namespace RestaurantLoop.Runtime.Data
     [CreateAssetMenu(fileName = "ConveyorTuning", menuName = "RestaurantLoop/Conveyor Tuning")]
     public class ConveyorTuning : ScriptableObject
     {
-        [Header("Belt (ConveyorManager)")]
-        [Tooltip("Path cells per second — not world units, every step takes the same time regardless of straight/corner.")]
-        public float BeltSpeed = 3f;
+        [Header("World Placement")]
+        [Tooltip("World-space origin every conveyor piece, food item, queue lane, exit slot, tray dispenser " +
+                 "and customer is placed relative to — move this instead of dragging scene props, so a level " +
+                 "rebuild always lands back on the same spot.")]
+        public Vector3 WorldOrigin = Vector3.zero;
 
-        [Tooltip("World Y every food item sits at while it is on the belt. Queue and exit-stack slots keep their own height.")]
+        [Header("Food (item height per stage)")]
+        [Tooltip("World Y every food item sits at while it is on the belt.")]
         public float BeltFoodHeight = 1f;
 
-        [Header("Queue (QueueAnchor, QueueSpawner)")]
         [Tooltip("World Y every food item sits at while it is in a queue lane.")]
         public float QueueFoodHeight = 1f;
 
+        [Tooltip("World Y a docked food item sits at in the exit stack — lifts it to rest on top of the rack " +
+                 "instead of inside it.")]
+        public float ExitStackFoodHeight = 1f;
+
+        [Header("Belt (ConveyorManager, ConveyorPieceSpawner)")]
+        [Tooltip("Path cells per second — not world units, every step takes the same time regardless of straight/corner.")]
+        public float BeltSpeed = 3f;
+
+        [Tooltip("World Y the belt track pieces themselves (straight/corner meshes) sit at.")]
+        public float BeltTrackHeight = 0f;
+
+        [Header("Queue (QueueAnchor, QueueSpawner)")]
         [Tooltip("World units between consecutive lanes on X, centered under the exit stack's midpoint.")]
         public float QueueLaneSpacing = 1.2f;
 
@@ -41,8 +55,15 @@ namespace RestaurantLoop.Runtime.Data
         public Vector3 TrayDispenserOffset = Vector3.zero;
 
         [Header("Exit Stack (ExitStackAnchor)")]
+        [Tooltip("World Y the exit stack rack (floor prop the food docks on top of) sits at.")]
+        public float ExitStackGroundHeight = 0f;
+
         [Tooltip("World units 'below' (negative Z) the belt's own closest (minimum-Y) row.")]
         public float ExitStackZOffsetFromGrid = 1.5f;
+
+        [Tooltip("World X the exit stack (and the queue, which centers itself under it) is centered on, " +
+                 "relative to WorldOrigin.x — manual placement, no longer derived from the grid's width.")]
+        public float ExitStackXOffset = 0f;
 
         [Tooltip("Extra Tray power-up: local offset from the leftmost exit slot for the decorative extra rack visual.")]
         public Vector3 ExtraRackVisualOffset = new Vector3(-0.8f, 0.6f, -0.8f);
@@ -50,9 +71,9 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Extra Tray power-up: Euler rotation applied to the decorative extra rack visual.")]
         public Vector3 ExtraRackVisualRotation = new Vector3(0f, 90f, 0f);
 
-        [Tooltip("World Y a docked food item sits at. The slot floor itself stays at Y 0 — this only lifts the food " +
-                 "so it rests on top of the slot instead of inside it.")]
-        public float ExitStackFoodHeight = 1f;
+        [Header("Customer (CustomerSpawner)")]
+        [Tooltip("World Y a customer NPC stands at.")]
+        public float CustomerHeight = 0f;
 
         [Header("Input (ConveyorEntryInput)")]
         [Tooltip("Click/tap hit-test radius in screen pixels.")]

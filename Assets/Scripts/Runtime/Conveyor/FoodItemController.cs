@@ -53,9 +53,20 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public FoodStackData Stack { get; private set; }
 
+        // e.g. a drink rack: several pre-placed single-item children under one shared base, instead of a
+        // vertical stack of copies. Consume flights fly one of those children directly (see TakeFixedSlotChild)
+        // rather than a duplicate of the whole rack.
+        public bool UsesFixedChildSlots => _usesFixedChildSlots;
+
         public Vector3 VisualCenter => _usesFixedChildSlots
             ? transform.position
             : transform.position + Vector3.up * (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) * 0.5f);
+
+        // World position of the top unit — the one that renders Opened while this item is Opened. Consume
+        // flights should spawn here, not at the item root (which sits at the bottom of the stack).
+        public Vector3 TopUnitWorldPosition => !_usesFixedChildSlots && _units.Count > 0 && _units[^1] != null
+            ? _units[^1].transform.position
+            : transform.position;
 
         public void OnSpawned(Vector3 position, FoodStackData stack, FoodVisualState visualState)
         {
@@ -73,7 +84,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             gameObject.SetActive(false);
         }
 
-        // Closed -> Opened when a queue item starts flying onto the belt.
         public void SetVisualState(FoodVisualState visualState)
         {
             if (_visualState == visualState) return;
@@ -251,6 +261,23 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             for (int i = 0; i < slotCount; i++)
                 root.GetChild(i + 1).gameObject.SetActive(i < visibleCount);
+        }
+
+        // Hands the caller the single drink that was just hidden by the latest ReduceAmount, detached from
+        // the rack so it can fly to a customer on its own instead of a duplicate of the whole rack. Always
+        // the rack's current last child: ReduceAmount only ever hides slots from the top down, so that's
+        // always the one that just went invisible. The rack (base + remaining drinks) is left untouched.
+        public Transform TakeFixedSlotChild()
+        {
+            if (!_usesFixedChildSlots || _fixedSlotInstance == null) return null;
+
+            var root = _fixedSlotInstance.transform;
+            if (root.childCount <= 1) return null; // only the base decoration is left
+
+            var child = root.GetChild(root.childCount - 1);
+            child.gameObject.SetActive(true);
+            child.SetParent(null, worldPositionStays: true);
+            return child;
         }
 
         // Scale and stack spacing both come from the feel asset, so they are re-applied together.

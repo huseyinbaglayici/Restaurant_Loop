@@ -160,8 +160,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
                 beltVisual.IsEnteringBelt = true;
                 visual.transform.position = sourcePosition;
-                // Swap Closed -> Opened right as the flight starts, not on arrival — otherwise the mesh
-                // pops mid-flight, right when the item starts walking the belt, which reads as laggy.
                 visual.SetVisualState(FoodVisualState.Opened);
 
                 _flightService.Launch(
@@ -199,6 +197,14 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             Defer(() =>
             {
+                if (sourceVisual == null) return;
+
+                if (sourceVisual.UsesFixedChildSlots)
+                {
+                    LaunchFixedSlotConsumeFlight(id, sourceVisual, fullyConsumed, coord, takenStack, serveResult, levelWon);
+                    return;
+                }
+
                 var flyer = ResolveConsumeFlyer(id, sourceVisual, takenStack, fullyConsumed);
                 if (flyer == null) return;
 
@@ -208,8 +214,49 @@ namespace RestaurantLoop.Runtime.Conveyor
                     flyer.transform,
                     () => ResolveCustomerHandoffPosition(coord, flyer.transform.position),
                     _feel.ConsumeToCustomer,
-                    () => OnConsumeFlightArrived(flyer, coord, takenStack, serveResult, levelWon));
+                    () => OnConsumeFlightArrived(flyer, flyer.transform.position, coord, takenStack, serveResult, levelWon));
             });
+        }
+
+        // Beverage rack (icecek_stack): fixed base + several pre-placed single-drink children. Rather than
+        // flying a duplicate of the whole rack per consume, detach just the one drink that was actually
+        // taken and fly that; the rack (and whatever drinks remain on it) stays exactly where ApplyStack
+        // already left it.
+        private void LaunchFixedSlotConsumeFlight(
+            int id,
+            FoodItemController sourceVisual,
+            bool fullyConsumed,
+            Vector2Int coord,
+            FoodStackData takenStack,
+            RuntimeCustomerState.ConsumeResult serveResult,
+            bool levelWon)
+        {
+            var child = sourceVisual.TakeFixedSlotChild();
+
+            if (fullyConsumed)
+            {
+                _beltVisuals.Remove(id);
+                _flightService.Cancel(sourceVisual.transform);
+                _foodPool.Despawn(sourceVisual);
+            }
+
+            if (child == null)
+            {
+                OnConsumeFlightArrived(null, sourceVisual != null ? sourceVisual.transform.position : Vector3.zero,
+                    coord, takenStack, serveResult, levelWon);
+                return;
+            }
+
+            _flightService.Launch(
+                child,
+                () => ResolveCustomerHandoffPosition(coord, child.position),
+                _feel.ConsumeToCustomer,
+                () =>
+                {
+                    var worldPosition = child.position;
+                    UnityEngine.Object.Destroy(child.gameObject);
+                    OnConsumeFlightArrived(null, worldPosition, coord, takenStack, serveResult, levelWon);
+                });
         }
 
         // Full take: the logical layer already dropped the item, so its own visual becomes the flyer.
@@ -226,18 +273,17 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return sourceVisual;
             }
 
-            return _foodPool.Spawn(sourceVisual.transform.position, takenStack, FoodVisualState.Opened);
+            return _foodPool.Spawn(sourceVisual.TopUnitWorldPosition, takenStack, FoodVisualState.Opened);
         }
 
         private void OnConsumeFlightArrived(
             FoodItemController flyer,
+            Vector3 worldPosition,
             Vector2Int coord,
             FoodStackData takenStack,
             RuntimeCustomerState.ConsumeResult serveResult,
             bool levelWon)
         {
-            var worldPosition = flyer != null ? flyer.transform.position : Vector3.zero;
-
             if (flyer != null)
             {
                 _ownedVisuals.Remove(flyer);

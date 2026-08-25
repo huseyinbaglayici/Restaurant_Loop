@@ -5,8 +5,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 {
     public static class ConveyorWorldUtil
     {
-        public static Vector3 ToWorldPosition(Vector2Int coord, float cellSize) =>
-            new(coord.x * cellSize, 0f, coord.y * cellSize);
+        public static Vector3 ToWorldPosition(Vector2Int coord, float cellSize, float groundY, Vector3 origin) =>
+            origin + new Vector3(coord.x * cellSize, groundY, coord.y * cellSize);
 
         // straight: R+90, corner: -(R+90) — different exported facings
         public static float ToWorldYRotation(ConveyorTileShape shape, float toolRotation) =>

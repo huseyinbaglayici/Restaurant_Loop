@@ -10,6 +10,21 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: b5c6aa2da48a9e041b19e9c208e2ed12,
         type: 3}
+      propertyPath: m_LocalScale.x
+      value: 65
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5c6aa2da48a9e041b19e9c208e2ed12,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 65
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5c6aa2da48a9e041b19e9c208e2ed12,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 65
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5c6aa2da48a9e041b19e9c208e2ed12,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -100,3 +115,5 @@ MonoBehaviour:
   _texturePropertyName: _BaseMap
   _scrollSpeed: 0.5
   _scrollDirection: 1
+  _rotateUV: 0
+  _uvPivot: {x: 0, y: 0}

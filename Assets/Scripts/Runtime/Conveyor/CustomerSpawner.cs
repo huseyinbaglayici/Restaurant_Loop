@@ -10,15 +10,17 @@ namespace RestaurantLoop.Runtime.Conveyor
     {
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorPrefabSettings _prefabSettings;
+        private readonly ConveyorTuning _tuning;
         private readonly CustomerController.Pool _customerPool;
 
         // keyed by coord
         private readonly Dictionary<Vector2Int, CustomerController> _spawned = new();
 
-        public CustomerSpawner(ConveyorLevelDataSO level, ConveyorPrefabSettings prefabSettings, CustomerController.Pool customerPool)
+        public CustomerSpawner(ConveyorLevelDataSO level, ConveyorPrefabSettings prefabSettings, ConveyorTuning tuning, CustomerController.Pool customerPool)
         {
             _level = level;
             _prefabSettings = prefabSettings;
+            _tuning = tuning;
             _customerPool = customerPool;
         }
 
@@ -28,7 +30,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             foreach (var customer in _level.Customers)
             {
-                var position = ConveyorWorldUtil.ToWorldPosition(customer.Coord, cellSize);
+                var position = ConveyorWorldUtil.ToWorldPosition(customer.Coord, cellSize, _tuning.CustomerHeight, _tuning.WorldOrigin);
                 var visual = _customerPool.Spawn(position, 0f, customer.Order);
                 visual.ApplySecondOrder(customer.HasSecondOrder, customer.SecondOrder);
                 _spawned[customer.Coord] = visual;

@@ -24,6 +24,10 @@ namespace Editor.LevelEditor
             var container = new GameObject(containerName);
             Undo.RegisterCreatedObjectUndo(container, "Build Conveyor");
 
+            var tuning = Resources.Load<ConveyorTuning>("ConveyorTuning");
+            float groundY = tuning != null ? tuning.BeltTrackHeight : 0f;
+            var worldOrigin = tuning != null ? tuning.WorldOrigin : Vector3.zero;
+
             float cellSize = settings.CellWorldSize;
             foreach (var cell in data.ConveyorCells)
             {
@@ -34,7 +38,7 @@ namespace Editor.LevelEditor
                     : settings.ConveyorCornerPrefab;
 
                 var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, container.transform);
-                instance.transform.localPosition = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize);
+                instance.transform.localPosition = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize, groundY, worldOrigin);
 
                 var baseEuler = instance.transform.localRotation.eulerAngles;
                 instance.transform.localRotation = Quaternion.Euler(baseEuler.x,

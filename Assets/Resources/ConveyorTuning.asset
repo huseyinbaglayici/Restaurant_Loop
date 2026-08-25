@@ -12,20 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7e50b614a64dd34ca58fdf631ffe791, type: 3}
   m_Name: ConveyorTuning
   m_EditorClassIdentifier: 
+  WorldOrigin: {x: 0, y: 0, z: -2.75}
+  BeltFoodHeight: -1.5
+  QueueFoodHeight: -2.5
+  ExitStackFoodHeight: -2
   BeltSpeed: 3
-  BeltFoodHeight: 1
-  QueueFoodHeight: 1
-  QueueLaneSpacing: 1.2
+  BeltTrackHeight: -2.7
+  QueueLaneSpacing: 1.55
   QueueZOffsetFromExitStack: 1.8
-  QueueRowSpacing: 1.2
+  QueueRowSpacing: 1.55
   QueueShiftSpeed: 4
-  TrayDispenserHeight: 0
-  TrayBeltHeight: 0.9
-  TrayDispenserOffset: {x: -2.5, y: 0, z: 0}
-  ExitStackZOffsetFromGrid: 5.5
-  ExtraRackVisualOffset: {x: -8.5, y: 0.6, z: 1.25}
+  TrayDispenserHeight: -2.35
+  TrayBeltHeight: -1.8
+  TrayDispenserOffset: {x: -2, y: 0, z: 0}
+  ExitStackGroundHeight: -2
+  ExitStackZOffsetFromGrid: 3
+  ExitStackXOffset: 3
+  ExtraRackVisualOffset: {x: -8.5, y: 0, z: 1.25}
   ExtraRackVisualRotation: {x: 0, y: 90, z: 0}
-  ExitStackFoodHeight: 1
+  CustomerHeight: -2.7
   ClickRadiusPixels: 80
   LinkLineWidth: 0.06
   LinkLineSag: 0.35

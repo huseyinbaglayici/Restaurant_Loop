@@ -39,7 +39,7 @@ namespace RestaurantLoop.Installers
             Container.BindInterfacesAndSelfTo<CustomerConsumeService>().AsSingle();
             Container.BindInterfacesTo<ConveyorEntryInput>().AsSingle();
 
-            Container.BindInstance(_trayDispenserRoot).AsSingle();
+            Container.BindInstance(ResolveTrayDispenserRoot()).AsSingle();
             Container.BindInterfacesAndSelfTo<TrayDispenserAnchor>().AsSingle();
 
             // visual layer ticks after the logical one, flights last so they consume this frame's commands
@@ -50,6 +50,30 @@ namespace RestaurantLoop.Installers
 
             Container.BindInstance(_levelText).AsSingle();
             Container.BindInterfacesTo<LevelOverlayPresenter>().AsSingle();
+        }
+
+        // The Inspector reference is a plain scene object drag-reference — a stray delete/undo in the
+        // Editor can silently clear it (Unity's undo doesn't always restore cross-object references).
+        // Falls back to finding the dispenser by name so a broken reference doesn't take the whole tray
+        // feature down; still logs loudly so the Inspector field gets re-wired properly.
+        private Transform ResolveTrayDispenserRoot()
+        {
+            if (_trayDispenserRoot != null) return _trayDispenserRoot;
+
+            var found = GameObject.Find("tepsi_dagitici");
+            if (found != null)
+            {
+                Debug.LogWarning(
+                    "[ConveyorInstaller] _trayDispenserRoot wasn't assigned in the Inspector — found " +
+                    "'tepsi_dagitici' by name instead. Re-assign the field on the ConveyorInstaller " +
+                    "component so this stops depending on the fallback.");
+                return found.transform;
+            }
+
+            Debug.LogError(
+                "[ConveyorInstaller] _trayDispenserRoot isn't assigned and no 'tepsi_dagitici' GameObject " +
+                "was found in the scene — trays won't work this level.");
+            return null;
         }
     }
 }

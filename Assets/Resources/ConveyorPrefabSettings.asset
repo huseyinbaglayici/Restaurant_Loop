@@ -16,4 +16,4 @@ MonoBehaviour:
     type: 3}
   ConveyorCornerPrefab: {fileID: 3834391676650660576, guid: 11c4f90b6a2212146a6b75c28d4e460a,
     type: 3}
-  CellWorldSize: 1
+  CellWorldSize: 1.3
