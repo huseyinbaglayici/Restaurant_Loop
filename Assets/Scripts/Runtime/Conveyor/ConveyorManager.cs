@@ -18,6 +18,11 @@ namespace RestaurantLoop.Runtime.Conveyor
             public int Id;
             public FoodItemController Visual;
             public float Progress;
+            public int LastCrossedIndex;
+
+            // While true the item is held at its entry slot — not moving, not crossable/consumable —
+            // because its visual is still mid-flight from the queue and hasn't reached the belt yet.
+            public bool AwaitingEntryLanding;
         }
 
         private readonly ConveyorLevelDataSO _level;
@@ -60,6 +65,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Initialize()
         {
+            _signalBus.Subscribe<FoodEntryLandedSignal>(OnFoodEntryLanded);
+
             var orderedPath = _level.BakedPath.OrderedPath;
             if (orderedPath.Count == 0)
             {
@@ -88,7 +95,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 // Level-authored items start already on the belt: no entry flight, just a placed visual.
                 var visual = _foodPool.Spawn(_pathWorldPositions[index], entity.Stack, FoodVisualState.Opened);
                 visual.SetLocation(FoodLocation.Conveyor);
-                AddItem(entity.Stack, visual, index, _pathWorldPositions[index], playEntryFlight: false);
+                AddItem(entity.Stack, visual, index, _pathWorldPositions[index], playEntryFlight: false, awaitsLanding: false);
             }
         }
 
@@ -99,7 +106,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             var visual = _foodPool.Spawn(_pathWorldPositions[0], stack, FoodVisualState.Opened);
             visual.SetLocation(FoodLocation.Conveyor);
-            AddItem(stack, visual, 0f, _pathWorldPositions[0], playEntryFlight: false);
+            AddItem(stack, visual, 0f, _pathWorldPositions[0], playEntryFlight: false, awaitsLanding: true);
         }
 
         // Reuses an existing visual (queue slot, exit-stack slot) and lets the visual layer fly it in
@@ -116,19 +123,29 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return;
             }
 
-            AddItem(stack, reusedVisual, entryProgress, sourceWorldPosition, playEntryFlight: true);
+            AddItem(stack, reusedVisual, entryProgress, sourceWorldPosition, playEntryFlight: true, awaitsLanding: true);
         }
 
-        // No entry-cell crossing is emitted here: the item becomes eligible for a consume match only
-        // once Tick() carries its Progress past cell 0, same as every other belt cell.
+        // Entry cell (index 0) gets its own crossing on the item's first Tick(), same as every other
+        // belt cell — see LastCrossedIndex init below.
         private void AddItem(
             FoodStackData stack,
             FoodItemController visual,
             float startProgress,
             Vector3 sourceWorldPosition,
-            bool playEntryFlight)
+            bool playEntryFlight,
+            bool awaitsLanding)
         {
-            var item = new BeltItem { Id = _nextItemId++, Visual = visual, Progress = startProgress };
+            var item = new BeltItem
+            {
+                Id = _nextItemId++,
+                Visual = visual,
+                Progress = startProgress,
+                // one below the entry cell so Tick() fires an entry-cell crossing (index 0) on its
+                // very first pass, instead of only becoming eligible once it has already left cell 0
+                LastCrossedIndex = Mathf.FloorToInt(startProgress + 0.5f) - 1,
+                AwaitingEntryLanding = awaitsLanding
+            };
             _items.Add(item);
 
             _signalBus.Fire(new FoodEnteredBeltSignal
@@ -137,7 +154,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 Visual = visual,
                 SourceWorldPosition = sourceWorldPosition,
                 StartProgress = startProgress,
-                PlayEntryFlight = playEntryFlight
+                PlayEntryFlight = playEntryFlight,
+                AwaitsLanding = awaitsLanding
             });
         }
 
@@ -162,14 +180,29 @@ namespace RestaurantLoop.Runtime.Conveyor
             float delta = _tuning.BeltSpeed * Time.deltaTime;
             float lastIndex = _pathWorldPositions.Count - 1;
 
+            int finalIndex = Mathf.FloorToInt(lastIndex);
+
             for (int i = _items.Count - 1; i >= 0; i--)
             {
                 var item = _items[i];
-                int prevIndex = Mathf.FloorToInt(item.Progress);
+                if (item.AwaitingEntryLanding) continue;
+
                 item.Progress += delta;
 
                 if (item.Progress >= lastIndex)
                 {
+                    // First frame reaching the end: fire the final-cell crossing (so a consume check
+                    // gets the same shot at the last grid as every other cell) and wait one tick before
+                    // docking, so the consume service can react to it before the item is removed.
+                    if (item.LastCrossedIndex < finalIndex)
+                    {
+                        for (int idx = Mathf.Max(0, item.LastCrossedIndex + 1); idx <= finalIndex; idx++)
+                            _crossingsThisFrame.Add((idx, item.Visual));
+                        item.LastCrossedIndex = finalIndex;
+                        item.Progress = lastIndex;
+                        continue;
+                    }
+
                     if (_exitStackAnchor.TryDock(item.Visual, out int slotIndex))
                     {
                         _signalBus.Fire(new FoodDockedSignal
@@ -190,10 +223,13 @@ namespace RestaurantLoop.Runtime.Conveyor
                     continue;
                 }
 
-                // lag-skip guard (items can start at a negative entryProgress — skip crossings before cell 0)
-                int newIndex = Mathf.FloorToInt(item.Progress);
-                for (int idx = Mathf.Max(0, prevIndex + 1); idx <= newIndex; idx++)
+                // Crossing fires at cell center, not cell start — matches TryPeekTypeAt's RoundToInt and
+                // makes the consume moment line up with the item visually sitting mid-grid, not just
+                // having entered it (lag-skip guard: items can start at a negative entryProgress).
+                int newIndex = Mathf.FloorToInt(item.Progress + 0.5f);
+                for (int idx = Mathf.Max(0, item.LastCrossedIndex + 1); idx <= newIndex; idx++)
                     _crossingsThisFrame.Add((idx, item.Visual));
+                item.LastCrossedIndex = newIndex;
             }
         }
 
@@ -255,8 +291,19 @@ namespace RestaurantLoop.Runtime.Conveyor
             return Vector3.Lerp(_pathWorldPositions[index], _pathWorldPositions[nextIndex], frac);
         }
 
+        private void OnFoodEntryLanded(FoodEntryLandedSignal signal)
+        {
+            for (int i = 0; i < _items.Count; i++)
+            {
+                if (_items[i].Id != signal.ItemId) continue;
+                _items[i].AwaitingEntryLanding = false;
+                break;
+            }
+        }
+
         public void Dispose()
         {
+            _signalBus.TryUnsubscribe<FoodEntryLandedSignal>(OnFoodEntryLanded);
             foreach (var item in _items) _foodPool.Despawn(item.Visual);
             _items.Clear();
         }

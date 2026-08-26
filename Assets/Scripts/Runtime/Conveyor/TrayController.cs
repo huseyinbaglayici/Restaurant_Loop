@@ -16,6 +16,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         // space, so it stays correct even though the root itself moves to a different Gate cell per level.
         private Vector3 _initialLocalPosition;
         private Quaternion _initialLocalRotation;
+        private Vector3 _initialLocalScale;
         private bool _initialPoseCaptured;
 
         private Tween _rotateTween;
@@ -30,6 +31,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _initialPoseCaptured = true;
             _initialLocalPosition = transform.localPosition;
             _initialLocalRotation = transform.localRotation;
+            _initialLocalScale = transform.localScale;
         }
 
         // Flies from the resting pose to the belt entry point. Rotation is animated in LOCAL space — the
@@ -65,7 +67,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             transform.localPosition = _initialLocalPosition;
             transform.localRotation = _initialLocalRotation;
-            transform.localScale = Vector3.one;
+            transform.localScale = _initialLocalScale;
         }
 
         // Belt-ride pose, in LOCAL space: same authored X/Z as the resting pose, Y zeroed (resting Y is
@@ -94,8 +96,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                     transform.localRotation = _initialLocalRotation;
 
                     _scaleTween = (withPunch
-                            ? transform.DOScale(Vector3.one, vanishDuration).SetEase(Ease.OutBack, punchOvershoot)
-                            : transform.DOScale(Vector3.one, vanishDuration).SetEase(Ease.OutQuad))
+                            ? transform.DOScale(_initialLocalScale, vanishDuration).SetEase(Ease.OutBack, punchOvershoot)
+                            : transform.DOScale(_initialLocalScale, vanishDuration).SetEase(Ease.OutQuad))
                         .OnComplete(() => onArrive?.Invoke());
                 });
         }

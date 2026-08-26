@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7176803744689848602}
   - component: {fileID: 1234966027686949287}
   - component: {fileID: 3981415278789682617}
+  - component: {fileID: 7013956476291859207}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -108,6 +109,26 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1.0000004, z: 1.0000004}
   m_Center: {x: 0, y: -3.3881318e-21, z: 0.0000002384187}
+--- !u!114 &7013956476291859207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7284215156896936443}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 989c9c0c3d04beb4ebc96cb98ad37784, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _targetMeshFilter: {fileID: 0}
+  _projectionPlane: 0
+  _cornerAnchor: 0
+  _textureScale: 1
+  _cornerUvOffset: {x: 0, y: 0}
+  _manualPivot: {x: 0.5, y: 0.5}
+  _scrollSpeed: 0.5
+  _scrollDirection: 1
 --- !u!1001 &4176832725815599025
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -227,12 +248,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3e052d9837f1434dab3cf061b9019a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _renderer: {fileID: 1234966027686949287}
-  _texturePropertyName: _BaseMap
-  _scrollSpeed: 0.5
-  _scrollDirection: 1
-  _rotateUV: 0
-  _uvPivot: {x: 0, y: 0}
 --- !u!4 &4502946820305614938 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fd3228555a206434195ea43dcd23a540,

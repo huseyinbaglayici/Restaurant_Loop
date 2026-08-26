@@ -15,20 +15,20 @@ MonoBehaviour:
   WorldOrigin: {x: 0.5, y: 0, z: 0.45}
   BeltFoodHeight: -3.8
   QueueFoodHeight: -4.1
-  ExitStackFoodHeight: -2
+  ExitStackFoodHeight: -3.75
   BeltSpeed: 3
   BeltTrackHeight: -4.45
   QueueLaneSpacing: 1.55
   QueueZOffsetFromExitStack: 1.8
-  QueueRowSpacing: 1.55
+  QueueRowSpacing: 2.775
   QueueShiftSpeed: 4
-  TrayDispenserHeight: -4.1
+  TrayDispenserHeight: -3.9
   TrayBeltHeight: -3.9
   TrayDispenserOffset: {x: -1, y: 0, z: 0}
   ExitStackGroundHeight: -3.9
   ExitStackZOffsetFromGrid: 1
   ExitStackXOffset: 3
-  ExtraRackVisualOffset: {x: -8.5, y: 0, z: 1.25}
+  ExtraRackVisualOffset: {x: -0.5, y: 0, z: 0}
   ExtraRackVisualRotation: {x: 0, y: 90, z: 0}
   CustomerHeight: -4.45
   ClickRadiusPixels: 80

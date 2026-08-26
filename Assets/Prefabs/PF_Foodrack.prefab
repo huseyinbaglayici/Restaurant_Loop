@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 7023645755316649943}
   - component: {fileID: 2530811607071623228}
   - component: {fileID: 6459335495413304588}
-  - component: {fileID: 2564438597827787383}
   - component: {fileID: 3410602119091145349}
   m_Layer: 0
   m_Name: PF_Foodrack
@@ -30,8 +29,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5576923}
-  m_ConstrainProportionsScale: 1
+  m_LocalScale: {x: 0.65, y: 0.65, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -66,8 +65,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -6478536213147159724, guid: 2b7861315a9fee547aa4ea5ddf6e7890, type: 3}
-  - {fileID: -3846018093981099296, guid: 2b7861315a9fee547aa4ea5ddf6e7890, type: 3}
+  - {fileID: 2100000, guid: 3bde8368634ff85418003757b7d1a495, type: 2}
+  - {fileID: 2100000, guid: a010cebdaf4b49048aed0b5d1a9b1144, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -89,27 +88,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &2564438597827787383
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2873491433116362623}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 2, z: 7.5923185}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &3410602119091145349
 MonoBehaviour:
   m_ObjectHideFlags: 0

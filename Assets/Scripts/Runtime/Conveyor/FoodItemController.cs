@@ -254,9 +254,10 @@ namespace RestaurantLoop.Runtime.Conveyor
         }
 
         // A rack with pre-placed items instead of a vertical stack of copies: one instance total, and
-        // however many slot children the amount allows stay active — the rest hide. Slot children are
-        // found by walking through any single-child wrapper levels the prefab has (e.g. a pivot-fix
-        // wrapper around the artist's own rack asset) until reaching the node that actually branches.
+        // however many slot children the amount allows stay active — the rest hide. The rack's own mesh
+        // sits on whichever node actually branches (e.g. icecek_stack: a single-child pivot wrapper down
+        // to the base holding the 4 icecek_tekli children) — ResolveFixedSlotContainer walks down through
+        // any such single-child wrapper levels to find it; that node's children (all of them) are the slots.
         private void ApplyFixedChildSlots(FoodStackData stack, GameObject sourcePrefab, Quaternion unitRotation)
         {
             if (_fixedSlotInstance == null)
@@ -270,28 +271,37 @@ namespace RestaurantLoop.Runtime.Conveyor
             _fixedSlotInstance.transform.localScale = _fixedSlotBaseScale * scale;
             _appliedFixedSlotScale = scale;
 
-            // Convention: child[0] is the always-visible base/decoration (e.g. the tray), children[1..]
-            // are the toggleable slots.
-            var root = _fixedSlotInstance.transform;
-            int slotCount = Mathf.Max(0, root.childCount - 1);
+            var container = ResolveFixedSlotContainer();
+            int slotCount = container != null ? container.childCount : 0;
             int visibleCount = Mathf.Clamp(stack.Amount, 0, slotCount);
 
             for (int i = 0; i < slotCount; i++)
-                root.GetChild(i + 1).gameObject.SetActive(i < visibleCount);
+                container.GetChild(i).gameObject.SetActive(i < visibleCount);
+        }
+
+        // Descends through wrapper levels that only exist to fix a pivot/orientation (exactly one child)
+        // until reaching the node that actually holds the slot children side by side.
+        private Transform ResolveFixedSlotContainer()
+        {
+            if (_fixedSlotInstance == null) return null;
+
+            var node = _fixedSlotInstance.transform;
+            while (node.childCount == 1) node = node.GetChild(0);
+            return node;
         }
 
         // Hands the caller the single drink that was just hidden by the latest ReduceAmount, detached from
         // the rack so it can fly to a customer on its own instead of a duplicate of the whole rack. Always
-        // the rack's current last child: ReduceAmount only ever hides slots from the top down, so that's
-        // always the one that just went invisible. The rack (base + remaining drinks) is left untouched.
+        // the container's current last child: ReduceAmount only ever hides slots from the top down, so
+        // that's always the one that just went invisible. The rack (base + remaining drinks) is left untouched.
         public Transform TakeFixedSlotChild()
         {
-            if (!_usesFixedChildSlots || _fixedSlotInstance == null) return null;
+            if (!_usesFixedChildSlots) return null;
 
-            var root = _fixedSlotInstance.transform;
-            if (root.childCount <= 1) return null; // only the base decoration is left
+            var container = ResolveFixedSlotContainer();
+            if (container == null || container.childCount == 0) return null;
 
-            var child = root.GetChild(root.childCount - 1);
+            var child = container.GetChild(container.childCount - 1);
             child.gameObject.SetActive(true);
             child.SetParent(null, worldPositionStays: true);
             return child;

@@ -20,6 +20,11 @@ namespace RestaurantLoop.Runtime.Conveyor
             public FoodItemController Visual;
             public float Progress;
             public bool IsEnteringBelt;
+
+            // Set the instant the logical layer fully consumes this item — freezes it in place so it
+            // doesn't keep sliding down the belt (and past the customer) during the VisualLagSeconds
+            // wait before the consume flight actually launches.
+            public bool IsFrozen;
         }
 
         private readonly struct DeferredCommand
@@ -124,6 +129,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             {
                 beltVisual.Progress = Mathf.Min(beltVisual.Progress + delta, lastProgress);
 
+                if (beltVisual.IsFrozen) continue;
+
                 // While flying in from the queue the flight owns the transform; it chases the belt slot,
                 // which keeps moving, so the item never snaps at the handover.
                 if (beltVisual.IsEnteringBelt) continue;
@@ -143,6 +150,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             var sourcePosition = signal.SourceWorldPosition;
             float startProgress = signal.StartProgress;
             bool playEntryFlight = signal.PlayEntryFlight;
+            bool awaitsLanding = signal.AwaitsLanding;
 
             Defer(() =>
             {
@@ -156,6 +164,10 @@ namespace RestaurantLoop.Runtime.Conveyor
                     visual.transform.position = _conveyorManager.SampleWorldPosition(beltVisual.Progress);
                     visual.SetVisualState(FoodVisualState.Opened);
                     visual.SetLocation(FoodLocation.Conveyor);
+
+                    // No actual travel to animate, but the logical layer still held this item for us
+                    // (AwaitingEntryLanding) — confirm "visual is here" the same way the flight path does.
+                    if (awaitsLanding) _signalBus.Fire(new FoodEntryLandedSignal { ItemId = id });
                     return;
                 }
 
@@ -168,7 +180,11 @@ namespace RestaurantLoop.Runtime.Conveyor
                     visual.transform,
                     () => _conveyorManager.SampleWorldPosition(beltVisual.Progress),
                     _feel.QueueToBelt,
-                    () => beltVisual.IsEnteringBelt = false);
+                    () =>
+                    {
+                        beltVisual.IsEnteringBelt = false;
+                        _signalBus.Fire(new FoodEntryLandedSignal { ItemId = id });
+                    });
             });
         }
 
@@ -198,27 +214,30 @@ namespace RestaurantLoop.Runtime.Conveyor
             var serveResult = signal.ServeResult;
             bool levelWon = signal.LevelWon;
 
-            Defer(() =>
+            if (fullyConsumed && _beltVisuals.TryGetValue(id, out var frozenVisual))
+                frozenVisual.IsFrozen = true;
+
+            // No VisualLagSeconds wait here: the item is already frozen at the exact spot it was
+            // consumed, so launching the flight now is what keeps it seamless — deferring it just adds
+            // a visible stall before the item takes off.
+            if (sourceVisual == null) return;
+
+            if (sourceVisual.UsesFixedChildSlots)
             {
-                if (sourceVisual == null) return;
+                LaunchFixedSlotConsumeFlight(id, sourceVisual, fullyConsumed, coord, takenStack, serveResult, levelWon);
+                return;
+            }
 
-                if (sourceVisual.UsesFixedChildSlots)
-                {
-                    LaunchFixedSlotConsumeFlight(id, sourceVisual, fullyConsumed, coord, takenStack, serveResult, levelWon);
-                    return;
-                }
+            var flyer = ResolveConsumeFlyer(id, sourceVisual, takenStack, fullyConsumed);
+            if (flyer == null) return;
 
-                var flyer = ResolveConsumeFlyer(id, sourceVisual, takenStack, fullyConsumed);
-                if (flyer == null) return;
+            _ownedVisuals.Add(flyer);
 
-                _ownedVisuals.Add(flyer);
-
-                _flightService.Launch(
-                    flyer.transform,
-                    () => ResolveCustomerHandoffPosition(coord, flyer.transform.position),
-                    _feel.ConsumeToCustomer,
-                    () => OnConsumeFlightArrived(flyer, flyer.transform.position, coord, takenStack, serveResult, levelWon));
-            });
+            _flightService.Launch(
+                flyer.transform,
+                () => ResolveCustomerHandoffPosition(coord, flyer.transform.position),
+                _feel.ConsumeToCustomer,
+                () => OnConsumeFlightArrived(flyer, flyer.transform.position, coord, takenStack, serveResult, levelWon));
         }
 
         // Beverage rack (icecek_stack): fixed base + several pre-placed single-drink children. Rather than
