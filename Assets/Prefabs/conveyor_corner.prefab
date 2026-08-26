@@ -211,7 +211,7 @@ PrefabInstance:
         type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 913b23a79d1e011468f6d69cd69bc6c2, type: 2}
+      objectReference: {fileID: 2100000, guid: f0308ebef9449014092d716bcb84a441, type: 2}
     - target: {fileID: 919132149155446097, guid: fd3228555a206434195ea43dcd23a540,
         type: 3}
       propertyPath: m_Name
@@ -228,7 +228,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fd3228555a206434195ea43dcd23a540,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1275698744318477819}
+      addedObject: {fileID: 516432002559137484}
   m_SourcePrefab: {fileID: 100100000, guid: fd3228555a206434195ea43dcd23a540, type: 3}
 --- !u!1 &3834391676650660576 stripped
 GameObject:
@@ -236,7 +236,7 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 4176832725815599025}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1275698744318477819
+--- !u!114 &516432002559137484
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

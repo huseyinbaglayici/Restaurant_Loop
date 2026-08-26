@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d96bbd148721efc48a7a5fb2f0b0d5f4, type: 3}
   m_Name: ConveyorPrefabSettings
   m_EditorClassIdentifier: 
-  ConveyorStraightPrefab: {fileID: 2290094063973647920, guid: ce6a5abb2f52b8c44a9d2e8a9e193992,
+  ConveyorStraightPrefab: {fileID: 7026330428676317393, guid: b90a440af677d9d4db80a1abe7222599,
     type: 3}
   ConveyorCornerPrefab: {fileID: 3834391676650660576, guid: 11c4f90b6a2212146a6b75c28d4e460a,
     type: 3}

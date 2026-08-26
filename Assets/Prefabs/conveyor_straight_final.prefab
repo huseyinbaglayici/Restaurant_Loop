@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &1868406183087244337
+--- !u!1001 &3896224313506290267
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -36,7 +36,7 @@ PrefabInstance:
     - target: {fileID: 6309720178775915146, guid: 5d904170e2ea1b74a946db15dda18636,
         type: 3}
       propertyPath: m_Name
-      value: conveyor_straight_latest
+      value: conveyor_straight_final
       objectReference: {fileID: 0}
     - target: {fileID: 6691066732695330864, guid: 5d904170e2ea1b74a946db15dda18636,
         type: 3}
@@ -56,17 +56,17 @@ PrefabInstance:
     - target: {fileID: 6691066732695330864, guid: 5d904170e2ea1b74a946db15dda18636,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -7.9600735
       objectReference: {fileID: 0}
     - target: {fileID: 6691066732695330864, guid: 5d904170e2ea1b74a946db15dda18636,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -4.4520073
       objectReference: {fileID: 0}
     - target: {fileID: 6691066732695330864, guid: 5d904170e2ea1b74a946db15dda18636,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.81
+      value: 2.8526678
       objectReference: {fileID: 0}
     - target: {fileID: 6691066732695330864, guid: 5d904170e2ea1b74a946db15dda18636,
         type: 3}
@@ -108,29 +108,60 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 6693035900836449319, guid: 5d904170e2ea1b74a946db15dda18636, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6309720178775915146, guid: 5d904170e2ea1b74a946db15dda18636,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5174762763819111725}
     - targetCorrespondingSourceObject: {fileID: 2840000922931554860, guid: 5d904170e2ea1b74a946db15dda18636,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8713332619649464257}
+      addedObject: {fileID: 3187844371189015283}
   m_SourcePrefab: {fileID: 100100000, guid: 5d904170e2ea1b74a946db15dda18636, type: 3}
---- !u!1 &4504827012691717661 stripped
+--- !u!23 &755306095256932770 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 4353091581997370361, guid: 5d904170e2ea1b74a946db15dda18636,
+    type: 3}
+  m_PrefabInstance: {fileID: 3896224313506290267}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1259774880997814391 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2840000922931554860, guid: 5d904170e2ea1b74a946db15dda18636,
     type: 3}
-  m_PrefabInstance: {fileID: 1868406183087244337}
+  m_PrefabInstance: {fileID: 3896224313506290267}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8713332619649464257
+--- !u!114 &3187844371189015283
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4504827012691717661}
+  m_GameObject: {fileID: 1259774880997814391}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c9b430226e282d4a95eec3639462487, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _renderer: {fileID: 755306095256932770}
+  _texturePropertyName: _BaseMap
+  _scrollSpeed: 0.5
+  _scrollDirection: 1
+--- !u!1 &7026330428676317393 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6309720178775915146, guid: 5d904170e2ea1b74a946db15dda18636,
+    type: 3}
+  m_PrefabInstance: {fileID: 3896224313506290267}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5174762763819111725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7026330428676317393}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3e052d9837f1434dab3cf061b9019a3, type: 3}
