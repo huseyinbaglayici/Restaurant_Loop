@@ -1,3 +1,4 @@
+using RestaurantLoop.Audio;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
@@ -13,6 +14,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ExitStackAnchor _exitStackAnchor;
         private readonly ConveyorManager _conveyorManager;
         private readonly ConveyorTuning _tuning;
+        private readonly IAudioService _audioService;
+        private readonly AudioLibrary _audioLibrary;
 
         private bool _wasMouseDown;
 
@@ -21,13 +24,17 @@ namespace RestaurantLoop.Runtime.Conveyor
             QueueSpawner queueSpawner,
             ExitStackAnchor exitStackAnchor,
             ConveyorManager conveyorManager,
-            ConveyorTuning tuning)
+            ConveyorTuning tuning,
+            IAudioService audioService,
+            AudioLibrary audioLibrary)
         {
             _queueAnchor = queueAnchor;
             _queueSpawner = queueSpawner;
             _exitStackAnchor = exitStackAnchor;
             _conveyorManager = conveyorManager;
             _tuning = tuning;
+            _audioService = audioService;
+            _audioLibrary = audioLibrary;
         }
 
         public void Tick()
@@ -75,6 +82,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (bestLane < 0) return false;
 
             var stack = bestVisual.Stack;
+            _audioService.PlaySfx(_audioLibrary.FoodClickSfx != null ? _audioLibrary.FoodClickSfx : _audioLibrary.DefaultClickSfx);
 
             if (stack.LinkId != 0)
             {
@@ -92,6 +100,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 // Partner enters one grid cell behind so the linked pair doesn't spawn stacked on the same cell.
                 _conveyorManager.AddItemAtEntry(stack, linkedVisual, linkedVisual.transform.position);
                 _conveyorManager.AddItemAtEntry(partnerVisual.Stack, linkedPartnerVisual, linkedPartnerVisual.transform.position, -1f);
+                _audioService.PlaySfx(_audioLibrary.FoodSendSfx);
                 return true;
             }
 
@@ -100,6 +109,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _queueSpawner.TryDetachAt(bestLane, bestRow, out var pickedVisual);
             _queueSpawner.PickFromBottomEnabled = false;
             _conveyorManager.AddItemAtEntry(stack, pickedVisual, pickedVisual.transform.position);
+            _audioService.PlaySfx(_audioLibrary.FoodSendSfx);
             return true;
         }
 
@@ -139,8 +149,11 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             if (bestSlot < 0) return false;
 
+            _audioService.PlaySfx(_audioLibrary.FoodClickSfx != null ? _audioLibrary.FoodClickSfx : _audioLibrary.DefaultClickSfx);
+
             _exitStackAnchor.TryRemoveFromSlot(bestSlot, out var visual);
             _conveyorManager.AddItemAtEntry(visual.Stack, visual, visual.transform.position);
+            _audioService.PlaySfx(_audioLibrary.FoodSendSfx);
             return true;
         }
 

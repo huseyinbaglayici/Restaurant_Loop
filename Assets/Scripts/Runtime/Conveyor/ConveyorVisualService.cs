@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using RestaurantLoop.Audio;
 using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Signals;
 using UnityEngine;
@@ -48,6 +49,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly CustomerSpawner _customerSpawner;
         private readonly RuntimeCustomerState _customerState;
         private readonly CustomerConsumeService _consumeService;
+        private readonly IAudioService _audioService;
+        private readonly AudioLibrary _audioLibrary;
 
         // Belt items currently drawn by this service, keyed by the logical item id.
         private readonly Dictionary<int, BeltVisual> _beltVisuals = new();
@@ -66,7 +69,9 @@ namespace RestaurantLoop.Runtime.Conveyor
             FoodItemController.Pool foodPool,
             CustomerSpawner customerSpawner,
             RuntimeCustomerState customerState,
-            CustomerConsumeService consumeService)
+            CustomerConsumeService consumeService,
+            IAudioService audioService,
+            AudioLibrary audioLibrary)
         {
             _signalBus = signalBus;
             _conveyorManager = conveyorManager;
@@ -77,6 +82,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             _customerSpawner = customerSpawner;
             _customerState = customerState;
             _consumeService = consumeService;
+            _audioService = audioService;
+            _audioLibrary = audioLibrary;
         }
 
         public void Initialize()
@@ -97,6 +104,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _deferred.Clear();
             _flightService.CancelAll();
             _beltVisuals.Clear();
+            _audioService.StopConveyorLoop();
             DespawnOwnedVisuals();
         }
 
@@ -104,6 +112,19 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             FlushDueCommands();
             AdvanceBeltVisuals();
+            UpdateConveyorLoopAudio();
+        }
+
+        private void UpdateConveyorLoopAudio()
+        {
+            if (_beltVisuals.Count > 0)
+            {
+                _audioService.PlayConveyorLoop(_audioLibrary.ConveyorLoopSfx);
+            }
+            else
+            {
+                _audioService.StopConveyorLoop();
+            }
         }
 
         private void FlushDueCommands()
@@ -200,7 +221,10 @@ namespace RestaurantLoop.Runtime.Conveyor
                 if (visual == null) return;
 
                 visual.SetLocation(FoodLocation.FoodStack);
-                _flightService.Launch(visual.transform, slotPosition, _feel.BeltToStack);
+                _flightService.Launch(visual.transform, slotPosition, _feel.BeltToStack, () =>
+                {
+                    _audioService.PlaySfx(_audioLibrary.FoodDropToRackSfx);
+                });
             });
         }
 
@@ -237,7 +261,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 flyer.transform,
                 () => ResolveCustomerHandoffPosition(coord, flyer.transform.position),
                 _feel.ConsumeToCustomer,
-                () => OnConsumeFlightArrived(flyer, flyer.transform.position, coord, takenStack, serveResult, levelWon));
+                () => OnConsumeFlightArrived(flyer, flyer.transform.position, coord, takenStack, serveResult, levelWon, fullyConsumed));
         }
 
         // Beverage rack (icecek_stack): fixed base + several pre-placed single-drink children. Rather than
@@ -265,7 +289,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (child == null)
             {
                 OnConsumeFlightArrived(null, sourceVisual != null ? sourceVisual.transform.position : Vector3.zero,
-                    coord, takenStack, serveResult, levelWon);
+                    coord, takenStack, serveResult, levelWon, fullyConsumed);
                 return;
             }
 
@@ -277,7 +301,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 {
                     var worldPosition = child.position;
                     UnityEngine.Object.Destroy(child.gameObject);
-                    OnConsumeFlightArrived(null, worldPosition, coord, takenStack, serveResult, levelWon);
+                    OnConsumeFlightArrived(null, worldPosition, coord, takenStack, serveResult, levelWon, fullyConsumed);
                 });
         }
 
@@ -306,7 +330,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             Vector2Int coord,
             FoodStackData takenStack,
             RuntimeCustomerState.ConsumeResult serveResult,
-            bool levelWon)
+            bool levelWon,
+            bool fullyConsumed = false)
         {
             if (flyer != null)
             {
@@ -319,6 +344,12 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _feel.ConsumePunchVibrato, _feel.ConsumePunchElasticity);
 
             ApplyServeResult(coord, serveResult);
+
+            _audioService.PlaySfx(_audioLibrary.CustomerEatSfx);
+            if (fullyConsumed)
+            {
+                _audioService.PlaySfx(_audioLibrary.FoodGroupCompletedSfx);
+            }
 
             _signalBus.Fire(new FoodDeliveredToCustomerSignal
             {

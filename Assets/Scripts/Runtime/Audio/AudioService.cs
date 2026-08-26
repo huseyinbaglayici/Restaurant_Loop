@@ -18,6 +18,7 @@ namespace RestaurantLoop.Audio
         private readonly AudioSource _musicSource;
         private readonly AudioSource _ambienceSource;
         private readonly AudioSource _sfxSource;
+        private readonly AudioSource _conveyorSource;
 
         public AudioService(SignalBus signalBus, AudioLibrary settings)
         {
@@ -30,6 +31,7 @@ namespace RestaurantLoop.Audio
             _musicSource = CreateSource(root.transform, "Music", loop: true, volume: settings.MusicVolume);
             _ambienceSource = CreateSource(root.transform, "Ambience", loop: true, volume: settings.AmbienceVolume);
             _sfxSource = CreateSource(root.transform, "Sfx", loop: false, volume: 1f);
+            _conveyorSource = CreateSource(root.transform, "Conveyor", loop: true, volume: settings.SfxVolume);
         }
 
         private static AudioSource CreateSource(Transform parent, string name, bool loop, float volume)
@@ -62,7 +64,11 @@ namespace RestaurantLoop.Audio
 
         // Cold boot fires this too, but GameplaySceneReadySignal follows right behind it
         // (SceneLoader continues straight into gameplay) and overrides the track before it's heard.
-        private void OnMenuReady() => PlayMusic(_settings.MenuMusic);
+        private void OnMenuReady()
+        {
+            StopConveyorLoop();
+            PlayMusic(_settings.MenuMusic);
+        }
 
         private void OnGameplayReady()
         {
@@ -70,14 +76,39 @@ namespace RestaurantLoop.Audio
             PlayAmbience(_settings.GameplayAmbience);
         }
 
-        // Stop gameplay ambience the moment a level ends, before the async scene unload even starts —
+        // Stop gameplay ambience and conveyor loop the moment a level ends, before the async scene unload even starts —
         // MenuReadySignal (fired once the unload completes) picks the music back up.
-        private void OnLevelEnded(LevelEndedSignal _) => StopAmbience();
+        private void OnLevelEnded(LevelEndedSignal _)
+        {
+            StopAmbience();
+            StopConveyorLoop();
+        }
 
         public void PlaySfx(AudioClip clip, float volumeScale = 1f)
         {
             if (clip == null) return;
             _sfxSource.PlayOneShot(clip, _settings.SfxVolume * volumeScale);
+        }
+
+        public void PlayConveyorLoop(AudioClip clip = null)
+        {
+            var targetClip = clip != null ? clip : _settings.ConveyorLoopSfx;
+            if (targetClip == null) return;
+
+            if (_conveyorSource.clip == targetClip && _conveyorSource.isPlaying) return;
+
+            _conveyorSource.Stop();
+            _conveyorSource.clip = targetClip;
+            _conveyorSource.volume = _settings.SfxVolume;
+            _conveyorSource.Play();
+        }
+
+        public void StopConveyorLoop()
+        {
+            if (_conveyorSource != null && _conveyorSource.isPlaying)
+            {
+                _conveyorSource.Stop();
+            }
         }
 
         public void PlayMusic(AudioClip clip)

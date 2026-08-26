@@ -9,5 +9,7 @@ namespace RestaurantLoop.Audio
         void StopMusic();
         void PlayAmbience(AudioClip clip);
         void StopAmbience();
+        void PlayConveyorLoop(AudioClip clip = null);
+        void StopConveyorLoop();
     }
 }

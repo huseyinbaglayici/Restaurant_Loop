@@ -211,6 +211,7 @@ public class TestConveyorBelt : MonoBehaviour
                 {
                     item.food.state = TestFoodStack.FoodState.OnRack;
                     items[i] = null; // RemoveAt yerine null atıyoruz ki döngü kaymasın
+                    TestGameManager.Instance.PlayFoodDropToRackSound();
                     continue; // Bu item artık bantta değil, bir sonrakine geç.
                 }
                 else
@@ -233,6 +234,19 @@ public class TestConveyorBelt : MonoBehaviour
         
         // Döngü bittikten sonra null olan (silinmiş/rafa inmiş) elemanları temizle
         items.RemoveAll(x => x == null || x.food == null);
+
+        // Bantta yemek varsa loop çal, yoksa durdur
+        if (TestGameManager.Instance != null)
+        {
+            if (items.Count > 0)
+            {
+                TestGameManager.Instance.StartConveyorLoop();
+            }
+            else
+            {
+                TestGameManager.Instance.StopConveyorLoop();
+            }
+        }
     }
     
     public void BuildPathFromConveyorData(RestaurantLoop.Runtime.Data.ConveyorLevelDataSO data, Vector3 centerPos)
@@ -585,6 +599,11 @@ public class TestConveyorBelt : MonoBehaviour
                                     Destroy(partnerBeltItem.food.gameObject);
                                 }
                             }
+
+                            if (TestGameManager.Instance != null)
+                            {
+                                TestGameManager.Instance.PlayFoodGroupCompletedSound();
+                            }
                         }
                     }
                     else
@@ -642,6 +661,11 @@ public class TestConveyorBelt : MonoBehaviour
         // Ağza/Gövdeye varış anında minik renkli kırıntı/yeme partikülü efekti
         CreateBurstParticles(targetPos, foodColor);
         Destroy(foodProj);
+
+        if (TestGameManager.Instance != null)
+        {
+            TestGameManager.Instance.PlayCustomerEatSound();
+        }
 
         onArrive?.Invoke();
     }

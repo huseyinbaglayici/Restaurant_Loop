@@ -7,6 +7,24 @@ public class TestGameManager : MonoBehaviour
     
     [Header("Level References")]
     public List<TestCustomer> customers = new List<TestCustomer>();
+
+    [Header("Audio Settings & SFX")]
+    [Tooltip("Ses efektlerini çalmak için AudioSource (Boş bırakılırsa otomatik oluşturulur)")]
+    public AudioSource audioSource;
+    [Tooltip("Bant loop sesini çalmak için AudioSource (Boş bırakılırsa otomatik oluşturulur)")]
+    public AudioSource conveyorAudioSource;
+    [Tooltip("Stack'teki veya raftaki objelere basınca çalacak ses")]
+    public AudioClip foodClickSound;
+    [Tooltip("Yemek objesi banda giderken / hareket ederken çalacak ses")]
+    public AudioClip foodSendSound;
+    [Tooltip("Müşteri yemeği yediğinde çalacak ses")]
+    public AudioClip customerEatSound;
+    [Tooltip("Bir yemek grubu (stack) tamamen bitip tükendiğinde çalacak ses")]
+    public AudioClip foodGroupCompletedSound;
+    [Tooltip("Bant üzerinde en az bir yemek varken sürekli (loop) çalacak ses")]
+    public AudioClip conveyorLoopSound;
+    [Tooltip("Yemek banttan çıkıp rafa düştüğünde çalacak ses")]
+    public AudioClip foodDropToRackSound;
     
     [Header("Level Data (Data-Driven - Optional)")]
     [Tooltip("Unified Level Data (Eski veya Birleşik Level Yapısı)")]
@@ -207,6 +225,16 @@ public class TestGameManager : MonoBehaviour
     protected virtual void Awake() 
     { 
         Instance = this; 
+
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+
         if (rackSlots != null && rackSlots.Length > 0)
         {
             rackItems = new TestFoodStack[rackSlots.Length];
@@ -978,4 +1006,48 @@ public class TestGameManager : MonoBehaviour
             }
         }
     }
+
+    #region Audio Playback Methods
+    public void PlaySound(AudioClip clip, float volume = 1f)
+    {
+        if (clip == null) return;
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
+        }
+        audioSource.PlayOneShot(clip, volume);
+    }
+
+    public void PlayFoodClickSound() => PlaySound(foodClickSound);
+    public void PlayFoodSendSound() => PlaySound(foodSendSound);
+    public void PlayCustomerEatSound() => PlaySound(customerEatSound);
+    public void PlayFoodGroupCompletedSound() => PlaySound(foodGroupCompletedSound);
+    public void PlayFoodDropToRackSound() => PlaySound(foodDropToRackSound);
+
+    public void StartConveyorLoop()
+    {
+        if (conveyorLoopSound == null) return;
+        if (conveyorAudioSource == null)
+        {
+            conveyorAudioSource = gameObject.AddComponent<AudioSource>();
+            conveyorAudioSource.loop = true;
+            conveyorAudioSource.playOnAwake = false;
+        }
+
+        if (!conveyorAudioSource.isPlaying || conveyorAudioSource.clip != conveyorLoopSound)
+        {
+            conveyorAudioSource.clip = conveyorLoopSound;
+            conveyorAudioSource.loop = true;
+            conveyorAudioSource.Play();
+        }
+    }
+
+    public void StopConveyorLoop()
+    {
+        if (conveyorAudioSource != null && conveyorAudioSource.isPlaying)
+        {
+            conveyorAudioSource.Stop();
+        }
+    }
+    #endregion
 }

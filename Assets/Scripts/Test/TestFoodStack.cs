@@ -334,6 +334,11 @@ public class TestFoodStack : MonoBehaviour
         // 1. Kuyruktaysa doğrudan BANDA (Conveyor Belt) gönder
         if (state == FoodState.InQueue && isClickable)
         {
+            if (TestGameManager.Instance != null)
+            {
+                TestGameManager.Instance.PlayFoodClickSound();
+            }
+
             if (linkedStack != null)
             {
                 // İkili bant ekleme
@@ -344,6 +349,7 @@ public class TestFoodStack : MonoBehaviour
                     linkedStack.state = FoodState.OnBelt;
                     TestGameManager.Instance.PopQueue(queueIndex, this);
                     TestGameManager.Instance.PopQueue(linkedStack.queueIndex, linkedStack);
+                    TestGameManager.Instance.PlayFoodSendSound();
                 }
             }
             else
@@ -354,17 +360,24 @@ public class TestFoodStack : MonoBehaviour
                 {
                     state = FoodState.OnBelt;
                     TestGameManager.Instance.PopQueue(queueIndex, this);
+                    TestGameManager.Instance.PlayFoodSendSound();
                 }
             }
         }
         // 2. Raftaysa (OnRack) Banda Tekrar Sok
         else if (state == FoodState.OnRack)
         {
+            if (TestGameManager.Instance != null)
+            {
+                TestGameManager.Instance.PlayFoodClickSound();
+            }
+
             bool added = TestConveyorBelt.Instance.TryAddItem(this);
             if (added)
             {
                 state = FoodState.OnBelt;
                 TestGameManager.Instance.RemoveFromRack(this);
+                TestGameManager.Instance.PlayFoodSendSound();
                 Debug.Log($"Food {gameObject.name} moved from Rack to Belt successfully.");
             }
             else
