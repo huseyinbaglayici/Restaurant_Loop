@@ -37,6 +37,12 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void OnSpawned(Vector3 position, float worldYRotation, FoodStackData order)
         {
+            if (_canvasRoot != null)
+            {
+                _canvasRoot.gameObject.SetActive(true);
+                _canvasRoot.localRotation = Quaternion.Euler(0f, -worldYRotation, 0f);
+            }
+
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, worldYRotation, 0f));
             if (_canvasRoot != null) _canvasRoot.localRotation = Quaternion.Euler(0f, -worldYRotation, 0f);
             ApplyOrder(order);
