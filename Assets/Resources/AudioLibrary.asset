@@ -26,3 +26,4 @@ MonoBehaviour:
   ConveyorLoopSfx: {fileID: 8300000, guid: c01822a72c26d954380c93f5956d99d4, type: 3}
   FoodDropToRackSfx: {fileID: 8300000, guid: f73ea7870852a034e8e363788e2e715e, type: 3}
   SfxVolume: 0.15
+  ConveyorVolume: 0.5

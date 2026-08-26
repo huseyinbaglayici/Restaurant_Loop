@@ -23,6 +23,8 @@ public class TestGameManager : MonoBehaviour
     public AudioClip foodGroupCompletedSound;
     [Tooltip("Bant üzerinde en az bir yemek varken sürekli (loop) çalacak ses")]
     public AudioClip conveyorLoopSound;
+    [Tooltip("Bant sesinin ses seviyesi (Varsayılan: 1f)")]
+    [Range(0f, 1f)] public float conveyorVolume = 1f;
     [Tooltip("Yemek banttan çıkıp rafa düştüğünde çalacak ses")]
     public AudioClip foodDropToRackSound;
     
@@ -1034,10 +1036,13 @@ public class TestGameManager : MonoBehaviour
             conveyorAudioSource.playOnAwake = false;
         }
 
+        conveyorAudioSource.volume = conveyorVolume;
+
         if (!conveyorAudioSource.isPlaying || conveyorAudioSource.clip != conveyorLoopSound)
         {
             conveyorAudioSource.clip = conveyorLoopSound;
             conveyorAudioSource.loop = true;
+            conveyorAudioSource.volume = conveyorVolume;
             conveyorAudioSource.Play();
         }
     }

@@ -31,7 +31,7 @@ namespace RestaurantLoop.Audio
             _musicSource = CreateSource(root.transform, "Music", loop: true, volume: settings.MusicVolume);
             _ambienceSource = CreateSource(root.transform, "Ambience", loop: true, volume: settings.AmbienceVolume);
             _sfxSource = CreateSource(root.transform, "Sfx", loop: false, volume: 1f);
-            _conveyorSource = CreateSource(root.transform, "Conveyor", loop: true, volume: settings.SfxVolume);
+            _conveyorSource = CreateSource(root.transform, "Conveyor", loop: true, volume: settings.ConveyorVolume > 0f ? settings.ConveyorVolume : settings.SfxVolume * 2f);
         }
 
         private static AudioSource CreateSource(Transform parent, string name, bool loop, float volume)
@@ -99,7 +99,7 @@ namespace RestaurantLoop.Audio
 
             _conveyorSource.Stop();
             _conveyorSource.clip = targetClip;
-            _conveyorSource.volume = _settings.SfxVolume;
+            _conveyorSource.volume = _settings.ConveyorVolume > 0f ? _settings.ConveyorVolume : Mathf.Clamp01(_settings.SfxVolume * 2f);
             _conveyorSource.Play();
         }
 
