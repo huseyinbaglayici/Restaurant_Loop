@@ -16,7 +16,7 @@ MonoBehaviour:
   GameplayMusic: {fileID: 8300000, guid: d33437845d8d67e4b9fe21f2f5ba5a65, type: 3}
   MusicVolume: 0.3
   GameplayAmbience: {fileID: 8300000, guid: 454dc65fa2c8b1042861e05cf626e7ac, type: 3}
-  AmbienceVolume: 0.15
+  AmbienceVolume: 0.1
   DefaultClickSfx: {fileID: 8300000, guid: 85bd6dbce48d98149afbad74bde02e20, type: 3}
   FoodClickSfx: {fileID: 8300000, guid: 85bd6dbce48d98149afbad74bde02e20, type: 3}
   FoodSendSfx: {fileID: 8300000, guid: f73ea7870852a034e8e363788e2e715e, type: 3}

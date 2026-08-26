@@ -86,7 +86,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void ApplyOrder(FoodStackData order)
         {
             ApplyFoodSprite(_foodImage, order.Type);
-            if (_amountText != null) _amountText.text = "x" + order.Amount;
+            if (_amountText != null) _amountText.text = order.Amount.ToString();
         }
 
         public void ApplySecondOrder(bool hasSecondOrder, FoodStackData secondOrder)
@@ -104,7 +104,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 ApplyFoodSprite(_secondFoodImage, secondOrder.Type);
 
                 if (_secondAmountText != null)
-                    _secondAmountText.text = "x" + secondOrder.Amount;
+                    _secondAmountText.text = secondOrder.Amount.ToString();
             }
             else
             {

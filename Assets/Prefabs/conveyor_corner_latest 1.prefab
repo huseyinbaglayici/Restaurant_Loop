@@ -390,7 +390,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cornerMaterial: {fileID: 2100000, guid: e46a4e5d556711f408d20d88d67de14b, type: 2}
-  cornerTexture: {fileID: 2800000, guid: 6dfcdfcb53d1f2a4588387a8baaec55a, type: 3}
+  cornerTexture: {fileID: 2800000, guid: 260cbe544e3cb7b448818602f484c38c, type: 3}
   texturePropertyName: _BaseMap
   planeAxis: 0
   cornerPivot: 1
