@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Wall
-  m_Shader: {fileID: 4800000, guid: 3040ca0a2e6ff484797d5c87d2274f22, type: 3}
+  m_Shader: {fileID: 4800000, guid: 9929e1fbe157a764ebee3ddd6a57e184, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
@@ -132,6 +132,7 @@ Material:
     - _Gloss2Soft: 0.45
     - _Gloss2Strength: 0.7
     - _Gloss2Wobble: 0.12
+    - _GlossFollowLight: 0.7
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -167,7 +168,10 @@ Material:
     - _NormalMapToggle: 0
     - _NormalStrength: 0.5
     - _OcclusionStrength: 1
+    - _OutlineCull: 1
+    - _OutlineDepthPush: 0
     - _OutlineReferenceHeight: 1080
+    - _OutlineRoundness: 0.5
     - _OutlineToggle: 0
     - _OutlineWidth: 2
     - _PaintLevels: 12
@@ -224,7 +228,7 @@ Material:
     m_Colors:
     - _AOColor: {r: 0.35999998, g: 0.24999997, b: 0.32999998, a: 1}
     - _AmbientColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BaseColor: {r: 0.91823894, g: 0.8093244, b: 0.7132233, a: 1}
+    - _BaseColor: {r: 1, g: 0.9068698, b: 0.827044, a: 1}
     - _BottomColor: {r: 0.8399999, g: 0.85, b: 0.96, a: 1}
     - _BounceColor: {r: 0.41999996, g: 0.62, b: 1, a: 1}
     - _Color: {r: 0.918239, g: 0.8093244, b: 0.7132233, a: 1}
