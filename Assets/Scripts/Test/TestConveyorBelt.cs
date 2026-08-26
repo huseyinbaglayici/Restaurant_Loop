@@ -390,7 +390,7 @@ public class TestConveyorBelt : MonoBehaviour
                     var cornerVisual = piece.GetComponent<TestConveyorVisualCorner>() ?? piece.GetComponentInChildren<TestConveyorVisualCorner>();
                     if (cornerVisual != null)
                     {
-                        cornerVisual.repeatAngle = 90f; // 90 derecede periyot tamamlanır, ters dönme olmaz
+                        cornerVisual.repeatAngle = 360f; // Tam dairesel texture için 360 derece kesintisiz döner
                         if (orderedPath != null && pathIndexByCoord.TryGetValue(cell.Coord, out int idx))
                         {
                             int count = orderedPath.Count;

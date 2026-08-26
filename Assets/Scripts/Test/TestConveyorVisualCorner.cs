@@ -4,266 +4,303 @@ using UnityEditor;
 #endif
 
 /// <summary>
-/// Çeyrek daire köşe bant modellerinde, tam yuvarlak (Full Circle) bir texture'ı
-/// modelin çeyrek daire geometrisiyle (X ve Z eksenlerinde, yukarıdan Y bakışında)
-/// otomatik eşleyip merkezden 360 derece döndüren script.
+/// Çeyrek daire konveyör köşe modelleri için tam dairesel (full circle) dokuyu
+/// modelin çeyrek daire geometrisi üzerine oturtup merkezinden 360 derece döndüren script.
 /// </summary>
-[ExecuteAlways]
-public class TestConveyorVisualCorner : MonoBehaviour
+public class TestConveyorVisualCorner : MonoBehaviour, RestaurantLoop.Runtime.Conveyor.IConveyorPieceVisual
 {
-    public enum CornerAnchor
+    public enum PlaneAxis
     {
-        BottomLeft,     // Çeyrek dairenin dönüş merkezi Sol-Alt köşede
-        BottomRight,    // Dönüş merkezi Sağ-Alt köşede
-        TopLeft,        // Dönüş merkezi Sol-Üst köşede
-        TopRight,       // Dönüş merkezi Sağ-Üst köşede
-        ManualCustom    // Elle UV pivotu belirle
+        AutoDetect,   // Modelin en geniş 2 eksenini otomatik bulur (örn: Blender -90X modelleri için X-Y)
+        XZ_TopDown,   // Düz zemin modeli (X ve Z eksenleri)
+        XY_Local      // -90 derece rotasyonlu modeller (X ve Y eksenleri)
     }
 
-    public enum ProjectionPlane
+    public enum CornerPivot
     {
-        XZ_TopDown,     // Yukarıdan (+Y) bakıldığında zemin düzlemi (X ve Z)
-        XY_Vertical     // Dikey düzlem (X ve Y)
+        BottomLeft,   // Çeyrek daire iç köşesi Sol-Alt
+        BottomRight,  // Çeyrek daire iç köşesi Sağ-Alt
+        TopLeft,      // Çeyrek daire iç köşesi Sol-Üst
+        TopRight,     // Çeyrek daire iç köşesi Sağ-Üst
+        Center,       // Modelin tam geometrik merkezi
+        Custom        // Elle girilen özel pivot
     }
 
-    [Header("1. Texture Ayarları")]
-    [Tooltip("Köşe için tam yuvarlak texture. Buraya atarsanız materyale otomatik uygulanır.")]
+    [Header("1. Texture / Materyal Ayarları")]
+    [Tooltip("Köşe için Materyal (MeshRenderer üzerinde materyal yoksa otomatik atanır)")]
+    public Material cornerMaterial;
+    [Tooltip("Köşe için tam yuvarlak texture (örn: conveyorCircularMaterial.png).")]
     public Texture2D cornerTexture;
-
     [Tooltip("Texture Property adı. URP için '_BaseMap', Standart için '_MainTex'")]
     public string texturePropertyName = "_BaseMap";
 
-    [Header("2. Yuvarlak Doku Otomatik Hizalama (X ve Z Ekseninde)")]
-    [Tooltip("Tam yuvarlak dokuyu çeyrek daire modelinin köşesine otomatik oturtur")]
-    public bool autoAlignFullCircle = true;
-
-    [Tooltip("Düzlem seçimi (Yukarıdan Y ekseninden bakıldığında XZ_TopDown kullanılır)")]
-    public ProjectionPlane projectionPlane = ProjectionPlane.XZ_TopDown;
-
-    [Tooltip("Çeyrek dairenin kıvrıldığı iç köşe merkezi")]
-    public CornerAnchor cornerAnchor = CornerAnchor.BottomLeft;
-
-    [Header("3. Dönme Ayarları")]
-    [Tooltip("Saniyede dönme hızı (Derece cinsinden, örn: 90f)")]
-    public float rotationSpeed = 90.0f;
-
-    [Tooltip("Saat yönünde mi dönsün?")]
-    public bool isClockwise = true;
-
-    [Tooltip("Dönüş açısının tekrarlanma periyodu. Yuvarlak texture'lar için 360 derece.")]
-    public float repeatAngle = 360.0f;
-
-    [Tooltip("Animasyonun aktif olup olmadığı")]
-    public bool isRotating = true;
-
-    [Header("4. Manuel UV / Pivot Ayarları (İsteğe Bağlı)")]
-    [Tooltip("ManualCustom modunda kullanılacak UV pivot noktası (0-1 aralığında)")]
+    [Header("2. Geometri & Hizalama")]
+    [Tooltip("Modelin eğri düzlemi")]
+    public PlaneAxis planeAxis = PlaneAxis.AutoDetect;
+    [Tooltip("Çeyrek dairenin dönüş merkezi / iç köşesi")]
+    public CornerPivot cornerPivot = CornerPivot.BottomLeft;
+    [Tooltip("Doku ölçek çarpanı (1 = Tam oturt)")]
+    public float textureScale = 1.0f;
+    [Tooltip("Doku UV ofseti (Gerekirse ince ayar için)")]
+    public Vector2 uvOffset = Vector2.zero;
+    [Tooltip("Custom modunda kullanılacak UV pivot noktası (0-1 aralığında)")]
     public Vector2 customPivot = new Vector2(0.5f, 0.5f);
 
-    [Tooltip("Dokuyu büyütme/küçültme çarpanı")]
-    public float textureScale = 1.0f;
+    [Header("3. Dönüş / Animasyon Ayarları")]
+    [Tooltip("Animasyon aktif mi?")]
+    public bool isRotating = true;
+    [Tooltip("Saniyede dönme hızı (Derece cinsinden, örn: 90f)")]
+    public float rotationSpeed = 90.0f;
+    [Tooltip("Saat yönünde mi dönsün?")]
+    public bool isClockwise = true;
+    [Tooltip("Dönüş açısının periyodu (Örn: 90f veya 360f)")]
+    public float repeatAngle = 360.0f;
 
-    [Tooltip("UV Ofseti")]
-    public Vector2 uvOffset = Vector2.zero;
-
-    [Header("5. Hedef & Gizmo")]
-    [Tooltip("Boş bırakılırsa bu objedeki veya altındaki ilk MeshFilter otomatik alınır.")]
+    [Header("4. Hedef & Gizmo")]
+    [Tooltip("Boş bırakılırsa bu objedeki veya altındaki ilk MeshFilter otomatik bulunur.")]
     public MeshFilter targetMeshFilter;
+    [Tooltip("Orijinal model meshi (Otomatik kaydedilir ve kaybolmayı önler)")]
+    [SerializeField] private Mesh originalMesh;
     public bool showGizmo = true;
     public Color gizmoColor = Color.cyan;
 
     private Mesh meshInstance;
-    private Vector2[] baseCircleUVs;
-    private Vector2[] workingUVs;
+    private Vector2[] baseUVs;
+    private Vector2[] currentUVs;
     private float currentAngle = 0f;
+    private float externalAxisSign = 1f;
     private bool isInitialized = false;
 
     private void Awake()
     {
-        Initialize();
-    }
-
-    private void OnEnable()
-    {
-        Initialize();
-    }
-
-    private void OnValidate()
-    {
-        isInitialized = false;
-        Initialize();
+        if (Application.isPlaying)
+        {
+            Initialize();
+        }
     }
 
     public void Initialize()
     {
+        if (!Application.isPlaying) return;
+
         if (targetMeshFilter == null)
         {
             targetMeshFilter = GetComponent<MeshFilter>() ?? GetComponentInChildren<MeshFilter>();
         }
 
         if (targetMeshFilter == null || targetMeshFilter.sharedMesh == null) return;
-
-#if UNITY_EDITOR
-        if (!targetMeshFilter.sharedMesh.isReadable)
-        {
-            string assetPath = UnityEditor.AssetDatabase.GetAssetPath(targetMeshFilter.sharedMesh);
-            if (!string.IsNullOrEmpty(assetPath))
-            {
-                var importer = UnityEditor.AssetImporter.GetAtPath(assetPath) as UnityEditor.ModelImporter;
-                if (importer != null && !importer.isReadable)
-                {
-                    importer.isReadable = true;
-                    importer.SaveAndReimport();
-                }
-            }
-        }
-#endif
-
         if (!targetMeshFilter.sharedMesh.isReadable) return;
 
+        Mesh sourceMesh = targetMeshFilter.sharedMesh;
         if (meshInstance == null)
         {
-            meshInstance = Instantiate(targetMeshFilter.sharedMesh);
-            meshInstance.name = targetMeshFilter.sharedMesh.name + "_CircleCornerInstance";
+            meshInstance = Instantiate(sourceMesh);
+            meshInstance.name = sourceMesh.name + "_RuntimeInstance";
             targetMeshFilter.mesh = meshInstance;
         }
 
         ApplyTexture();
-        GenerateBaseUVs();
+        GenerateBaseUVs(meshInstance.vertices);
         isInitialized = true;
     }
 
     private void ApplyTexture()
     {
-        if (cornerTexture == null) return;
         Renderer rend = GetComponent<Renderer>() ?? GetComponentInChildren<Renderer>();
-        if (rend != null && rend.sharedMaterial != null)
+        if (rend == null) return;
+
+        if (rend.sharedMaterial == null && cornerMaterial != null)
+        {
+            rend.material = cornerMaterial;
+        }
+
+        if (cornerTexture != null && rend.material != null)
         {
             if (rend.material.HasProperty(texturePropertyName))
                 rend.material.SetTexture(texturePropertyName, cornerTexture);
+            else if (rend.material.HasProperty("_BaseMap"))
+                rend.material.SetTexture("_BaseMap", cornerTexture);
             else if (rend.material.HasProperty("_MainTex"))
                 rend.material.SetTexture("_MainTex", cornerTexture);
         }
     }
 
-    private void GenerateBaseUVs()
+    private void GenerateBaseUVs(Vector3[] verts)
     {
-        if (targetMeshFilter == null || targetMeshFilter.sharedMesh == null) return;
-        Vector3[] verts = targetMeshFilter.sharedMesh.vertices;
         if (verts == null || verts.Length == 0) return;
 
-        if (!autoAlignFullCircle || cornerAnchor == CornerAnchor.ManualCustom)
+        // Eksen seçimi
+        int axisU = 0; // X
+        int axisV = 2; // Z
+
+        if (planeAxis == PlaneAxis.XY_Local)
         {
-            baseCircleUVs = targetMeshFilter.sharedMesh.uv;
-            if (baseCircleUVs == null || baseCircleUVs.Length == 0)
-                baseCircleUVs = new Vector2[verts.Length];
+            axisU = 0; // X
+            axisV = 1; // Y
         }
-        else
+        else if (planeAxis == PlaneAxis.AutoDetect)
         {
+            // En geniş aralığa sahip 2 ekseni bul
             float minX = float.MaxValue, maxX = float.MinValue;
+            float minY = float.MaxValue, maxY = float.MinValue;
             float minZ = float.MaxValue, maxZ = float.MinValue;
 
             for (int i = 0; i < verts.Length; i++)
             {
-                float vx = verts[i].x;
-                float vz = projectionPlane == ProjectionPlane.XZ_TopDown ? verts[i].z : verts[i].y;
-
-                minX = Mathf.Min(minX, vx);
-                maxX = Mathf.Max(maxX, vx);
-                minZ = Mathf.Min(minZ, vz);
-                maxZ = Mathf.Max(maxZ, vz);
+                minX = Mathf.Min(minX, verts[i].x); maxX = Mathf.Max(maxX, verts[i].x);
+                minY = Mathf.Min(minY, verts[i].y); maxY = Mathf.Max(maxY, verts[i].y);
+                minZ = Mathf.Min(minZ, verts[i].z); maxZ = Mathf.Max(maxZ, verts[i].z);
             }
 
-            float spanX = maxX - minX > 0.001f ? maxX - minX : 1f;
-            float spanZ = maxZ - minZ > 0.001f ? maxZ - minZ : 1f;
-            float radius = Mathf.Max(spanX, spanZ);
+            float spanX = maxX - minX;
+            float spanY = maxY - minY;
+            float spanZ = maxZ - minZ;
 
-            Vector2 origin = Vector2.zero;
-            Vector2 dirSign = Vector2.one;
-
-            switch (cornerAnchor)
+            // En küçük span yükseklik (thickness) eksenidir
+            if (spanY <= spanX && spanY <= spanZ)
             {
-                case CornerAnchor.BottomLeft:
-                    origin = new Vector2(minX, minZ);
-                    dirSign = new Vector2(1f, 1f);
-                    break;
-                case CornerAnchor.BottomRight:
-                    origin = new Vector2(maxX, minZ);
-                    dirSign = new Vector2(-1f, 1f);
-                    break;
-                case CornerAnchor.TopLeft:
-                    origin = new Vector2(minX, maxZ);
-                    dirSign = new Vector2(1f, -1f);
-                    break;
-                case CornerAnchor.TopRight:
-                    origin = new Vector2(maxX, maxZ);
-                    dirSign = new Vector2(-1f, -1f);
-                    break;
+                axisU = 0; axisV = 2; // XZ düzlemi
             }
-
-            baseCircleUVs = new Vector2[verts.Length];
-            for (int i = 0; i < verts.Length; i++)
+            else if (spanZ <= spanX && spanZ <= spanY)
             {
-                float vx = verts[i].x;
-                float vz = projectionPlane == ProjectionPlane.XZ_TopDown ? verts[i].z : verts[i].y;
-
-                // origin noktasını tam yuvarlak texture'ın (0.5, 0.5) merkezine oturtuyoruz
-                float normX = ((vx - origin.x) / radius) * dirSign.x * textureScale;
-                float normZ = ((vz - origin.y) / radius) * dirSign.y * textureScale;
-
-                float u = 0.5f + normX * 0.5f + uvOffset.x;
-                float v = 0.5f + normZ * 0.5f + uvOffset.y;
-
-                baseCircleUVs[i] = new Vector2(u, v);
+                axisU = 0; axisV = 1; // XY düzlemi (-90X modelleri)
+            }
+            else
+            {
+                axisU = 1; axisV = 2; // YZ düzlemi
             }
         }
 
-        workingUVs = new Vector2[baseCircleUVs.Length];
-        System.Array.Copy(baseCircleUVs, workingUVs, baseCircleUVs.Length);
+        // Bounding box hesapla
+        float minU = float.MaxValue, maxU = float.MinValue;
+        float minV = float.MaxValue, maxV = float.MinValue;
+
+        for (int i = 0; i < verts.Length; i++)
+        {
+            float uVal = GetAxisValue(verts[i], axisU);
+            float vVal = GetAxisValue(verts[i], axisV);
+            minU = Mathf.Min(minU, uVal); maxU = Mathf.Max(maxU, uVal);
+            minV = Mathf.Min(minV, vVal); maxV = Mathf.Max(maxV, vVal);
+        }
+
+        float spanU = maxU - minU > 0.0001f ? maxU - minU : 1f;
+        float spanV = maxV - minV > 0.0001f ? maxV - minV : 1f;
+        float radius = Mathf.Max(spanU, spanV);
+
+        Vector2 origin = Vector2.zero;
+        Vector2 dirSign = Vector2.one;
+
+        switch (cornerPivot)
+        {
+            case CornerPivot.BottomLeft:
+                origin = new Vector2(minU, minV);
+                dirSign = new Vector2(1f, 1f);
+                break;
+            case CornerPivot.BottomRight:
+                origin = new Vector2(maxU, minV);
+                dirSign = new Vector2(-1f, 1f);
+                break;
+            case CornerPivot.TopLeft:
+                origin = new Vector2(minU, maxV);
+                dirSign = new Vector2(1f, -1f);
+                break;
+            case CornerPivot.TopRight:
+                origin = new Vector2(maxU, maxV);
+                dirSign = new Vector2(-1f, -1f);
+                break;
+            case CornerPivot.Center:
+                origin = new Vector2((minU + maxU) * 0.5f, (minV + maxV) * 0.5f);
+                dirSign = new Vector2(1f, 1f);
+                break;
+            case CornerPivot.Custom:
+                origin = customPivot;
+                dirSign = Vector2.one;
+                break;
+        }
+
+        baseUVs = new Vector2[verts.Length];
+        currentUVs = new Vector2[verts.Length];
+
+        for (int i = 0; i < verts.Length; i++)
+        {
+            float uVal = GetAxisValue(verts[i], axisU);
+            float vVal = GetAxisValue(verts[i], axisV);
+
+            // Dairesel dokunun merkezi (0.5, 0.5) olacak şekilde normalize et
+            float normU = ((uVal - origin.x) / radius) * dirSign.x * textureScale;
+            float normV = ((vVal - origin.y) / radius) * dirSign.y * textureScale;
+
+            float u = 0.5f + normU * 0.5f + uvOffset.x;
+            float v = 0.5f + normV * 0.5f + uvOffset.y;
+
+            baseUVs[i] = new Vector2(u, v);
+            currentUVs[i] = baseUVs[i];
+        }
+
+        if (meshInstance != null)
+        {
+            meshInstance.SetUVs(0, baseUVs);
+        }
+    }
+
+    private static float GetAxisValue(Vector3 v, int axis)
+    {
+        switch (axis)
+        {
+            case 0: return v.x;
+            case 1: return v.y;
+            default: return v.z;
+        }
     }
 
     private void Update()
     {
-        if (!Application.isPlaying) return;
         if (!isRotating) return;
+        StepRotation(Time.deltaTime);
+    }
 
-        if (!isInitialized || meshInstance == null || baseCircleUVs == null)
+    private void StepRotation(float deltaTime)
+    {
+        if (this == null) return;
+
+        if (!isInitialized || meshInstance == null || baseUVs == null)
         {
             Initialize();
             if (!isInitialized || meshInstance == null) return;
         }
 
-        float dir = isClockwise ? -1f : 1f;
-        currentAngle += dir * rotationSpeed * Time.deltaTime;
+        float axis = (Mathf.Abs(externalAxisSign) > 0.001f) ? Mathf.Sign(externalAxisSign) : 1f;
+        float dir = (isClockwise ? -1f : 1f) * axis;
+        currentAngle += dir * rotationSpeed * deltaTime;
         currentAngle = Mathf.Repeat(currentAngle, repeatAngle > 0f ? repeatAngle : 360f);
-
-        Vector2 pivot = (autoAlignFullCircle && cornerAnchor != CornerAnchor.ManualCustom)
-            ? new Vector2(0.5f, 0.5f)
-            : customPivot;
 
         float rad = currentAngle * Mathf.Deg2Rad;
         float cos = Mathf.Cos(rad);
         float sin = Mathf.Sin(rad);
 
-        for (int i = 0; i < baseCircleUVs.Length; i++)
+        Vector2 center = new Vector2(0.5f, 0.5f);
+
+        for (int i = 0; i < baseUVs.Length; i++)
         {
-            Vector2 p = baseCircleUVs[i] - pivot;
-            Vector2 rotated = new Vector2(
+            Vector2 p = baseUVs[i] - center;
+            currentUVs[i] = center + new Vector2(
                 p.x * cos - p.y * sin,
                 p.x * sin + p.y * cos
             );
-            workingUVs[i] = pivot + rotated;
         }
 
-        meshInstance.uv = workingUVs;
+        meshInstance.uv = currentUVs;
     }
 
-    private void OnDestroy()
+    /// <summary>
+    /// ConveyorPieceController entegrasyonu: Bant yönüne göre ters/düz dönüşü otomatik eşler.
+    /// </summary>
+    public void OnPieceSpawned(float axisSign)
     {
-        if (meshInstance != null && Application.isPlaying)
-        {
-            Destroy(meshInstance);
-        }
+        if (Mathf.Abs(axisSign) > 0.001f)
+            externalAxisSign = Mathf.Sign(axisSign);
+        else
+            externalAxisSign = 1f;
     }
 
     public void SetRotationSpeed(float speed, bool clockwise = true)
@@ -272,28 +309,18 @@ public class TestConveyorVisualCorner : MonoBehaviour
         isClockwise = clockwise;
     }
 
-    private void OnDrawGizmos()
+    private void OnDestroy()
     {
-        if (!showGizmo) return;
-        DrawGizmo();
+        if (Application.isPlaying && meshInstance != null)
+        {
+            Destroy(meshInstance);
+        }
     }
 
-    private void DrawGizmo()
+    private void OnDrawGizmosSelected()
     {
-        Vector3 centerPos = transform.position;
+        if (!showGizmo) return;
         Gizmos.color = gizmoColor;
-        Gizmos.DrawSphere(centerPos + Vector3.up * 0.05f, 0.08f);
-
-        // Çember yayı (Zemin X ve Z ekseninde)
-        int segments = 32;
-        float radius = 0.5f;
-        Vector3 prev = centerPos + transform.right * radius;
-        for (int i = 1; i <= segments; i++)
-        {
-            float a = (i / (float)segments) * Mathf.PI * 2f;
-            Vector3 next = centerPos + (transform.right * Mathf.Cos(a) + transform.forward * Mathf.Sin(a)) * radius;
-            Gizmos.DrawLine(prev, next);
-            prev = next;
-        }
+        Gizmos.DrawWireSphere(transform.position + Vector3.up * 0.1f, 0.5f);
     }
 }

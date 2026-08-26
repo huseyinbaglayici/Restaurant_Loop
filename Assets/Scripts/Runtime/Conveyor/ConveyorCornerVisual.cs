@@ -46,23 +46,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             if (_targetMeshFilter == null || _targetMeshFilter.sharedMesh == null) return;
-
-#if UNITY_EDITOR
-            if (!_targetMeshFilter.sharedMesh.isReadable)
-            {
-                string assetPath = AssetDatabase.GetAssetPath(_targetMeshFilter.sharedMesh);
-                if (!string.IsNullOrEmpty(assetPath))
-                {
-                    var importer = AssetImporter.GetAtPath(assetPath) as ModelImporter;
-                    if (importer != null && !importer.isReadable)
-                    {
-                        importer.isReadable = true;
-                        importer.SaveAndReimport();
-                    }
-                }
-            }
-#endif
-
             if (!_targetMeshFilter.sharedMesh.isReadable) return;
 
             _mesh = _targetMeshFilter.mesh;
@@ -139,6 +122,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void Update()
         {
+            if (this == null) return;
             if (_mesh == null || _baseUV == null) return;
 
             _uvAngle += _axisSign * _scrollDirection * _scrollSpeed * Time.deltaTime * 360f;
@@ -155,6 +139,14 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             _mesh.SetUVs(0, _workingUV);
+        }
+
+        private void OnDestroy()
+        {
+            if (Application.isPlaying && _mesh != null)
+            {
+                Destroy(_mesh);
+            }
         }
     }
 }
