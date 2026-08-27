@@ -21,3 +21,4 @@ MonoBehaviour:
   EatFailClip: {fileID: -203655887218126122, guid: fc725889a1d107d4e8a318594dd03059,
     type: 3}
   CrossfadeDuration: 0.15
+  ServeReactionSpeedMultiplier: 2

@@ -27,10 +27,11 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void Initialize()
         {
             float cellSize = _prefabSettings.CellWorldSize;
+            var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
 
             foreach (var customer in _level.Customers)
             {
-                var position = ConveyorWorldUtil.ToWorldPosition(customer.Coord, cellSize, _tuning.CustomerHeight, _tuning.WorldOrigin);
+                var position = ConveyorWorldUtil.ToWorldPosition(customer.Coord, cellSize, _tuning.CustomerHeight, beltOrigin);
                 var visual = _customerPool.Spawn(position, 0f, customer.Order);
                 visual.ApplyOrder(customer.Order, customer.IsHidden);
                 visual.ApplySecondOrder(customer.HasSecondOrder, customer.SecondOrder);

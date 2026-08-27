@@ -11,6 +11,19 @@ namespace RestaurantLoop.Runtime.Data
                  "rebuild always lands back on the same spot.")]
         public Vector3 WorldOrigin = Vector3.zero;
 
+        [Header("Camera & Auto-Scale (CameraController)")]
+        [Tooltip("If the level's grid width or height exceeds ReferenceGridDimension, the camera orthographic size scales up proportionally.")]
+        public bool EnableDynamicCameraScale = true;
+
+        [Tooltip("When enabled, offsets the belt/customer world origin based on the difference between the level's grid size and the reference grid size.")]
+        public bool AutoCenterBeltGrid = true;
+
+        [Tooltip("Reference grid width where WorldOrigin was authored (Level 1).")]
+        public int ReferenceGridWidth = 7;
+
+        [Tooltip("Reference grid height where WorldOrigin was authored (Level 1).")]
+        public int ReferenceGridHeight = 9;
+
         [Header("Food (item height per stage)")]
         [Tooltip("World Y every food item sits at while it is on the belt.")]
         public float BeltFoodHeight = 1f;

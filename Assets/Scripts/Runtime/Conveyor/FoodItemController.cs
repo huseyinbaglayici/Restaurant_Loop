@@ -19,6 +19,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         [Inject(Optional = true)] private FoodMeshSettings _foodMeshSettings;
         [Inject(Optional = true)] private FoodPlacementSettings _placement;
+        [Inject(Optional = true)] private TableSettings _tableSettings;
+        [Inject(Optional = true)] private CameraController _cameraController;
 
         // Stacked-units mode (most food types): one GameObject per visible unit. Only the top unit
         // (highest index) is ever Opened — and only while this whole item is Opened — everything below
@@ -42,6 +44,11 @@ namespace RestaurantLoop.Runtime.Conveyor
         private bool _usesFixedChildSlots;
         private bool _appliedUsesFixedChildSlots;
 
+        // 2D Queue Visuals (Sprite Icon + Amount Text)
+        private GameObject _queue2DHolder;
+        private SpriteRenderer _queue2DSpriteRenderer;
+        private TextMesh _queue2DAmountText;
+
         // Last multiplier / spacing pushed onto the stacked units — used to pick up live tweaks while playing.
         private float _appliedClosedScale = -1f;
         private float _appliedOpenedScale = -1f;
@@ -64,9 +71,20 @@ namespace RestaurantLoop.Runtime.Conveyor
         // rather than a duplicate of the whole rack.
         public bool UsesFixedChildSlots => _usesFixedChildSlots;
 
-        public Vector3 VisualCenter => _usesFixedChildSlots
-            ? transform.position
-            : transform.position + Vector3.up * (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) * 0.5f);
+        public Vector3 VisualCenter
+        {
+            get
+            {
+                if (ShouldUse2DQueue() && _queue2DHolder != null)
+                {
+                    return _queue2DHolder.transform.position;
+                }
+
+                return _usesFixedChildSlots
+                    ? transform.position
+                    : transform.position + Vector3.up * (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) * 0.5f);
+            }
+        }
 
         // World position of the top unit — the one that renders Opened while this item is Opened. Consume
         // flights should spawn here, not at the item root (which sits at the bottom of the stack).
@@ -88,6 +106,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void OnDespawned()
         {
+            if (_queue2DHolder != null) _queue2DHolder.SetActive(false);
             gameObject.SetActive(false);
         }
 
@@ -117,8 +136,97 @@ namespace RestaurantLoop.Runtime.Conveyor
             ApplyStack(stack);
         }
 
+        private bool ShouldUse2DQueue()
+        {
+            return _location == FoodLocation.Queue && (_tableSettings == null || _tableSettings.Enable2DQueueVisuals);
+        }
+
+        private void Ensure2DVisualHolder()
+        {
+            if (_queue2DHolder != null) return;
+
+            _queue2DHolder = new GameObject("Queue2D_Visual");
+            _queue2DHolder.transform.SetParent(transform, false);
+
+            _queue2DSpriteRenderer = _queue2DHolder.AddComponent<SpriteRenderer>();
+            _queue2DSpriteRenderer.sortingOrder = 5;
+
+            var textObj = new GameObject("AmountText");
+            textObj.transform.SetParent(_queue2DHolder.transform, false);
+            textObj.transform.localPosition = new Vector3(0.35f, -0.35f, -0.05f);
+
+            _queue2DAmountText = textObj.AddComponent<TextMesh>();
+            _queue2DAmountText.alignment = TextAlignment.Center;
+            _queue2DAmountText.anchor = TextAnchor.MiddleCenter;
+            _queue2DAmountText.fontSize = 40;
+            _queue2DAmountText.characterSize = 0.05f;
+            _queue2DAmountText.color = Color.white;
+            _queue2DAmountText.fontStyle = FontStyle.Bold;
+
+            var textRenderer = textObj.GetComponent<MeshRenderer>();
+            if (textRenderer != null) textRenderer.sortingOrder = 6;
+        }
+
+        private void ApplyQueue2DVisual(FoodStackData stack)
+        {
+            Ensure2DVisualHolder();
+
+            _queue2DHolder.SetActive(true);
+
+            if (_foodMeshSettings != null && _foodMeshSettings.TryGetIcon(stack.Type, out var icon))
+            {
+                _queue2DSpriteRenderer.sprite = icon;
+            }
+            else
+            {
+                _queue2DSpriteRenderer.sprite = null;
+            }
+
+            if (_queue2DAmountText != null)
+            {
+                _queue2DAmountText.text = stack.Amount > 1 ? stack.Amount.ToString() : "";
+            }
+
+            float baseIconScale = _tableSettings != null ? _tableSettings.Queue2DIconScale : 1.5f;
+            float zoomMultiplier = 1f;
+            if (_tableSettings != null && _tableSettings.ScaleWithCamera && _cameraController != null)
+            {
+                float zoom = _cameraController.CameraZoomFactor;
+                float multiplier = _tableSettings.FoodQueueScaleMultiplier;
+                zoomMultiplier = 1f + (zoom - 1f) * multiplier;
+            }
+
+            _queue2DHolder.transform.localScale = Vector3.one * (baseIconScale * zoomMultiplier);
+            _queue2DHolder.transform.localPosition = _tableSettings != null ? _tableSettings.Queue2DOffset : new Vector3(0f, 0.5f, 0f);
+
+            Align2DWithCamera();
+        }
+
+        private void Align2DWithCamera()
+        {
+            if (_queue2DHolder == null || !_queue2DHolder.activeSelf) return;
+
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                _queue2DHolder.transform.rotation = cam.transform.rotation;
+            }
+        }
+
         private void ApplyStack(FoodStackData stack)
         {
+            bool is2D = ShouldUse2DQueue();
+
+            if (is2D)
+            {
+                ApplyQueue2DVisual(stack);
+                Set3DVisualsActive(false);
+                return;
+            }
+
+            if (_queue2DHolder != null) _queue2DHolder.SetActive(false);
+            Set3DVisualsActive(true);
+
             FoodMeshSettings.MeshVisual closedVisual = default, openedVisual = default;
             bool hasClosed = _foodMeshSettings != null &&
                               _foodMeshSettings.TryGetVisual(stack.Type, FoodVisualState.Closed, out closedVisual);
@@ -159,6 +267,19 @@ namespace RestaurantLoop.Runtime.Conveyor
             else
             {
                 ApplyStackedUnits(stack, closedVisual, openedVisual, hasClosed, hasOpened);
+            }
+        }
+
+        private void Set3DVisualsActive(bool active)
+        {
+            for (int i = 0; i < _units.Count; i++)
+            {
+                if (_units[i] != null) _units[i].SetActive(active);
+            }
+
+            if (_fixedSlotInstance != null)
+            {
+                _fixedSlotInstance.SetActive(active);
             }
         }
 
@@ -391,12 +512,28 @@ namespace RestaurantLoop.Runtime.Conveyor
             return combined;
         }
 
-        private float ResolveScale(FoodType type, FoodVisualState state) =>
-            _placement == null ? 1f : _placement.ResolveScale(type, _location, state);
+        private float ResolveScale(FoodType type, FoodVisualState state)
+        {
+            float baseScale = _placement == null ? 1f : _placement.ResolveScale(type, _location, state);
+            if (_location == FoodLocation.Queue && _tableSettings != null && _tableSettings.ScaleWithCamera && _cameraController != null)
+            {
+                float zoom = _cameraController.CameraZoomFactor;
+                float multiplier = _tableSettings.FoodQueueScaleMultiplier;
+                float factor = 1f + (zoom - 1f) * multiplier;
+                baseScale *= factor;
+            }
+            return baseScale;
+        }
 
         // Picks up scale / spacing tweaks made in the placement asset while the game is running.
         private void LateUpdate()
         {
+            if (ShouldUse2DQueue())
+            {
+                Align2DWithCamera();
+                return;
+            }
+
             if (_usesFixedChildSlots)
             {
                 float scale = ResolveScale(Stack.Type, _visualState);
