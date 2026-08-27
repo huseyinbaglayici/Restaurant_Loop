@@ -65,6 +65,9 @@ namespace RestaurantLoop.Runtime.Data
                  "relative to WorldOrigin.x — manual placement, no longer derived from the grid's width.")]
         public float ExitStackXOffset = 0f;
 
+        [Tooltip("Distance between consecutive exit stack food slots on X. Defaults to 1 (uses cell size if 0 or left unassigned).")]
+        public float ExitStackSlotSpacing = 1f;
+
         [Tooltip("Extra Tray power-up: local offset from the leftmost exit slot for the decorative extra rack visual.")]
         public Vector3 ExtraRackVisualOffset = new Vector3(-0.8f, 0.6f, -0.8f);
 

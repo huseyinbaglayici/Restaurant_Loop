@@ -80,7 +80,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         // the reaction animation until the whole customer despawns.
         public void HideOrderUI() => _orderWidget?.SetVisible(false);
 
-        public void ApplyOrder(FoodStackData order) => _orderWidget?.ApplyOrder(order);
+        public void ApplyOrder(FoodStackData order, bool isHidden = false) =>
+            _orderWidget?.ApplyOrder(order, isHidden);
 
         public void ApplySecondOrder(bool hasSecondOrder, FoodStackData secondOrder) =>
             _orderWidget?.ApplySecondOrder(hasSecondOrder, secondOrder);

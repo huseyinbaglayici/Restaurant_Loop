@@ -32,6 +32,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             {
                 var position = ConveyorWorldUtil.ToWorldPosition(customer.Coord, cellSize, _tuning.CustomerHeight, _tuning.WorldOrigin);
                 var visual = _customerPool.Spawn(position, 0f, customer.Order);
+                visual.ApplyOrder(customer.Order, customer.IsHidden);
                 visual.ApplySecondOrder(customer.HasSecondOrder, customer.SecondOrder);
                 _spawned[customer.Coord] = visual;
             }
@@ -44,7 +45,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void RefreshCustomerVisual(Vector2Int coord, CustomerEntity customer)
         {
             if (!_spawned.TryGetValue(coord, out var visual)) return;
-            visual.ApplyOrder(customer.Order);
+            visual.ApplyOrder(customer.Order, customer.IsHidden);
             visual.ApplySecondOrder(customer.HasSecondOrder, customer.SecondOrder);
         }
 

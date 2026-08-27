@@ -56,6 +56,10 @@ namespace RestaurantLoop.Runtime.Data
             }
         }
 
+        [Header("Hidden Customer")]
+        [Tooltip("UI sprite shown when a customer is hidden (question mark / mystery bubble).")]
+        public Sprite HiddenOrderBubble;
+
         [SerializeField] private List<Entry> _entries = new();
 
         public bool TryGetVisual(FoodType type, FoodVisualState state, out MeshVisual visual)

@@ -18,55 +18,55 @@ MonoBehaviour:
       ClosedScale: 1.18
       OpenedScale: 1.18
     FoodStack:
-      ClosedScale: 1.18
-      OpenedScale: 1.18
+      ClosedScale: 1
+      OpenedScale: 1
     Conveyor:
-      ClosedScale: 0.7
-      OpenedScale: 0.7
+      ClosedScale: 1
+      OpenedScale: 1
     StackSpacingFactor: 1
   - Type: 1
     Queue:
       ClosedScale: 1.18
       OpenedScale: 1.18
     FoodStack:
-      ClosedScale: 1.18
-      OpenedScale: 1.18
+      ClosedScale: 1
+      OpenedScale: 1
     Conveyor:
-      ClosedScale: 0.7
-      OpenedScale: 0.7
+      ClosedScale: 1
+      OpenedScale: 1
     StackSpacingFactor: 1
   - Type: 2
     Queue:
       ClosedScale: 1.18
       OpenedScale: 1.18
     FoodStack:
-      ClosedScale: 1.18
-      OpenedScale: 1.18
+      ClosedScale: 1
+      OpenedScale: 1
     Conveyor:
-      ClosedScale: 0.7
-      OpenedScale: 0.7
+      ClosedScale: 1
+      OpenedScale: 1
     StackSpacingFactor: 1
   - Type: 3
     Queue:
       ClosedScale: 1.18
       OpenedScale: 1.18
     FoodStack:
-      ClosedScale: 1.18
-      OpenedScale: 1.18
+      ClosedScale: 1
+      OpenedScale: 1
     Conveyor:
-      ClosedScale: 0.7
-      OpenedScale: 0.7
-    StackSpacingFactor: 1
+      ClosedScale: 1
+      OpenedScale: 1
+    StackSpacingFactor: 0.3
   - Type: 4
     Queue:
       ClosedScale: 1.18
       OpenedScale: 1.18
     FoodStack:
-      ClosedScale: 1.18
-      OpenedScale: 1.18
+      ClosedScale: 1
+      OpenedScale: 1
     Conveyor:
-      ClosedScale: 0.7
-      OpenedScale: 0.7
+      ClosedScale: 1
+      OpenedScale: 1
     StackSpacingFactor: 1
   - Type: 5
     Queue:
@@ -76,8 +76,8 @@ MonoBehaviour:
       ClosedScale: 1.18
       OpenedScale: 1.18
     Conveyor:
-      ClosedScale: 0.7
-      OpenedScale: 0.7
+      ClosedScale: 1
+      OpenedScale: 1
     StackSpacingFactor: 1
   - Type: 6
     Queue:
@@ -117,9 +117,9 @@ MonoBehaviour:
       ClosedScale: 1.18
       OpenedScale: 1.18
     FoodStack:
-      ClosedScale: 1.18
-      OpenedScale: 1.18
+      ClosedScale: 1
+      OpenedScale: 1
     Conveyor:
-      ClosedScale: 0.7
-      OpenedScale: 0.7
+      ClosedScale: 1
+      OpenedScale: 1
     StackSpacingFactor: 1

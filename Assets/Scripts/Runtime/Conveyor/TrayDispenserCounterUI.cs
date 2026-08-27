@@ -12,7 +12,7 @@ namespace RestaurantLoop.Runtime.Conveyor
     public class TrayDispenserCounterUI : MonoBehaviour
     {
         [Inject] private TrayDispenserAnchor _trayAnchor;
-
+        [Inject(Optional = true)] private Camera _camera;
         [SerializeField] private TMP_Text _text;
 
         private int _lastAvailable = -1;
@@ -34,6 +34,15 @@ namespace RestaurantLoop.Runtime.Conveyor
             _lastAvailable = available;
             _lastTotal = total;
             _text.SetText("{0}/{1}", available, total);
+        }
+
+        private void LateUpdate()
+        {
+            var cam = _camera != null ? _camera : Camera.main;
+            if (cam != null)
+            {
+                transform.rotation = cam.transform.rotation;
+            }
         }
     }
 }

@@ -11,10 +11,6 @@ namespace RestaurantLoop.Runtime.Conveyor
     {
         public const int BaseSlotCount = 5;
 
-        // Foodrack.fbx authored length along local Z at scale 1 (measured from its mesh bounds).
-        // The single rack is scaled on Z to stretch across every slot instead of spawning one piece per slot.
-        private const float RackAuthoredLength = 7.59f;
-
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ConveyorTuning _tuning;
@@ -75,7 +71,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             float cellSize = _prefabSettings.CellWorldSize;
-            float slotSpacing = cellSize;
+            float slotSpacing = _tuning.ExitStackSlotSpacing > 0f ? _tuning.ExitStackSlotSpacing : cellSize;
             // Manual X placement — no longer derived from the grid's width, so slots stop re-centering
             // themselves whenever a level's grid changes shape. Tweak ExitStackXOffset instead.
             float startX = _tuning.WorldOrigin.x + _tuning.ExitStackXOffset - slotSpacing * BaseSlotCount * 0.5f;
@@ -105,12 +101,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         private void SpawnRack(Vector3 firstSlot, Vector3 lastSlot)
         {
             var center = (firstSlot + lastSlot) * 0.5f;
-            float spanWorldX = (lastSlot.x - firstSlot.x) + (lastSlot.x - firstSlot.x) / (SlotPositions.Length - 1);
 
             var rack = _exitSlotPool.Spawn(center);
-            rack.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
-            var prefabScale = rack.transform.localScale; // preserve prefab-authored X/Y, only stretch Z
-            rack.transform.localScale = new Vector3(prefabScale.x, prefabScale.y, spanWorldX / RackAuthoredLength);
+            rack.transform.rotation = Quaternion.Euler(_tuning.ExtraRackVisualRotation);
             _spawnedFloors.Add(rack);
         }
 
@@ -184,11 +177,13 @@ namespace RestaurantLoop.Runtime.Conveyor
             return true;
         }
 
+        public const int MaxExtraSlots = 1;
+
         // Extra Tray power-up: appends one slot, following the same spacing as the last two.
-        // Repeatable — every call adds another slot (and another decorative rack visual) past the last one.
+        // Limited to MaxExtraSlots (1 extra slot max).
         public bool TryAddExtraSlot()
         {
-            if (SlotPositions.Length == 0) return false;
+            if (SlotPositions.Length == 0 || ExtraSlotsAdded >= MaxExtraSlots) return false;
 
             Vector3 delta = SlotPositions.Length > 1
                 ? SlotPositions[^1] - SlotPositions[^2]

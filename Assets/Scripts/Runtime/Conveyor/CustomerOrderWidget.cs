@@ -54,16 +54,40 @@ namespace RestaurantLoop.Runtime.Conveyor
             gameObject.SetActive(false);
         }
 
+        private bool _isHidden;
+
         public void SetVisible(bool visible)
         {
             _foodImage.gameObject.SetActive(visible);
-            _amountText.gameObject.SetActive(visible);
-            _secondFoodImage.gameObject.SetActive(visible && _hasSecondOrder);
-            _secondAmountText.gameObject.SetActive(visible && _hasSecondOrder);
+            _amountText.gameObject.SetActive(visible && !_isHidden);
+            _secondFoodImage.gameObject.SetActive(visible && _hasSecondOrder && !_isHidden);
+            _secondAmountText.gameObject.SetActive(visible && _hasSecondOrder && !_isHidden);
         }
 
-        public void ApplyOrder(FoodStackData order)
+        public void ApplyOrder(FoodStackData order, bool isHidden = false)
         {
+            _isHidden = isHidden;
+
+            if (isHidden)
+            {
+                if (_foodMeshSettings != null && _foodMeshSettings.HiddenOrderBubble != null)
+                {
+                    _foodImage.sprite = _foodMeshSettings.HiddenOrderBubble;
+                    _foodImage.color = new Color(1f, 1f, 1f, _foodImage.color.a);
+                }
+                else
+                {
+                    _foodImage.sprite = null;
+                    _foodImage.color = new Color(0.3f, 0.3f, 0.3f, _foodImage.color.a);
+                }
+
+                if (_amountText != null) _amountText.gameObject.SetActive(false);
+                if (_secondFoodImage != null) _secondFoodImage.gameObject.SetActive(false);
+                if (_secondAmountText != null) _secondAmountText.gameObject.SetActive(false);
+                return;
+            }
+
+            if (_amountText != null) _amountText.gameObject.SetActive(true);
             ApplyFoodSprite(_foodImage, order.Type);
             if (_amountText != null) _amountText.text = order.Amount.ToString();
         }
@@ -73,8 +97,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             CaptureDimAlphaOnce();
 
             _hasSecondOrder = hasSecondOrder;
-            if (_secondFoodImage != null) _secondFoodImage.gameObject.SetActive(hasSecondOrder);
-            if (_secondAmountText != null) _secondAmountText.gameObject.SetActive(hasSecondOrder);
+            if (_secondFoodImage != null) _secondFoodImage.gameObject.SetActive(hasSecondOrder && !_isHidden);
+            if (_secondAmountText != null) _secondAmountText.gameObject.SetActive(hasSecondOrder && !_isHidden);
 
             if (hasSecondOrder)
             {
