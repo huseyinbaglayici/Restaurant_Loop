@@ -18,6 +18,7 @@ MonoBehaviour:
   ExitStackFoodHeight: -3.75
   BeltSpeed: 3
   BeltTrackHeight: -4.45
+  MinEntrySpacing: 1.5
   QueueLaneSpacing: 1.47
   QueueZOffsetFromExitStack: 1.8
   QueueRowSpacing: 2

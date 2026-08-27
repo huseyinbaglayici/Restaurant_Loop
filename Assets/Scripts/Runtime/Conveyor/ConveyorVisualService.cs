@@ -117,13 +117,14 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             foreach (var beltVisual in _beltVisuals.Values)
             {
-                beltVisual.Progress = Mathf.Min(beltVisual.Progress + delta, lastProgress);
-
-                // While flying in from the queue the flight owns the transform; it chases the belt slot,
-                // which keeps moving, so the item never snaps at the handover.
+                // While flying in from the queue the flight owns the transform and targets the fixed
+                // entry point (Progress held at its start value) — advancing Progress here too would
+                // drag that point forward under the flight, landing the item a belt-speed's worth of
+                // cells past the true entry instead of on it.
                 if (beltVisual.IsEnteringBelt) continue;
                 if (beltVisual.Visual == null) continue;
 
+                beltVisual.Progress = Mathf.Min(beltVisual.Progress + delta, lastProgress);
                 beltVisual.Visual.transform.position = _conveyorManager.SampleWorldPosition(beltVisual.Progress);
 
                 if (!Mathf.Approximately(_feel.BeltSpinYDegreesPerSecond, 0f))
@@ -149,6 +150,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 visual.transform.position = _conveyorManager.SampleWorldPosition(beltVisual.Progress);
                 visual.SetVisualState(FoodVisualState.Opened);
                 visual.SetLocation(FoodLocation.Conveyor);
+                _signalBus.Fire(new FoodBeltEntryLandedSignal { ItemId = id, Visual = visual, Progress = beltVisual.Progress });
                 return;
             }
 
@@ -157,14 +159,19 @@ namespace RestaurantLoop.Runtime.Conveyor
             visual.SetVisualState(FoodVisualState.Opened);
             visual.SetLocation(FoodLocation.Conveyor);
 
-            // The flight chases the belt slot's live position (which keeps advancing every Tick, same
-            // as the logical item's Progress) — that's what keeps this seamless without either layer
-            // ever having to wait on the other.
+            // Targets the entry cell itself, not a moving belt slot — AdvanceBeltVisuals holds
+            // beltVisual.Progress at its start value for as long as IsEnteringBelt is set, so the item
+            // actually lands on the entry cell instead of wherever the belt reached by the time the
+            // flight finished.
             _flightService.Launch(
                 visual.transform,
                 () => _conveyorManager.SampleWorldPosition(beltVisual.Progress),
                 _feel.QueueToBelt,
-                () => beltVisual.IsEnteringBelt = false);
+                () =>
+                {
+                    beltVisual.IsEnteringBelt = false;
+                    _signalBus.Fire(new FoodBeltEntryLandedSignal { ItemId = id, Visual = visual, Progress = beltVisual.Progress });
+                });
         }
 
         private void OnFoodDocked(FoodDockedSignal signal)

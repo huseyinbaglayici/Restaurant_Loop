@@ -29,6 +29,10 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("World Y the belt track pieces themselves (straight/corner meshes) sit at.")]
         public float BeltTrackHeight = 0f;
 
+        [Tooltip("Minimum path-cell gap (in Progress units) the entry cell must clear before another item can " +
+                 "spawn there — blocks rapid-click stacking at the belt entry without a fixed input cooldown.")]
+        public float MinEntrySpacing = 0.5f;
+
         [Header("Queue (QueueAnchor, QueueSpawner)")]
         [Tooltip("World units between consecutive lanes on X, centered under the exit stack's midpoint.")]
         public float QueueLaneSpacing = 1.2f;
