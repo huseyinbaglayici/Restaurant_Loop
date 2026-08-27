@@ -40,19 +40,25 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Initialize()
         {
-            _camera.transform.position = ComputeQueueCenter() + _offsetFromQueueCenter;
-
             if (_tuning.EnableDynamicCameraScale && _camera.orthographic && _tuning.ReferenceGridHeight > 0)
             {
                 int maxDimension = Mathf.Max(_level.GridWidth, _level.GridHeight);
                 int refDimension = Mathf.Max(_tuning.ReferenceGridWidth, _tuning.ReferenceGridHeight);
                 if (maxDimension > refDimension)
                 {
-                    float scaleFactor = (float)maxDimension / refDimension;
+                    float rawRatio = (float)maxDimension / refDimension;
+                    float sensitivity = _tuning.CameraZoomSensitivity > 0f ? _tuning.CameraZoomSensitivity : 0.85f;
+                    float scaleFactor = 1f + (rawRatio - 1f) * sensitivity;
                     _camera.orthographicSize = _initialOrthoSize * scaleFactor;
                     CameraZoomFactor = scaleFactor;
                 }
             }
+
+            var queueCenter = ComputeQueueCenter();
+            // Camera position: keep X aligned with queue/world origin, adjust Y/Z with offset
+            var targetPos = queueCenter + _offsetFromQueueCenter;
+            targetPos.x = queueCenter.x;
+            _camera.transform.position = targetPos;
         }
     }
 }

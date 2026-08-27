@@ -1,3 +1,4 @@
+using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
 using TMPro;
 using UnityEngine;
@@ -42,19 +43,29 @@ namespace RestaurantLoop.Runtime.Conveyor
             _amountText.transform.SetParent(_textsGroup, true);
             _secondFoodImage.transform.SetParent(_iconsGroup, true);
             _secondAmountText.transform.SetParent(_textsGroup, true);
+
+            _foodImage.transform.localScale = Vector3.one;
+            if (_amountText != null) _amountText.transform.localScale = Vector3.one;
         }
 
         public void OnDespawned()
         {
+            _foodImage.transform.DOKill(true);
+            if (_amountText != null) _amountText.transform.DOKill(true);
+
             _foodImage.transform.SetParent(_firstOrderHolder, false);
             _amountText.transform.SetParent(_firstOrderHolder, false);
             _secondFoodImage.transform.SetParent(_secondOrderHolder.transform, false);
             _secondAmountText.transform.SetParent(_secondOrderHolder.transform, false);
 
+            _foodImage.transform.localScale = Vector3.one;
+            if (_amountText != null) _amountText.transform.localScale = Vector3.one;
+
             gameObject.SetActive(false);
         }
 
         private bool _isHidden;
+        private bool _wasHidden;
 
         public void SetVisible(bool visible)
         {
@@ -66,7 +77,9 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void ApplyOrder(FoodStackData order, bool isHidden = false)
         {
+            bool isRevealing = _wasHidden && !isHidden;
             _isHidden = isHidden;
+            _wasHidden = isHidden;
 
             if (isHidden)
             {
@@ -81,15 +94,41 @@ namespace RestaurantLoop.Runtime.Conveyor
                     _foodImage.color = new Color(0.3f, 0.3f, 0.3f, _foodImage.color.a);
                 }
 
-                if (_amountText != null) _amountText.gameObject.SetActive(false);
+                if (_amountText != null)
+                {
+                    _amountText.gameObject.SetActive(true);
+                    _amountText.text = "?";
+                }
                 if (_secondFoodImage != null) _secondFoodImage.gameObject.SetActive(false);
                 if (_secondAmountText != null) _secondAmountText.gameObject.SetActive(false);
                 return;
             }
 
-            if (_amountText != null) _amountText.gameObject.SetActive(true);
+            if (_amountText != null)
+            {
+                _amountText.gameObject.SetActive(true);
+                _amountText.text = order.Amount.ToString();
+            }
             ApplyFoodSprite(_foodImage, order.Type);
-            if (_amountText != null) _amountText.text = order.Amount.ToString();
+
+            if (isRevealing)
+            {
+                PlayRevealAnimation();
+            }
+        }
+
+        public void PlayRevealAnimation()
+        {
+            _foodImage.transform.DOKill(true);
+            _foodImage.transform.localScale = Vector3.one * 0.3f;
+            _foodImage.transform.DOScale(1f, 0.4f).SetEase(Ease.OutBack);
+
+            if (_amountText != null)
+            {
+                _amountText.transform.DOKill(true);
+                _amountText.transform.localScale = Vector3.one * 0.3f;
+                _amountText.transform.DOScale(1f, 0.4f).SetEase(Ease.OutBack);
+            }
         }
 
         public void ApplySecondOrder(bool hasSecondOrder, FoodStackData secondOrder)

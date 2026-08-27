@@ -26,6 +26,8 @@ namespace RestaurantLoop.Runtime.Data
         public AudioClip FoodGroupCompletedSfx;
         [Tooltip("Bant üzerinde en az bir yemek varken sürekli (loop) çalacak bant çalışma sesi")]
         public AudioClip ConveyorLoopSfx;
+        [Tooltip("Gizli bir müşteri açığa çıktığında / siparişi belirdiğinde çalacak ses")]
+        public AudioClip CustomerRevealSfx;
         [Tooltip("Yemek banttan çıkıp rafa düştüğünde çalacak ses")]
         public AudioClip FoodDropToRackSfx;
         [Range(0f, 1f)] public float SfxVolume = 0.2f;

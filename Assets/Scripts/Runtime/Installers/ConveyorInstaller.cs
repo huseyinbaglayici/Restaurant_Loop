@@ -41,6 +41,7 @@ namespace RestaurantLoop.Installers
             Container.BindInterfacesAndSelfTo<QueueLinkVisualizer>().AsSingle();
             Container.BindInterfacesAndSelfTo<CameraController>().AsSingle();
             Container.BindInterfacesAndSelfTo<TableController>().AsSingle();
+            Container.BindInterfacesAndSelfTo<EnvironmentController>().AsSingle();
             Container.BindInterfacesAndSelfTo<ConveyorManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<CustomerConsumeService>().AsSingle();
             Container.BindInterfacesTo<ConveyorEntryInput>().AsSingle();

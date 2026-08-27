@@ -19,6 +19,9 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Base scale of the table authored for the default reference grid.")]
         public Vector3 BaseScale = new Vector3(420f, 239f, 239f);
 
+        [Tooltip("Local offset added to table position relative to the queue lanes center.")]
+        public Vector3 QueueCenterOffset = Vector3.zero;
+
         [Header("Queue 2D Display")]
         [Tooltip("When enabled, food items in the queue are displayed as 2D icons with amount text, instead of 3D models.")]
         public bool Enable2DQueueVisuals = true;

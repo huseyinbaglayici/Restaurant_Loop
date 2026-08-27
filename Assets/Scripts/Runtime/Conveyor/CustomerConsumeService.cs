@@ -23,6 +23,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly CustomerSpawner _customerSpawner;
         private readonly ExitStackAnchor _exitStackAnchor;
         private readonly SignalBus _signalBus;
+        private readonly RestaurantLoop.Audio.IAudioService _audioService;
+        private readonly AudioLibrary _audioLibrary;
 
         // [pathIndex][direction] -> ray, in outward order.
         private List<RayEntry>[][] _raysByPathIndex;
@@ -42,7 +44,9 @@ namespace RestaurantLoop.Runtime.Conveyor
             RuntimeCustomerState customerState,
             CustomerSpawner customerSpawner,
             ExitStackAnchor exitStackAnchor,
-            SignalBus signalBus)
+            SignalBus signalBus,
+            [Inject(Optional = true)] RestaurantLoop.Audio.IAudioService audioService = null,
+            [Inject(Optional = true)] AudioLibrary audioLibrary = null)
         {
             _level = level;
             _conveyorManager = conveyorManager;
@@ -50,6 +54,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             _customerSpawner = customerSpawner;
             _exitStackAnchor = exitStackAnchor;
             _signalBus = signalBus;
+            _audioService = audioService;
+            _audioLibrary = audioLibrary;
         }
 
         public void Initialize()
@@ -208,6 +214,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void RevealHiddenNeighbors(Vector2Int coord)
         {
+            bool anyRevealed = false;
             for (int d = 0; d < Directions.Length; d++)
             {
                 var neighborCoord = coord + Directions[d];
@@ -216,6 +223,12 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _customerState.SetHidden(neighborCoord, false);
                 neighbor.IsHidden = false;
                 _customerSpawner.RefreshCustomerVisual(neighborCoord, neighbor);
+                anyRevealed = true;
+            }
+
+            if (anyRevealed && _audioService != null && _audioLibrary != null && _audioLibrary.CustomerRevealSfx != null)
+            {
+                _audioService.PlaySfx(_audioLibrary.CustomerRevealSfx, _audioLibrary.SfxVolume);
             }
         }
     }
