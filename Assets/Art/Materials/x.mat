@@ -26,9 +26,10 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _DROPSHADOW_ON
+  - _MOBILE_SIMPLE
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -143,7 +144,7 @@ Material:
     - _LightWrap: 0.22
     - _MainLightInfluence: 0.207
     - _Metallic: 0
-    - _MobileSimpleToggle: 0
+    - _MobileSimpleToggle: 1
     - _OcclusionStrength: 1
     - _OutlineReferenceHeight: 1080
     - _OutlineToggle: 0

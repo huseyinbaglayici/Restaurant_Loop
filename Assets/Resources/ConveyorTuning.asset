@@ -24,7 +24,7 @@ MonoBehaviour:
   QueueShiftSpeed: 4
   TrayDispenserHeight: -3.9
   TrayBeltHeight: -3.9
-  TrayDispenserOffset: {x: -0.5, y: 0, z: 0}
+  TrayDispenserOffset: {x: -1, y: 0, z: 0}
   ExitStackGroundHeight: -3.9
   ExitStackZOffsetFromGrid: 1
   ExitStackXOffset: 3

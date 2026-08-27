@@ -9,7 +9,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         [SerializeField] private float _scrollSpeed = 0.5f;
         [SerializeField] private float _scrollDirection = 1f;
 
-        private Material _material;
+        private MaterialPropertyBlock _propertyBlock;
+        private int _stPropertyId;
+        private Vector2 _tiling;
         private Vector2 _uvOffset;
         private float _axisSign = 1f;
 
@@ -20,7 +22,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _renderer = GetComponent<Renderer>() ?? GetComponentInChildren<Renderer>();
             }
 
-            _material = _renderer.material;
+            _stPropertyId = Shader.PropertyToID(_texturePropertyName + "_ST");
+            _tiling = _renderer.sharedMaterial.GetTextureScale(_texturePropertyName);
+            _propertyBlock = new MaterialPropertyBlock();
         }
 
         public void OnPieceSpawned(float axisSign)
@@ -32,7 +36,10 @@ namespace RestaurantLoop.Runtime.Conveyor
         private void Update()
         {
             _uvOffset.y += _axisSign * _scrollDirection * _scrollSpeed * Time.deltaTime;
-            _material.SetTextureOffset(_texturePropertyName, _uvOffset);
+
+            _renderer.GetPropertyBlock(_propertyBlock);
+            _propertyBlock.SetVector(_stPropertyId, new Vector4(_tiling.x, _tiling.y, _uvOffset.x, _uvOffset.y));
+            _renderer.SetPropertyBlock(_propertyBlock);
         }
     }
 }

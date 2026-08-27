@@ -6,29 +6,55 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
+    public readonly struct TraySlotPose
+    {
+        public readonly Vector3 Position;
+        public readonly Quaternion Rotation;
+        public readonly Vector3 Scale;
+
+        public TraySlotPose(Vector3 position, Quaternion rotation, Vector3 scale)
+        {
+            Position = position;
+            Rotation = rotation;
+            Scale = scale;
+        }
+    }
+
     // Repositions the tray-dispenser prop onto the current level's Gate cell every time the level
     // initializes (GameplayScene is shared across levels with different Gate placements), and hands out
     // its 5 tray children as a small fixed pool — no separate prefab/pool, the trays ARE the dispenser's
     // own decorative children, which is what makes the dispenser visibly deplete while trays are out.
+    //
+    // Slot positions are fixed (each tray's own authored pose, index 0 = rightmost/highest priority,
+    // last index = leftmost). Slot occupancy is dynamic: TryAcquire always drains the rightmost occupied
+    // slot, ReserveReturnSlot always refills the leftmost empty slot — independent scans, not "whatever's
+    // adjacent to the current block", so send/return order stays correct no matter how returns interleave.
     public class TrayDispenserAnchor : IInitializable
     {
+        private enum SlotState
+        {
+            Empty,
+            Reserved,
+            Idle
+        }
+
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ConveyorTuning _tuning;
         private readonly Transform _dispenserRoot;
 
-        // The prop's own authored orientation (e.g. an fbx-import "lie flat -> stand up" correction) —
-        // captured once so re-facing it per level never loses that correction.
         private Quaternion _baseRotation = Quaternion.identity;
         private bool _baseRotationCaptured;
 
-        // Fixed priority order, always drained from the same end: prefer the LAST tray in hierarchy
-        // ("tepsi (4)"), then (3), (2), (1), then the first ("tepsi") — whichever of those is currently
-        // free. This is deliberately not a round-robin: a tray that just came back is immediately
-        // top-priority again if it's the highest-index free one, so the dispenser always reads as
-        // draining/refilling from one consistent side instead of alternating which end looks emptiest.
         private readonly List<TrayController> _traysHighToLow = new();
-        private readonly HashSet<TrayController> _busy = new();
+        private readonly List<TraySlotPose> _slotPoses = new();
+        private readonly List<TrayController> _slotOccupant = new();
+        private readonly List<SlotState> _slotState = new();
+
+        private int _idleCount;
+
+        public int TotalCount => _traysHighToLow.Count;
+        public int AvailableCount => _idleCount;
 
         public TrayDispenserAnchor(
             ConveyorLevelDataSO level,
@@ -48,12 +74,32 @@ namespace RestaurantLoop.Runtime.Conveyor
             PositionOnGateCell();
 
             _traysHighToLow.Clear();
-            _busy.Clear();
             if (_dispenserRoot != null)
             {
                 _traysHighToLow.AddRange(_dispenserRoot.GetComponentsInChildren<TrayController>(true));
-                _traysHighToLow.Reverse(); // hierarchy order is low->high; acquire wants high->low
+                _traysHighToLow.Reverse();
             }
+
+            _slotPoses.Clear();
+            foreach (var tray in _traysHighToLow)
+                _slotPoses.Add(new TraySlotPose(tray.InitialLocalPosition, tray.InitialLocalRotation, tray.InitialLocalScale));
+
+            ResetAll();
+        }
+
+        public void ResetAll()
+        {
+            _slotOccupant.Clear();
+            _slotOccupant.AddRange(_traysHighToLow);
+
+            _slotState.Clear();
+            for (int i = 0; i < _traysHighToLow.Count; i++)
+                _slotState.Add(SlotState.Idle);
+
+            _idleCount = _traysHighToLow.Count;
+
+            foreach (var tray in _traysHighToLow)
+                tray?.SnapToInitialPose();
         }
 
         private void PositionOnGateCell()
@@ -71,8 +117,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             float yaw = ConveyorWorldUtil.ToWorldYRotation(gateCell.Shape, gateCell.Rotation);
             var rotation = Quaternion.Euler(0f, yaw, 0f) * _baseRotation;
 
-            // Offset expressed in the dispenser's own facing so it stays "sideways/forward relative to the
-            // Gate" regardless of which way that Gate happens to face on a given level.
             position += Quaternion.Euler(0f, yaw, 0f) * _tuning.TrayDispenserOffset;
 
             if (_dispenserRoot != null) _dispenserRoot.SetPositionAndRotation(position, rotation);
@@ -86,16 +130,16 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (_dispenserRoot != null) _baseRotation = _dispenserRoot.rotation;
         }
 
-        // false when every tray is already out on the belt (e.g. Extra Tray power-up pushed concurrent
-        // items past the dispenser's fixed 5) — callers must treat that as "no tray for this item".
         public bool TryAcquire(out TrayController tray)
         {
-            for (int i = 0; i < _traysHighToLow.Count; i++)
+            for (int i = 0; i < _slotState.Count; i++)
             {
-                if (_busy.Contains(_traysHighToLow[i])) continue;
+                if (_slotState[i] != SlotState.Idle) continue;
 
-                tray = _traysHighToLow[i];
-                _busy.Add(tray);
+                tray = _slotOccupant[i];
+                _slotOccupant[i] = null;
+                _slotState[i] = SlotState.Empty;
+                _idleCount--;
                 return true;
             }
 
@@ -103,10 +147,27 @@ namespace RestaurantLoop.Runtime.Conveyor
             return false;
         }
 
-        public void Release(TrayController tray)
+        public TraySlotPose ReserveReturnSlot(TrayController tray)
         {
-            if (tray == null) return;
-            _busy.Remove(tray);
+            for (int i = _slotState.Count - 1; i >= 0; i--)
+            {
+                if (_slotState[i] != SlotState.Empty) continue;
+
+                _slotOccupant[i] = tray;
+                _slotState[i] = SlotState.Reserved;
+                return _slotPoses[i];
+            }
+
+            return default;
+        }
+
+        public void ConfirmReturn(TrayController tray)
+        {
+            int index = _slotOccupant.IndexOf(tray);
+            if (index < 0) return;
+
+            _slotState[index] = SlotState.Idle;
+            _idleCount++;
         }
     }
 }

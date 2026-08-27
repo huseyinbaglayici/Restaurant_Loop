@@ -21,14 +21,15 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Material.003
-  m_Shader: {fileID: 4800000, guid: 9929e1fbe157a764ebee3ddd6a57e184, type: 3}
+  m_Shader: {fileID: 4800000, guid: 3040ca0a2e6ff484797d5c87d2274f22, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _MOBILE_SIMPLE
+  m_InvalidKeywords:
   - _DROPSHADOW_ON
-  m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -176,7 +177,7 @@ Material:
     - _MatCapToggle: 0
     - _Metallic: 0
     - _MinimumBrightness: 0.4
-    - _MobileSimpleToggle: 0
+    - _MobileSimpleToggle: 1
     - _Mode: 0
     - _NormalMapToggle: 0
     - _NormalStrength: 0.5

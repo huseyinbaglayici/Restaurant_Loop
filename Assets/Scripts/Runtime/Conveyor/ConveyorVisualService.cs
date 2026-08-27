@@ -9,8 +9,9 @@ using Zenject;
 namespace RestaurantLoop.Runtime.Conveyor
 {
     // The visual half of the conveyor. The logical half (ConveyorManager / CustomerConsumeService) owns
-    // "what is where on the grid" and decides consumes/docks the instant they happen; this class owns every
-    // food transform and replays those decisions ConveyorFeelSettings.VisualLagSeconds later.
+    // "what is where on the grid" and decides consumes/docks; this class reacts to those decisions the
+    // instant they fire — entry, travel, dock and consume all run on the same immediate signal-driven
+    // path, so the visual is never more than a frame away from what the logical layer just decided.
     //
     // Nothing here may change gameplay state — it only moves, spawns and despawns visuals, and pokes the
     // customer visuals (order UI refresh, serve reaction) at the moment the food actually lands.
@@ -21,23 +22,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             public FoodItemController Visual;
             public float Progress;
             public bool IsEnteringBelt;
-
-            // Set the instant the logical layer fully consumes this item — freezes it in place so it
-            // doesn't keep sliding down the belt (and past the customer) during the VisualLagSeconds
-            // wait before the consume flight actually launches.
-            public bool IsFrozen;
-        }
-
-        private readonly struct DeferredCommand
-        {
-            public readonly float DueTime;
-            public readonly Action Command;
-
-            public DeferredCommand(float dueTime, Action command)
-            {
-                DueTime = dueTime;
-                Command = command;
-            }
         }
 
         private readonly SignalBus _signalBus;
@@ -57,8 +41,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         // Visuals the logical layer handed over (in flight to a customer) — this service despawns them.
         private readonly HashSet<FoodItemController> _ownedVisuals = new();
-
-        private readonly Queue<DeferredCommand> _deferred = new();
 
         public ConveyorVisualService(
             SignalBus signalBus,
@@ -101,7 +83,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             _signalBus.TryUnsubscribe<FoodConsumedSignal>(OnFoodConsumed);
             _signalBus.TryUnsubscribe<BeltClearedSignal>(OnBeltCleared);
 
-            _deferred.Clear();
             _flightService.CancelAll();
             _beltVisuals.Clear();
             _audioService.StopConveyorLoop();
@@ -110,7 +91,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Tick()
         {
-            FlushDueCommands();
             AdvanceBeltVisuals();
             UpdateConveyorLoopAudio();
         }
@@ -127,17 +107,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        private void FlushDueCommands()
-        {
-            float now = Time.time;
-            while (_deferred.Count > 0 && _deferred.Peek().DueTime <= now)
-                _deferred.Dequeue().Command?.Invoke();
-        }
-
-        // Every logical event lands here first — the lag is what makes the visual layer trail the logical one.
-        private void Defer(Action command) =>
-            _deferred.Enqueue(new DeferredCommand(Time.time + Mathf.Max(0f, _feel.VisualLagSeconds), command));
-
         private void AdvanceBeltVisuals()
         {
             if (_beltVisuals.Count == 0) return;
@@ -149,8 +118,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             foreach (var beltVisual in _beltVisuals.Values)
             {
                 beltVisual.Progress = Mathf.Min(beltVisual.Progress + delta, lastProgress);
-
-                if (beltVisual.IsFrozen) continue;
 
                 // While flying in from the queue the flight owns the transform; it chases the belt slot,
                 // which keeps moving, so the item never snaps at the handover.
@@ -171,42 +138,33 @@ namespace RestaurantLoop.Runtime.Conveyor
             var sourcePosition = signal.SourceWorldPosition;
             float startProgress = signal.StartProgress;
             bool playEntryFlight = signal.PlayEntryFlight;
-            bool awaitsLanding = signal.AwaitsLanding;
 
-            Defer(() =>
+            if (visual == null) return;
+
+            var beltVisual = new BeltVisual { Visual = visual, Progress = startProgress };
+            _beltVisuals[id] = beltVisual;
+
+            if (!playEntryFlight)
             {
-                if (visual == null) return;
-
-                var beltVisual = new BeltVisual { Visual = visual, Progress = startProgress };
-                _beltVisuals[id] = beltVisual;
-
-                if (!playEntryFlight)
-                {
-                    visual.transform.position = _conveyorManager.SampleWorldPosition(beltVisual.Progress);
-                    visual.SetVisualState(FoodVisualState.Opened);
-                    visual.SetLocation(FoodLocation.Conveyor);
-
-                    // No actual travel to animate, but the logical layer still held this item for us
-                    // (AwaitingEntryLanding) — confirm "visual is here" the same way the flight path does.
-                    if (awaitsLanding) _signalBus.Fire(new FoodEntryLandedSignal { ItemId = id });
-                    return;
-                }
-
-                beltVisual.IsEnteringBelt = true;
-                visual.transform.position = sourcePosition;
+                visual.transform.position = _conveyorManager.SampleWorldPosition(beltVisual.Progress);
                 visual.SetVisualState(FoodVisualState.Opened);
                 visual.SetLocation(FoodLocation.Conveyor);
+                return;
+            }
 
-                _flightService.Launch(
-                    visual.transform,
-                    () => _conveyorManager.SampleWorldPosition(beltVisual.Progress),
-                    _feel.QueueToBelt,
-                    () =>
-                    {
-                        beltVisual.IsEnteringBelt = false;
-                        _signalBus.Fire(new FoodEntryLandedSignal { ItemId = id });
-                    });
-            });
+            beltVisual.IsEnteringBelt = true;
+            visual.transform.position = sourcePosition;
+            visual.SetVisualState(FoodVisualState.Opened);
+            visual.SetLocation(FoodLocation.Conveyor);
+
+            // The flight chases the belt slot's live position (which keeps advancing every Tick, same
+            // as the logical item's Progress) — that's what keeps this seamless without either layer
+            // ever having to wait on the other.
+            _flightService.Launch(
+                visual.transform,
+                () => _conveyorManager.SampleWorldPosition(beltVisual.Progress),
+                _feel.QueueToBelt,
+                () => beltVisual.IsEnteringBelt = false);
         }
 
         private void OnFoodDocked(FoodDockedSignal signal)
@@ -215,16 +173,13 @@ namespace RestaurantLoop.Runtime.Conveyor
             var visual = signal.Visual;
             var slotPosition = signal.SlotWorldPosition;
 
-            Defer(() =>
-            {
-                _beltVisuals.Remove(id);
-                if (visual == null) return;
+            _beltVisuals.Remove(id);
+            if (visual == null) return;
 
-                visual.SetLocation(FoodLocation.FoodStack);
-                _flightService.Launch(visual.transform, slotPosition, _feel.BeltToStack, () =>
-                {
-                    _audioService.PlaySfx(_audioLibrary.FoodDropToRackSfx);
-                });
+            visual.SetLocation(FoodLocation.FoodStack);
+            _flightService.Launch(visual.transform, slotPosition, _feel.BeltToStack, () =>
+            {
+                _audioService.PlaySfx(_audioLibrary.FoodDropToRackSfx);
             });
         }
 
@@ -238,12 +193,9 @@ namespace RestaurantLoop.Runtime.Conveyor
             var serveResult = signal.ServeResult;
             bool levelWon = signal.LevelWon;
 
-            if (fullyConsumed && _beltVisuals.TryGetValue(id, out var frozenVisual))
-                frozenVisual.IsFrozen = true;
-
-            // No VisualLagSeconds wait here: the item is already frozen at the exact spot it was
-            // consumed, so launching the flight now is what keeps it seamless — deferring it just adds
-            // a visible stall before the item takes off.
+            // Fires and reacts the same frame the logical layer decides — the item's belt visual is
+            // wherever AdvanceBeltVisuals put it this frame, which is exactly where the flight should
+            // launch from, so there's nothing to wait on here.
             if (sourceVisual == null) return;
 
             if (sourceVisual.UsesFixedChildSlots)
@@ -401,7 +353,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void OnBeltCleared()
         {
-            _deferred.Clear();
             _flightService.CancelAll();
             _beltVisuals.Clear();
             DespawnOwnedVisuals();

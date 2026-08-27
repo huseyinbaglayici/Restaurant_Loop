@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace RestaurantLoop.Signals
 {
-    // Logical layer (ConveyorManager / CustomerConsumeService) fires these the frame a decision is made.
-    // The visual layer (ConveyorVisualService) replays them ConveyorFeelSettings.VisualLagSeconds later.
+    // Logical layer (ConveyorManager / CustomerConsumeService) fires these the instant a decision is
+    // made, and the visual layer (ConveyorVisualService) reacts the same frame — no lag, no waiting.
     // Anything cosmetic added later — VFX, SFX, screen shake, DOTween flourishes — subscribes here too.
 
     public class FoodEnteredBeltSignal
@@ -21,19 +21,6 @@ namespace RestaurantLoop.Signals
 
         // false for level-authored items that are already sitting on the belt at boot.
         public bool PlayEntryFlight;
-
-        // true whenever this item came from the belt entry (queue/stack), regardless of PlayEntryFlight —
-        // the logical layer holds it (ConveyorManager.AwaitingEntryLanding) until FoodEntryLandedSignal
-        // confirms the visual is actually there. False only for level-authored boot placement.
-        public bool AwaitsLanding;
-    }
-
-    // Fired by the visual layer once an entry flight actually lands the item on the belt. Until this
-    // arrives the logical layer holds the item at the entry cell — it can't be crossed/consumed while
-    // its visual is still mid-flight from the queue.
-    public class FoodEntryLandedSignal
-    {
-        public int ItemId;
     }
 
     public class FoodDockedSignal

@@ -274,7 +274,7 @@ Shader "RestaurantLoop/CandyGloss"
 
         // Sam Hocevar's branchless RGB<->HSV. Every tone in this shader is derived from
         // the base hue through these, which is why nothing can drift toward grey.
-        half3 RgbToHsv(half3 c)
+        half3 CandyRgbToHsv(half3 c)
         {
             half4 K = half4(0.0h, -1.0h / 3.0h, 2.0h / 3.0h, -1.0h);
             half4 p = lerp(half4(c.bg, K.wz), half4(c.gb, K.xy), step(c.b, c.g));
@@ -284,7 +284,7 @@ Shader "RestaurantLoop/CandyGloss"
             return half3(abs(q.z + (q.w - q.y) / (6.0h * d + e)), d / (q.x + e), q.x);
         }
 
-        half3 HsvToRgb(half3 c)
+        half3 CandyHsvToRgb(half3 c)
         {
             half4 K = half4(1.0h, 2.0h / 3.0h, 1.0h / 3.0h, 3.0h);
             half3 p = abs(frac(c.xxx + K.xyz) * 6.0h - K.www);
@@ -294,11 +294,11 @@ Shader "RestaurantLoop/CandyGloss"
         // Derive a related tone: rotate the hue, scale saturation, scale value.
         half3 ShiftTone(half3 baseRGB, half hueShift, half satMul, half valMul)
         {
-            half3 hsv = RgbToHsv(saturate(baseRGB));
+            half3 hsv = CandyRgbToHsv(saturate(baseRGB));
             hsv.x = frac(hsv.x + hueShift);
             hsv.y = saturate(hsv.y * satMul);
             hsv.z = hsv.z * valMul;
-            return HsvToRgb(hsv);
+            return CandyHsvToRgb(hsv);
         }
 
         half3 ApplySaturation(half3 c, half amount)

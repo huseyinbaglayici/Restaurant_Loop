@@ -1,61 +1,55 @@
 using System;
 using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
     public class CustomerController : MonoBehaviour, IPoolable<Vector3, float, FoodStackData>
     {
-        [SerializeField] private Transform _canvasRoot;
-        [SerializeField] private Image _foodImage;
-        [SerializeField] private TMP_Text _amountText;
-
         // World-space handoff point the consumed FoodItemController flies to (ConveyorVisualService).
         // Should sit on the character's hand bone, not the UI canvas.
         [SerializeField] private Transform _foodHandoffAnchor;
 
-        [SerializeField] private GameObject _secondOrderHolder;
-        [SerializeField] private Image _secondFoodImage;
-        [SerializeField] private TMP_Text _secondAmountText;
-
-        [SerializeField] private CustomerVisualRandomizer _visualRandomizer;
         [SerializeField] private CustomerPlayableAnimator _playableAnimator;
 
-        [Inject(Optional = true)] private FoodMeshSettings _foodMeshSettings;
+        [Inject] private CustomerOrderWidget.Pool _orderWidgetPool;
 
-        private float _secondFoodDimAlpha = 1f;
-        private float _secondAmountDimAlpha = 1f;
-        private bool _dimAlphaCaptured;
+        // Matches the old per-customer Canvas's anchoredPosition.y — the bubble always sat this far
+        // above the customer's pivot, unaffected by the customer's own facing (see ApplySecondOrder
+        // history: canvasRoot's local rotation canceled the customer's Y rotation, net world rotation
+        // was always identity).
+        private const float OrderBubbleHeight = 3f;
 
+        private CustomerOrderWidget _orderWidget;
         private Tween _consumePunchTween;
 
         public Transform FoodHandoffAnchor => _foodHandoffAnchor;
 
         public void OnSpawned(Vector3 position, float worldYRotation, FoodStackData order)
         {
-            if (_canvasRoot != null)
-            {
-                _canvasRoot.gameObject.SetActive(true);
-                _canvasRoot.localRotation = Quaternion.Euler(0f, -worldYRotation, 0f);
-            }
-
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, worldYRotation, 0f));
-            if (_canvasRoot != null) _canvasRoot.localRotation = Quaternion.Euler(0f, -worldYRotation, 0f);
+
+            var widgetPosition = position + Vector3.up * OrderBubbleHeight;
+            _orderWidget = _orderWidgetPool.Spawn(widgetPosition, Quaternion.identity);
             ApplyOrder(order);
             ApplySecondOrder(false, default);
             gameObject.SetActive(true);
 
-            if (_visualRandomizer != null) _visualRandomizer.Randomize();
             if (_playableAnimator != null) _playableAnimator.PlayIdleWithRandomOffset();
         }
 
         public void OnDespawned()
         {
             _consumePunchTween?.Kill();
+
+            if (_orderWidget != null)
+            {
+                _orderWidgetPool.Despawn(_orderWidget);
+                _orderWidget = null;
+            }
+
             gameObject.SetActive(false);
         }
 
@@ -84,85 +78,12 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         // Fully served: the order UI should read as "done" the instant it happens, not linger through
         // the reaction animation until the whole customer despawns.
-        public void HideOrderUI()
-        {
-            if (_canvasRoot != null) _canvasRoot.gameObject.SetActive(false);
-        }
+        public void HideOrderUI() => _orderWidget?.SetVisible(false);
 
-        public void ApplyOrder(FoodStackData order)
-        {
-            ApplyFoodSprite(_foodImage, order.Type);
-            if (_amountText != null) _amountText.text = order.Amount.ToString();
-        }
+        public void ApplyOrder(FoodStackData order) => _orderWidget?.ApplyOrder(order);
 
-        public void ApplySecondOrder(bool hasSecondOrder, FoodStackData secondOrder)
-        {
-            CaptureDimAlphaOnce();
-
-            if (_secondOrderHolder != null) _secondOrderHolder.SetActive(hasSecondOrder);
-
-            if (hasSecondOrder)
-            {
-                // dimmed
-                SetAlpha(_secondFoodImage, _secondFoodDimAlpha);
-                SetAlpha(_secondAmountText, _secondAmountDimAlpha);
-
-                ApplyFoodSprite(_secondFoodImage, secondOrder.Type);
-
-                if (_secondAmountText != null)
-                    _secondAmountText.text = secondOrder.Amount.ToString();
-            }
-            else
-            {
-                // promoted
-                SetAlpha(_secondFoodImage, 1f);
-                SetAlpha(_secondAmountText, 1f);
-            }
-        }
-
-        // Sprite-only visual: no separate background image anymore, the food sprite carries the full look.
-        private void ApplyFoodSprite(Image image, FoodType type)
-        {
-            if (image == null) return;
-
-            if (_foodMeshSettings != null && _foodMeshSettings.TryGetIcon(type, out var icon))
-            {
-                image.sprite = icon;
-                image.color = new Color(1f, 1f, 1f, image.color.a);
-            }
-            else
-            {
-                image.sprite = null;
-                var c = FoodTypeUtil.ToColor(type);
-                c.a = image.color.a;
-                image.color = c;
-            }
-        }
-
-        private void CaptureDimAlphaOnce()
-        {
-            if (_dimAlphaCaptured) return;
-            _dimAlphaCaptured = true;
-
-            if (_secondFoodImage != null) _secondFoodDimAlpha = _secondFoodImage.color.a;
-            if (_secondAmountText != null) _secondAmountDimAlpha = _secondAmountText.color.a;
-        }
-
-        private static void SetAlpha(Image image, float alpha)
-        {
-            if (image == null) return;
-            var c = image.color;
-            c.a = alpha;
-            image.color = c;
-        }
-
-        private static void SetAlpha(TMP_Text text, float alpha)
-        {
-            if (text == null) return;
-            var c = text.color;
-            c.a = alpha;
-            text.color = c;
-        }
+        public void ApplySecondOrder(bool hasSecondOrder, FoodStackData secondOrder) =>
+            _orderWidget?.ApplySecondOrder(hasSecondOrder, secondOrder);
 
         public class Pool : MonoPoolableMemoryPool<Vector3, float, FoodStackData, CustomerController>
         {

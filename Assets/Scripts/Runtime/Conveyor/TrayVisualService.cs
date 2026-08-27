@@ -162,11 +162,15 @@ namespace RestaurantLoop.Runtime.Conveyor
                 if (ride.Tray == null) return;
 
                 var tray = ride.Tray;
+                var slotPose = _trayAnchor.ReserveReturnSlot(tray);
                 tray.ReturnToInitialPose(
+                    slotPose.Position,
+                    slotPose.Rotation,
+                    slotPose.Scale,
                     withPunch,
                     _feel.TrayVanishDuration,
                     _feel.TrayVanishPunchOvershoot,
-                    () => _trayAnchor.Release(tray));
+                    () => _trayAnchor.ConfirmReturn(tray));
             });
         }
 
@@ -182,11 +186,10 @@ namespace RestaurantLoop.Runtime.Conveyor
             {
                 if (ride.Tray == null) continue;
                 _flightService.Cancel(ride.Tray.transform);
-                ride.Tray.SnapToInitialPose();
-                _trayAnchor.Release(ride.Tray);
             }
 
             _rides.Clear();
+            _trayAnchor.ResetAll();
         }
     }
 }

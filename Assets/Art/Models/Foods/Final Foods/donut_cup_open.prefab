@@ -82,12 +82,11 @@ PrefabInstance:
         type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: -2813337366143557646, guid: 77e6ef37490b2b443be5226d09c0af2a,
-        type: 3}
+      objectReference: {fileID: 2100000, guid: c172df5c4a9e3de4a8018ff719c5628d, type: 2}
     - target: {fileID: 919132149155446097, guid: ab0125ed7cc054c4490e433fb04cdff5,
         type: 3}
       propertyPath: m_Name
-      value: kap_yeni
+      value: donut_cup_open
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -7,9 +7,9 @@ namespace RestaurantLoop.Runtime.Conveyor
 {
     // Pure visual companion to a FoodItemController: one of the 5 trays already sitting in
     // tepsi_dagitici's stack. Leaves its authored resting pose to ride directly under its food on the
-    // belt, then returns to that exact pose — shrinking away where it stands and popping back in at the
-    // dispenser rather than flying the whole way back. Never touches gameplay state — driven entirely by
-    // TrayVisualService via TrayDispenserAnchor's acquire/release.
+    // belt, then returns to a slot pose handed to it by TrayDispenserAnchor — shrinking away where it
+    // stands and popping back in at the dispenser rather than flying the whole way back. Never touches
+    // gameplay state — driven entirely by TrayVisualService via TrayDispenserAnchor's acquire/reserve.
     public class TrayController : MonoBehaviour
     {
         // Captured once at Awake, before TrayDispenserAnchor ever repositions the dispenser root — local
@@ -21,6 +21,10 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private Tween _rotateTween;
         private Tween _scaleTween;
+
+        public Vector3 InitialLocalPosition => _initialLocalPosition;
+        public Quaternion InitialLocalRotation => _initialLocalRotation;
+        public Vector3 InitialLocalScale => _initialLocalScale;
 
         private void Awake() => CaptureInitialPoseOnce();
 
@@ -82,7 +86,14 @@ namespace RestaurantLoop.Runtime.Conveyor
         // !withPunch: food completed its lap and docked (calmer vanish/reappear).
         // Either way: no flight back across the belt — it shrinks away where it stands, teleports to the
         // resting pose, then grows back in.
-        public void ReturnToInitialPose(bool withPunch, float vanishDuration, float punchOvershoot, Action onArrive)
+        public void ReturnToInitialPose(
+            Vector3 targetLocalPosition,
+            Quaternion targetLocalRotation,
+            Vector3 targetLocalScale,
+            bool withPunch,
+            float vanishDuration,
+            float punchOvershoot,
+            Action onArrive)
         {
             _rotateTween?.Kill();
             _scaleTween?.Kill();
@@ -92,12 +103,12 @@ namespace RestaurantLoop.Runtime.Conveyor
                     : transform.DOScale(Vector3.zero, vanishDuration).SetEase(Ease.InQuad))
                 .OnComplete(() =>
                 {
-                    transform.localPosition = _initialLocalPosition;
-                    transform.localRotation = _initialLocalRotation;
+                    transform.localPosition = targetLocalPosition;
+                    transform.localRotation = targetLocalRotation;
 
                     _scaleTween = (withPunch
-                            ? transform.DOScale(_initialLocalScale, vanishDuration).SetEase(Ease.OutBack, punchOvershoot)
-                            : transform.DOScale(_initialLocalScale, vanishDuration).SetEase(Ease.OutQuad))
+                            ? transform.DOScale(targetLocalScale, vanishDuration).SetEase(Ease.OutBack, punchOvershoot)
+                            : transform.DOScale(targetLocalScale, vanishDuration).SetEase(Ease.OutQuad))
                         .OnComplete(() => onArrive?.Invoke());
                 });
         }

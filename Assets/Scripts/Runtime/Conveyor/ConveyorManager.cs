@@ -9,8 +9,9 @@ using Zenject;
 namespace RestaurantLoop.Runtime.Conveyor
 {
     // Logical layer: owns where every item is on the baked path, who crosses which cell, and what gets
-    // consumed or docked. It never moves a transform — it fires signals and ConveyorVisualService plays
-    // them back a few frames later (see ConveyorFeelSettings.VisualLagSeconds).
+    // consumed or docked. It never moves a transform — it fires signals the instant a decision happens,
+    // and ConveyorVisualService reacts to them the same frame. Entry, mid-belt travel and exit (dock or
+    // consume) all run through this one loop — no separate holds or waits for any of them.
     public class ConveyorManager : IInitializable, ITickable, IDisposable
     {
         private class BeltItem
@@ -19,10 +20,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             public FoodItemController Visual;
             public float Progress;
             public int LastCrossedIndex;
-
-            // While true the item is held at its entry slot — not moving, not crossable/consumable —
-            // because its visual is still mid-flight from the queue and hasn't reached the belt yet.
-            public bool AwaitingEntryLanding;
         }
 
         private readonly ConveyorLevelDataSO _level;
@@ -65,8 +62,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Initialize()
         {
-            _signalBus.Subscribe<FoodEntryLandedSignal>(OnFoodEntryLanded);
-
             var orderedPath = _level.BakedPath.OrderedPath;
             if (orderedPath.Count == 0)
             {
@@ -95,7 +90,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 // Level-authored items start already on the belt: no entry flight, just a placed visual.
                 var visual = _foodPool.Spawn(_pathWorldPositions[index], entity.Stack, FoodVisualState.Opened);
                 visual.SetLocation(FoodLocation.Conveyor);
-                AddItem(entity.Stack, visual, index, _pathWorldPositions[index], playEntryFlight: false, awaitsLanding: false);
+                AddItem(entity.Stack, visual, index, _pathWorldPositions[index], playEntryFlight: false);
             }
         }
 
@@ -106,11 +101,13 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             var visual = _foodPool.Spawn(_pathWorldPositions[0], stack, FoodVisualState.Opened);
             visual.SetLocation(FoodLocation.Conveyor);
-            AddItem(stack, visual, 0f, _pathWorldPositions[0], playEntryFlight: false, awaitsLanding: true);
+            AddItem(stack, visual, 0f, _pathWorldPositions[0], playEntryFlight: false);
         }
 
         // Reuses an existing visual (queue slot, exit-stack slot) and lets the visual layer fly it in
-        // from where it currently sits. Logically the item is on the belt entry right away.
+        // from where it currently sits. Logically the item is on the belt entry right away — the flight
+        // chases the belt slot's live position (SampleWorldPosition keeps advancing every Tick), so it
+        // catches up naturally instead of either layer waiting on the other.
         // entryProgress lets two items entering together (linked pair) land a grid apart instead of
         // stacking on the same cell — pass a small negative value to place an item behind the entry.
         public void AddItemAtEntry(FoodStackData stack, FoodItemController reusedVisual, Vector3 sourceWorldPosition, float entryProgress = 0f)
@@ -123,7 +120,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return;
             }
 
-            AddItem(stack, reusedVisual, entryProgress, sourceWorldPosition, playEntryFlight: true, awaitsLanding: true);
+            AddItem(stack, reusedVisual, entryProgress, sourceWorldPosition, playEntryFlight: true);
         }
 
         // Entry cell (index 0) gets its own crossing on the item's first Tick(), same as every other
@@ -133,8 +130,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             FoodItemController visual,
             float startProgress,
             Vector3 sourceWorldPosition,
-            bool playEntryFlight,
-            bool awaitsLanding)
+            bool playEntryFlight)
         {
             var item = new BeltItem
             {
@@ -143,8 +139,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 Progress = startProgress,
                 // one below the entry cell so Tick() fires an entry-cell crossing (index 0) on its
                 // very first pass, instead of only becoming eligible once it has already left cell 0
-                LastCrossedIndex = Mathf.FloorToInt(startProgress + 0.5f) - 1,
-                AwaitingEntryLanding = awaitsLanding
+                LastCrossedIndex = Mathf.FloorToInt(startProgress + 0.5f) - 1
             };
             _items.Add(item);
 
@@ -154,8 +149,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 Visual = visual,
                 SourceWorldPosition = sourceWorldPosition,
                 StartProgress = startProgress,
-                PlayEntryFlight = playEntryFlight,
-                AwaitsLanding = awaitsLanding
+                PlayEntryFlight = playEntryFlight
             });
         }
 
@@ -185,8 +179,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             for (int i = _items.Count - 1; i >= 0; i--)
             {
                 var item = _items[i];
-                if (item.AwaitingEntryLanding) continue;
-
                 item.Progress += delta;
 
                 if (item.Progress >= lastIndex)
@@ -291,19 +283,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             return Vector3.Lerp(_pathWorldPositions[index], _pathWorldPositions[nextIndex], frac);
         }
 
-        private void OnFoodEntryLanded(FoodEntryLandedSignal signal)
-        {
-            for (int i = 0; i < _items.Count; i++)
-            {
-                if (_items[i].Id != signal.ItemId) continue;
-                _items[i].AwaitingEntryLanding = false;
-                break;
-            }
-        }
-
         public void Dispose()
         {
-            _signalBus.TryUnsubscribe<FoodEntryLandedSignal>(OnFoodEntryLanded);
             foreach (var item in _items) _foodPool.Despawn(item.Visual);
             _items.Clear();
         }

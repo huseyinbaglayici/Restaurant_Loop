@@ -14,3 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CustomerPrefab: {fileID: 7376332367164606921, guid: 52626e7ea58a0b544b75b48767a3d892,
     type: 3}
+  CustomerOrderWidgetPrefab: {fileID: 6721451329109794264, guid: c15a090090fe8c345a844a719552d387,
+    type: 3}

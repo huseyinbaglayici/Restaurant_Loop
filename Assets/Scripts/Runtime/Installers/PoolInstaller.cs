@@ -9,7 +9,6 @@ namespace RestaurantLoop.Installers
     {
         [SerializeField] private int _conveyorPieceInitialSize = 30;
         [SerializeField] private int _foodItemInitialSize = 20;
-        [SerializeField] private int _customerInitialSize = 10;
 
         public override void InstallBindings()
         {
@@ -29,7 +28,6 @@ namespace RestaurantLoop.Installers
 
             BindFoodItemPool();
             BindExitSlotPool();
-            BindCustomerPool();
             BindTuning();
             BindFeelSettings();
             BindPlacementSettings();
@@ -135,48 +133,6 @@ namespace RestaurantLoop.Installers
                 .WithInitialSize(1)
                 .FromComponentInNewPrefab(exitSlotSettings.ExitSlotPrefab)
                 .UnderTransformGroup("ExitSlots")
-                .NonLazy();
-        }
-
-        private void BindCustomerPool()
-        {
-            var customerSettings = Resources.Load<CustomerPrefabSettings>("CustomerPrefabSettings");
-            if (customerSettings == null || customerSettings.CustomerPrefab == null)
-            {
-                Debug.LogError(
-                    "[PoolInstaller] CustomerPrefabSettings.asset missing or has no CustomerPrefab assigned " +
-                    "under Assets/Resources — customer pool not bound.");
-                return;
-            }
-
-            Container.BindInstance(customerSettings).AsSingle();
-
-            var appearanceSettings = Resources.Load<CustomerAppearanceSettings>("CustomerAppearanceSettings");
-            if (appearanceSettings == null)
-            {
-                Debug.LogError(
-                    "[PoolInstaller] CustomerAppearanceSettings.asset not found under Assets/Resources — " +
-                    "create it via RestaurantLoop/Customer Appearance Settings, customer pool not bound.");
-                return;
-            }
-
-            Container.BindInstance(appearanceSettings).AsSingle();
-
-            var animationSet = Resources.Load<CustomerAnimationSet>("CustomerAnimationSet");
-            if (animationSet == null)
-            {
-                Debug.LogError(
-                    "[PoolInstaller] CustomerAnimationSet.asset not found under Assets/Resources — " +
-                    "create it via RestaurantLoop/Customer Animation Set, customer pool not bound.");
-                return;
-            }
-
-            Container.BindInstance(animationSet).AsSingle();
-
-            Container.BindMemoryPool<CustomerController, CustomerController.Pool>()
-                .WithInitialSize(_customerInitialSize)
-                .FromComponentInNewPrefab(customerSettings.CustomerPrefab)
-                .UnderTransformGroup("Customers")
                 .NonLazy();
         }
     }
