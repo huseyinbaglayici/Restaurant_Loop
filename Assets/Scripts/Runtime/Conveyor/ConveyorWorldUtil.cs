@@ -5,6 +5,16 @@ namespace RestaurantLoop.Runtime.Conveyor
 {
     public static class ConveyorWorldUtil
     {
+        public static Vector3 ComputeBeltOrigin(ConveyorLevelDataSO level, ConveyorTuning tuning, float cellSize)
+        {
+            if (!tuning.AutoCenterBeltGrid) return tuning.WorldOrigin;
+
+            float deltaX = (level.GridWidth - tuning.ReferenceGridWidth) * cellSize * 0.5f;
+            float deltaZ = (level.GridHeight - tuning.ReferenceGridHeight) * cellSize * 0.5f;
+
+            return new Vector3(tuning.WorldOrigin.x - deltaX, tuning.WorldOrigin.y, tuning.WorldOrigin.z - deltaZ);
+        }
+
         public static Vector3 ToWorldPosition(Vector2Int coord, float cellSize, float groundY, Vector3 origin) =>
             origin + new Vector3(coord.x * cellSize, groundY, coord.y * cellSize);
 

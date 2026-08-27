@@ -36,13 +36,14 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void Initialize()
         {
             float cellSize = _prefabSettings.CellWorldSize;
+            var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
 
             foreach (var cell in _level.ConveyorCells)
             {
                 // gate: no physical piece
                 if (cell.IsGate) continue;
 
-                var position = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize, _tuning.BeltTrackHeight, _tuning.WorldOrigin);
+                var position = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize, _tuning.BeltTrackHeight, beltOrigin);
                 var worldYRotation = ConveyorWorldUtil.ToWorldYRotation(cell.Shape, cell.Rotation);
 
                 if (cell.Shape == ConveyorTileShape.Straight)

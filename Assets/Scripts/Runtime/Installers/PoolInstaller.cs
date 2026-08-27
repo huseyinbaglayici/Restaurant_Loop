@@ -31,6 +31,13 @@ namespace RestaurantLoop.Installers
             BindTuning();
             BindFeelSettings();
             BindPlacementSettings();
+            BindTableSettings();
+        }
+
+        private void BindTableSettings()
+        {
+            var tableSettings = Resources.Load<TableSettings>("TableSettings");
+            if (tableSettings != null) Container.BindInstance(tableSettings).AsSingle();
         }
 
         private void BindFeelSettings()
