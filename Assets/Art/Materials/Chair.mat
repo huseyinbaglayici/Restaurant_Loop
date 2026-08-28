@@ -8,13 +8,13 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Chair
-  m_Shader: {fileID: 4800000, guid: 3040ca0a2e6ff484797d5c87d2274f22, type: 3}
+  m_Shader: {fileID: 4800000, guid: 83b42c5003fa12746a72ecb10ce62d07, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _MOBILE_SIMPLE
+  m_ValidKeywords: []
   m_InvalidKeywords:
   - _DROPSHADOW_ON
+  - _MOBILE_SIMPLE
   - _OUTLINE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
@@ -97,6 +97,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AOFloor: 0.45
     - _AOStrength: 0.6
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
@@ -112,6 +113,7 @@ Material:
     - _CanvasStrength: 0.05
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
+    - _Contrast: 1
     - _Cull: 2
     - _Cutoff: 0.5
     - _DepthFadeRange: 20
@@ -119,6 +121,7 @@ Material:
     - _DepthFadeStrength: 0
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
+    - _DirectionalStrength: 0.55
     - _DropShadowDepthBias: 0.0006
     - _DropShadowSoftness: 0.5
     - _DropShadowSpread: 0.01
@@ -134,13 +137,18 @@ Material:
     - _Gloss2Soft: 0.45
     - _Gloss2Strength: 0.7
     - _Gloss2Wobble: 0.12
+    - _GlossFollowLight: 0.7
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _GradientCenter: 0
+    - _GradientEnd: 0.5
+    - _GradientIntensity: 0.1
     - _GradientSize: 2
     - _GradientSpace: 1
+    - _GradientStart: -0.5
     - _GradientStrength: 0.2
+    - _HemisphereWrap: 0.85
     - _HighlightSize: 0.3
     - _HighlightSoftness: 0.5
     - _HighlightStrength: 0.12
@@ -155,6 +163,7 @@ Material:
     - _LightHueShift: -0.035
     - _LightSat: 0.95
     - _LightSaturation: 1.08
+    - _LightThreshold: 0.82
     - _LightValue: 1.14
     - _LightWrap: 0.4
     - _MacroDriftScale: 0.3
@@ -170,12 +179,15 @@ Material:
     - _NormalStrength: 0.5
     - _OcclusionStrength: 1
     - _OutlineBreakup: 0
+    - _OutlineCull: 1
+    - _OutlineDepthPush: 0
     - _OutlineInkVariation: 0.35
     - _OutlineJitter: 0.55
     - _OutlineJitterScale: 9
     - _OutlineLightTaper: 0.35
     - _OutlineNormalBlend: 0
     - _OutlineReferenceHeight: 1080
+    - _OutlineRoundness: 0.5
     - _OutlineToggle: 1
     - _OutlineWidth: 0.6
     - _PaintLevels: 12
@@ -187,20 +199,25 @@ Material:
     - _RampShadowEdge: 0.34
     - _RampSoftness: 0.18
     - _RampTintAmount: 0.55
+    - _ReceiveShadowStrength: 0.5
     - _ReceiveShadows: 1
+    - _RimIntensity: 0
     - _RimPower: 3
     - _RimStrength: 0.2
     - _RimToggle: 0
     - _RimTopStrength: 0.5
     - _Roundness: 0.55
+    - _Saturation: 1
     - _ShadeHigh: 0.84
     - _ShadeLow: 0.3
     - _ShadeSoft: 0.17
+    - _ShadowBrightness: 0.55
     - _ShadowHueShift: 0.045
     - _ShadowReceive: 0
     - _ShadowSat: 1.42
     - _ShadowSaturation: 1.25
     - _ShadowStrength: 0.5
+    - _ShadowThreshold: 0.28
     - _ShadowValue: 0.62
     - _SheenEdge: 0.72
     - _SheenSoft: 0.28
@@ -225,6 +242,9 @@ Material:
     - _Surface: 0
     - _TerminatorBreak: 0.7
     - _UVSec: 0
+    - _UseMainLightDirection: 1
+    - _VertexAOIntensity: 0
+    - _VertexAOToggle: 0
     - _VertexColorToggle: 0
     - _Vibrance: 2
     - _WorkflowMode: 1
@@ -234,19 +254,23 @@ Material:
     - _AmbientColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColor: {r: 0.5837166, g: 0.5837166, b: 0.96981126, a: 1}
     - _BottomColor: {r: 0.8399999, g: 0.85, b: 0.96, a: 1}
+    - _BottomGradientColor: {r: 0.9, g: 0.88, b: 0.92, a: 1}
     - _BounceColor: {r: 0.41999996, g: 0.62, b: 1, a: 1}
     - _Color: {r: 0, g: 0.65882355, b: 0.5254902, a: 1}
     - _DepthFadeColor: {r: 0.86, g: 0.87, b: 0.96, a: 1}
     - _DropShadowColor: {r: 0.15999997, g: 0.10999996, b: 0.17999998, a: 1}
     - _DropShadowOffset: {r: 0.009, g: -0.011, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
+    - _FakeLightDirection: {r: -0.4, g: 0.8, b: -0.3, a: 0}
     - _Gloss1Pos: {r: -0.42, g: 0.52, b: 0, a: 0}
     - _Gloss1Size: {r: 0.3, g: 0.2, b: 0, a: 0}
     - _Gloss2Pos: {r: -0.66, g: 0.16, b: 0, a: 0}
     - _Gloss2Size: {r: 0.11, g: 0.14, b: 0, a: 0}
     - _GlossColor: {r: 0.7735849, g: 0.7735849, b: 0.7735849, a: 1}
+    - _GroundColor: {r: 0.62, g: 0.56, b: 0.58, a: 1}
     - _HighlightColor: {r: 1, g: 0.96999997, b: 0.88, a: 1}
     - _LightColorTint: {r: 1, g: 0.96, b: 0.86, a: 1}
+    - _LightTint: {r: 1, g: 0.97999996, b: 0.94, a: 1}
     - _MacroDriftColor: {r: 0.93, g: 0.96, b: 1.06, a: 1}
     - _MatCapColor: {r: 1, g: 1, b: 1, a: 1}
     - _MidColor: {r: 0.86, g: 0.81, b: 0.8399999, a: 1}
@@ -257,9 +281,13 @@ Material:
     - _RimTopColor: {r: 1, g: 0.97999996, b: 0.92, a: 1}
     - _RoundPivot: {r: 0, g: 0, b: 0, a: 0}
     - _ShadowColor: {r: 0.39999998, g: 0.29999998, b: 0.43999997, a: 1}
+    - _ShadowColorTint: {r: 0.7, g: 0.62, b: 0.65999997, a: 1}
     - _ShadowReceiveTint: {r: 0.54999995, g: 0.45, b: 0.68, a: 1}
+    - _ShadowTint: {r: 0.62, g: 0.54999995, b: 0.6, a: 1}
+    - _SkyColor: {r: 1.06, g: 1.03, b: 0.97999996, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _TopColor: {r: 1.07, g: 1.02, b: 0.92, a: 1}
+    - _TopGradientColor: {r: 1.04, g: 1.02, b: 0.97999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &3516021952718372277
