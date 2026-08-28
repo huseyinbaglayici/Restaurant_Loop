@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using Zenject;
@@ -17,10 +18,45 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private int _lastAvailable = -1;
         private int _lastTotal = -1;
+        private Color _originalColor = Color.white;
+        private Vector3 _originalLocalPos;
+        private bool _originalPosCaptured;
+        private DG.Tweening.Tween _shakeTween;
+        private DG.Tweening.Tween _colorTween;
 
         private void Awake()
         {
             if (_text == null) _text = GetComponentInChildren<TMP_Text>(true);
+            if (_text != null)
+            {
+                _originalColor = _text.color;
+            }
+            _originalLocalPos = transform.localPosition;
+            _originalPosCaptured = true;
+        }
+
+        public void PlayRejectAnimation()
+        {
+            if (_text == null) return;
+            if (!_originalPosCaptured)
+            {
+                _originalLocalPos = transform.localPosition;
+                _originalPosCaptured = true;
+            }
+
+            _shakeTween?.Kill();
+            _colorTween?.Kill();
+
+            transform.localPosition = _originalLocalPos;
+            _text.color = _originalColor;
+
+            // Shake position left-right (very subtle feedback)
+            _shakeTween = transform.DOShakePosition(0.2f, strength: new Vector3(0.005f, 0f, 0f), vibrato: 8, randomness: 0, snapping: false, fadeOut: true)
+                .OnComplete(() => transform.localPosition = _originalLocalPos);
+
+            // Flash red and return to original color
+            _text.color = Color.red;
+            _colorTween = _text.DOColor(_originalColor, 0.45f).SetEase(DG.Tweening.Ease.InQuad);
         }
 
         private void Update()

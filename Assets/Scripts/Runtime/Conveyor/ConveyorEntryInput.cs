@@ -14,6 +14,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ExitStackAnchor _exitStackAnchor;
         private readonly ConveyorManager _conveyorManager;
         private readonly ConveyorTuning _tuning;
+        private readonly TableSettings _tableSettings;
+        private readonly CameraController _cameraController;
+        private readonly Camera _camera;
         private readonly IAudioService _audioService;
         private readonly AudioLibrary _audioLibrary;
 
@@ -25,6 +28,9 @@ namespace RestaurantLoop.Runtime.Conveyor
             ExitStackAnchor exitStackAnchor,
             ConveyorManager conveyorManager,
             ConveyorTuning tuning,
+            [Inject(Optional = true)] TableSettings tableSettings,
+            [Inject(Optional = true)] CameraController cameraController,
+            [Inject(Optional = true)] Camera camera,
             IAudioService audioService,
             AudioLibrary audioLibrary)
         {
@@ -33,6 +39,9 @@ namespace RestaurantLoop.Runtime.Conveyor
             _exitStackAnchor = exitStackAnchor;
             _conveyorManager = conveyorManager;
             _tuning = tuning;
+            _tableSettings = tableSettings;
+            _cameraController = cameraController;
+            _camera = camera;
             _audioService = audioService;
             _audioLibrary = audioLibrary;
         }
@@ -44,7 +53,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _wasMouseDown = isMouseDown;
             if (!clicked) return;
 
-            var camera = Camera.main;
+            var camera = _camera != null ? _camera : (_cameraController != null && _cameraController.Camera != null ? _cameraController.Camera : Camera.main);
             if (camera == null) return;
 
             Vector2 screenPoint = Input.mousePosition;
@@ -58,7 +67,12 @@ namespace RestaurantLoop.Runtime.Conveyor
             int bestLane = -1;
             int bestRow = -1;
             FoodItemController bestVisual = null;
-            float bestDistance = _tuning.ClickRadiusPixels;
+
+            // Compute dynamic click radius taking into account screen size and camera zoom factor
+            float baseRadius = _tuning.ClickRadiusPixels > 0f ? _tuning.ClickRadiusPixels : 80f;
+            float zoom = _cameraController != null ? _cameraController.CameraZoomFactor : 1f;
+            // Larger radius on zoomed out cameras / higher resolution screens
+            float bestDistance = baseRadius * Mathf.Max(1f, 1f / zoom) * 1.5f;
 
             for (int lane = 0; lane < _queueAnchor.LanePositions.Length; lane++)
             {
@@ -90,7 +104,11 @@ namespace RestaurantLoop.Runtime.Conveyor
                 if (bestRow != 0 || !TryFindLinkedFrontPartner(stack.LinkId, bestLane, out int partnerLane, out var partnerVisual))
                     return true;
 
-                if (_conveyorManager.ItemCount + _exitStackAnchor.OccupiedCount + 2 > _exitStackAnchor.SlotCount) return true;
+                if (_conveyorManager.ItemCount + _exitStackAnchor.OccupiedCount + 2 > _exitStackAnchor.SlotCount)
+                {
+                    TriggerRejectFeedback();
+                    return true;
+                }
 
                 _queueSpawner.TryDetachAt(bestLane, 0, out var linkedVisual);
                 _queueSpawner.TryDetachAt(partnerLane, 0, out var linkedPartnerVisual);
@@ -104,13 +122,26 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return true;
             }
 
-            if (_conveyorManager.ItemCount + _exitStackAnchor.OccupiedCount >= _exitStackAnchor.SlotCount) return false;
+            if (_conveyorManager.ItemCount + _exitStackAnchor.OccupiedCount >= _exitStackAnchor.SlotCount)
+            {
+                TriggerRejectFeedback();
+                return false;
+            }
 
             _queueSpawner.TryDetachAt(bestLane, bestRow, out var pickedVisual);
             _queueSpawner.PickFromBottomEnabled = false;
             _conveyorManager.AddItemAtEntry(stack, pickedVisual, pickedVisual.transform.position);
             _audioService.PlaySfx(_audioLibrary.FoodSendSfx);
             return true;
+        }
+
+        private void TriggerRejectFeedback()
+        {
+            var counterUI = Object.FindAnyObjectByType<TrayDispenserCounterUI>();
+            if (counterUI != null)
+            {
+                counterUI.PlayRejectAnimation();
+            }
         }
 
         private bool TryFindLinkedFrontPartner(int linkId, int excludeLane, out int partnerLane, out FoodItemController partnerVisual)

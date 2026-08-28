@@ -60,6 +60,10 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("UI sprite shown when a customer is hidden (question mark / mystery bubble).")]
         public Sprite HiddenOrderBubble;
 
+        [Header("Fonts")]
+        [Tooltip("Font asset used for stack amount numbers across 2D queue and 3D conveyor.")]
+        public TMPro.TMP_FontAsset StackAmountFont;
+
         [SerializeField] private List<Entry> _entries = new();
 
         public bool TryGetVisual(FoodType type, FoodVisualState state, out MeshVisual visual)

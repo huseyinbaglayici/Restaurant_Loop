@@ -46,4 +46,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _unitPrefab: {fileID: 4697279458208426433, guid: 28f8d02aa3eddc940a9352db5d00e5b8,
     type: 3}
-  _stackSpacing: 0.75

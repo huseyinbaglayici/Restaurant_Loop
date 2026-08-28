@@ -111,7 +111,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return;
             }
 
-            var position = ConveyorWorldUtil.ToWorldPosition(gateCell.Coord, _prefabSettings.CellWorldSize, 0f, _tuning.WorldOrigin); // Y overwritten below
+            var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, _prefabSettings.CellWorldSize);
+            var position = ConveyorWorldUtil.ToWorldPosition(gateCell.Coord, _prefabSettings.CellWorldSize, 0f, beltOrigin); // Y overwritten below
             position.y = _tuning.TrayDispenserHeight;
 
             float yaw = ConveyorWorldUtil.ToWorldYRotation(gateCell.Shape, gateCell.Rotation);
@@ -168,6 +169,45 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _slotState[index] = SlotState.Idle;
             _idleCount++;
+        }
+
+        public bool TryAddExtraTray()
+        {
+            if (_traysHighToLow.Count == 0 || _dispenserRoot == null) return false;
+
+            var baseTray = _traysHighToLow[0];
+            if (baseTray == null) return false;
+
+            var newTrayObj = Object.Instantiate(baseTray.gameObject, _dispenserRoot);
+            newTrayObj.name = $"tepsi_{_traysHighToLow.Count + 1}";
+
+            var newTray = newTrayObj.GetComponent<TrayController>();
+            if (newTray == null)
+            {
+                Object.Destroy(newTrayObj);
+                return false;
+            }
+
+            Vector3 stepOffset = _slotPoses.Count > 1
+                ? _slotPoses[0].Position - _slotPoses[1].Position
+                : new Vector3(0f, 0.05f, 0f);
+
+            var newPose = new TraySlotPose(
+                _slotPoses[0].Position + stepOffset,
+                _slotPoses[0].Rotation,
+                _slotPoses[0].Scale);
+
+            _traysHighToLow.Insert(0, newTray);
+            _slotPoses.Insert(0, newPose);
+            _slotOccupant.Insert(0, newTray);
+            _slotState.Insert(0, SlotState.Idle);
+            _idleCount++;
+
+            newTray.transform.localPosition = newPose.Position;
+            newTray.transform.localRotation = newPose.Rotation;
+            newTray.transform.localScale = newPose.Scale;
+
+            return true;
         }
     }
 }

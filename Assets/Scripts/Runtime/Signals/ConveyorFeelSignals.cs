@@ -23,6 +23,16 @@ namespace RestaurantLoop.Signals
         public bool PlayEntryFlight;
     }
 
+    // Fired by the visual layer the instant a food's belt-entry flight actually lands (or immediately,
+    // for level-authored items that never played one). TrayVisualService waits for this before flying a
+    // tray in, so the tray always targets where the food already is instead of racing it there.
+    public class FoodBeltEntryLandedSignal
+    {
+        public int ItemId;
+        public FoodItemController Visual;
+        public float Progress;
+    }
+
     public class FoodDockedSignal
     {
         public int ItemId;

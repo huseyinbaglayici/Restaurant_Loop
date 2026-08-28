@@ -11,6 +11,22 @@ namespace RestaurantLoop.Runtime.Data
                  "rebuild always lands back on the same spot.")]
         public Vector3 WorldOrigin = Vector3.zero;
 
+        [Header("Camera & Auto-Scale (CameraController)")]
+        [Tooltip("If the level's grid width or height exceeds ReferenceGridDimension, the camera orthographic size scales up proportionally.")]
+        public bool EnableDynamicCameraScale = true;
+
+        [Tooltip("When enabled, offsets the belt/customer world origin based on the difference between the level's grid size and the reference grid size.")]
+        public bool AutoCenterBeltGrid = true;
+
+        [Tooltip("Reference grid width where WorldOrigin was authored (Level 1).")]
+        public int ReferenceGridWidth = 7;
+
+        [Tooltip("Reference grid height where WorldOrigin was authored (Level 1).")]
+        public int ReferenceGridHeight = 9;
+
+        [Tooltip("Extra damping/multiplier for camera zoom out (e.g. 0.8 = zoom out 20% less to reduce empty side space).")]
+        public float CameraZoomSensitivity = 0.85f;
+
         [Header("Food (item height per stage)")]
         [Tooltip("World Y every food item sits at while it is on the belt.")]
         public float BeltFoodHeight = 1f;
@@ -28,6 +44,10 @@ namespace RestaurantLoop.Runtime.Data
 
         [Tooltip("World Y the belt track pieces themselves (straight/corner meshes) sit at.")]
         public float BeltTrackHeight = 0f;
+
+        [Tooltip("Minimum path-cell gap (in Progress units) the entry cell must clear before another item can " +
+                 "spawn there — blocks rapid-click stacking at the belt entry without a fixed input cooldown.")]
+        public float MinEntrySpacing = 0.5f;
 
         [Header("Queue (QueueAnchor, QueueSpawner)")]
         [Tooltip("World units between consecutive lanes on X, centered under the exit stack's midpoint.")]
@@ -91,5 +111,27 @@ namespace RestaurantLoop.Runtime.Data
 
         [Tooltip("Curve smoothness — number of straight segments approximating the rope's arc.")]
         public int LinkLineSegments = 16;
+
+        [Header("Environment / Background Decor")]
+        [Tooltip("The environment / background decor prefab spawned in the scene.")]
+        public GameObject EnvironmentPrefab;
+
+        [Tooltip("Default world position authored for Level 1 / reference grid.")]
+        public Vector3 EnvironmentBasePosition = Vector3.zero;
+
+        [Tooltip("Default rotation of the environment prefab.")]
+        public Vector3 EnvironmentBaseRotation = Vector3.zero;
+
+        [Tooltip("Default scale of the environment prefab.")]
+        public Vector3 EnvironmentBaseScale = Vector3.one;
+
+        [Tooltip("When enabled, automatically shifts the environment along Z so it maintains a minimum gap from the conveyor belt.")]
+        public bool AutoAlignEnvironment = true;
+
+        [Tooltip("Minimum gap (distance in Z) to keep between the top edge of the conveyor belt and the environment.")]
+        public float EnvironmentMinZGap = 1.5f;
+
+        [Tooltip("Extra manual Z offset added on top of the calculated position.")]
+        public float EnvironmentExtraZOffset = 0f;
     }
 }

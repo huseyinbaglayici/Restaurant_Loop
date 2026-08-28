@@ -40,6 +40,16 @@ namespace RestaurantLoop.Runtime.Conveyor
         public int ItemCount => _items.Count;
         public int PathLength => _pathWorldPositions.Count;
 
+        // True once the belt's newest item has moved far enough past Progress 0 that a fresh spawn there
+        // won't visually overlap it. Checked by ConveyorEntryInput before it commits an item to the belt.
+        public bool CanAcceptEntry()
+        {
+            for (int i = 0; i < _items.Count; i++)
+                if (_items[i].Progress < _tuning.MinEntrySpacing) return false;
+
+            return true;
+        }
+
         // Mirrors QueueSpawner.TryGetVisual so callers (e.g. QueueLinkVisualizer) can enumerate belt
         // items the same way they enumerate queue items, without exposing the BeltItem type itself.
         public FoodItemController GetVisualAt(int index) => _items[index].Visual;
@@ -71,9 +81,10 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             float cellSize = _prefabSettings.CellWorldSize;
+            var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
             foreach (var coord in orderedPath)
             {
-                var position = ConveyorWorldUtil.ToWorldPosition(coord, cellSize, 0f, _tuning.WorldOrigin); // Y overwritten below
+                var position = ConveyorWorldUtil.ToWorldPosition(coord, cellSize, 0f, beltOrigin); // Y overwritten below
                 position.y = _tuning.BeltFoodHeight;
                 _pathWorldPositions.Add(position);
             }
@@ -110,6 +121,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         // catches up naturally instead of either layer waiting on the other.
         // entryProgress lets two items entering together (linked pair) land a grid apart instead of
         // stacking on the same cell — pass a small negative value to place an item behind the entry.
+        // Callers are expected to have already checked CanAcceptEntry() — see ConveyorEntryInput.
         public void AddItemAtEntry(FoodStackData stack, FoodItemController reusedVisual, Vector3 sourceWorldPosition, float entryProgress = 0f)
         {
             if (_pathWorldPositions.Count == 0) return;

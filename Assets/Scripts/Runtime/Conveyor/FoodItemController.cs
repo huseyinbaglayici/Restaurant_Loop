@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RestaurantLoop.Runtime.Data;
+using TMPro;
 using UnityEngine;
 using Zenject;
 
@@ -19,6 +20,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         [Inject(Optional = true)] private FoodMeshSettings _foodMeshSettings;
         [Inject(Optional = true)] private FoodPlacementSettings _placement;
+        [Inject(Optional = true)] private TableSettings _tableSettings;
+        [Inject(Optional = true)] private CameraController _cameraController;
 
         // Stacked-units mode (most food types): one GameObject per visible unit. Only the top unit
         // (highest index) is ever Opened — and only while this whole item is Opened — everything below
@@ -42,6 +45,15 @@ namespace RestaurantLoop.Runtime.Conveyor
         private bool _usesFixedChildSlots;
         private bool _appliedUsesFixedChildSlots;
 
+        // 2D Queue Visuals (Sprite Icon + Amount Text)
+        private GameObject _queue2DHolder;
+        private SpriteRenderer _queue2DSpriteRenderer;
+        private TextMeshPro _queue2DAmountText;
+
+        // 3D Belt/Stack Amount Badge (World-Space Text Billboard)
+        private GameObject _conveyorAmountBadge;
+        private TextMeshPro _conveyorAmountText;
+
         // Last multiplier / spacing pushed onto the stacked units — used to pick up live tweaks while playing.
         private float _appliedClosedScale = -1f;
         private float _appliedOpenedScale = -1f;
@@ -64,9 +76,20 @@ namespace RestaurantLoop.Runtime.Conveyor
         // rather than a duplicate of the whole rack.
         public bool UsesFixedChildSlots => _usesFixedChildSlots;
 
-        public Vector3 VisualCenter => _usesFixedChildSlots
-            ? transform.position
-            : transform.position + Vector3.up * (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) * 0.5f);
+        public Vector3 VisualCenter
+        {
+            get
+            {
+                if (ShouldUse2DQueue() && _queue2DHolder != null)
+                {
+                    return _queue2DHolder.transform.position;
+                }
+
+                return _usesFixedChildSlots
+                    ? transform.position
+                    : transform.position + Vector3.up * (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) * 0.5f);
+            }
+        }
 
         // World position of the top unit — the one that renders Opened while this item is Opened. Consume
         // flights should spawn here, not at the item root (which sits at the bottom of the stack).
@@ -88,6 +111,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void OnDespawned()
         {
+            if (_queue2DHolder != null) _queue2DHolder.SetActive(false);
+            if (_conveyorAmountBadge != null) _conveyorAmountBadge.SetActive(false);
             gameObject.SetActive(false);
         }
 
@@ -117,8 +142,181 @@ namespace RestaurantLoop.Runtime.Conveyor
             ApplyStack(stack);
         }
 
+        private bool ShouldUse2DQueue()
+        {
+            return _location == FoodLocation.Queue && (_tableSettings == null || _tableSettings.Enable2DQueueVisuals);
+        }
+
+        private void Ensure2DVisualHolder()
+        {
+            if (_queue2DHolder != null) return;
+
+            _queue2DHolder = new GameObject("Queue2D_Visual");
+            _queue2DHolder.transform.SetParent(transform, false);
+
+            _queue2DSpriteRenderer = _queue2DHolder.AddComponent<SpriteRenderer>();
+            _queue2DSpriteRenderer.sortingOrder = 10;
+
+            var textObj = new GameObject("AmountText");
+            textObj.transform.SetParent(_queue2DHolder.transform, false);
+            // Position at top-right corner of the 2D sprite
+            textObj.transform.localPosition = new Vector3(6f, 6f, -0.2f);
+            textObj.transform.localRotation = Quaternion.identity;
+            textObj.transform.localScale = Vector3.one * 12f;
+
+            var rt = textObj.AddComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(3f, 3f);
+
+            _queue2DAmountText = textObj.AddComponent<TextMeshPro>();
+            if (_foodMeshSettings != null && _foodMeshSettings.StackAmountFont != null)
+            {
+                _queue2DAmountText.font = _foodMeshSettings.StackAmountFont;
+            }
+            _queue2DAmountText.alignment = TextAlignmentOptions.Center;
+            _queue2DAmountText.fontSize = 6.5f;
+            _queue2DAmountText.color = Color.white;
+            _queue2DAmountText.fontStyle = FontStyles.Bold;
+            _queue2DAmountText.sortingOrder = 50; // Higher sorting order so it always appears above the sprite
+            
+            var meshRenderer = textObj.GetComponent<MeshRenderer>();
+            if (meshRenderer != null)
+            {
+                meshRenderer.sortingOrder = 50;
+            }
+        }
+
+        private void EnsureConveyorAmountBadge()
+        {
+            if (_conveyorAmountBadge != null) return;
+
+            _conveyorAmountBadge = new GameObject("Conveyor3D_AmountBadge");
+            _conveyorAmountBadge.transform.SetParent(transform, false);
+
+            var textObj = new GameObject("AmountText");
+            textObj.transform.SetParent(_conveyorAmountBadge.transform, false);
+            textObj.transform.localPosition = Vector3.zero;
+            textObj.transform.localRotation = Quaternion.identity;
+            textObj.transform.localScale = Vector3.one;
+
+            var rt = textObj.AddComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(2f, 2f);
+
+            _conveyorAmountText = textObj.AddComponent<TextMeshPro>();
+            if (_foodMeshSettings != null && _foodMeshSettings.StackAmountFont != null)
+            {
+                _conveyorAmountText.font = _foodMeshSettings.StackAmountFont;
+            }
+            _conveyorAmountText.alignment = TextAlignmentOptions.Center;
+            _conveyorAmountText.fontSize = 5.5f;
+            _conveyorAmountText.color = Color.white;
+            _conveyorAmountText.fontStyle = FontStyles.Bold;
+            _conveyorAmountText.sortingOrder = 20;
+        }
+
+        public void SetAmountBadgeVisible(bool visible)
+        {
+            if (_conveyorAmountBadge != null)
+            {
+                _conveyorAmountBadge.SetActive(visible);
+            }
+        }
+
+        private void ApplyConveyorAmountBadge(FoodStackData stack)
+        {
+            if (stack.Amount <= 0)
+            {
+                if (_conveyorAmountBadge != null) _conveyorAmountBadge.SetActive(false);
+                return;
+            }
+
+            EnsureConveyorAmountBadge();
+            _conveyorAmountBadge.SetActive(true);
+            _conveyorAmountText.text = stack.Amount.ToString();
+
+            // Place slightly to the top right and above the top unit
+            float height = _usesFixedChildSlots ? 0.7f : (Mathf.Min(stack.Amount, MaxVisibleUnits) * ResolveSpacing(stack.Type) + 0.3f);
+            _conveyorAmountBadge.transform.localPosition = new Vector3(0.4f, height, 0f);
+
+            AlignConveyorBadgeWithCamera();
+        }
+
+        private void AlignConveyorBadgeWithCamera()
+        {
+            if (_conveyorAmountBadge == null || !_conveyorAmountBadge.activeSelf) return;
+
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                _conveyorAmountBadge.transform.rotation = cam.transform.rotation;
+            }
+        }
+
+        private void ApplyQueue2DVisual(FoodStackData stack)
+        {
+            Ensure2DVisualHolder();
+
+            _queue2DHolder.SetActive(true);
+
+            if (_foodMeshSettings != null && _foodMeshSettings.TryGetIcon(stack.Type, out var icon))
+            {
+                _queue2DSpriteRenderer.sprite = icon;
+            }
+            else
+            {
+                _queue2DSpriteRenderer.sprite = null;
+            }
+
+            if (_queue2DAmountText != null)
+            {
+                if (_foodMeshSettings != null && _foodMeshSettings.StackAmountFont != null && _queue2DAmountText.font != _foodMeshSettings.StackAmountFont)
+                {
+                    _queue2DAmountText.font = _foodMeshSettings.StackAmountFont;
+                }
+                _queue2DAmountText.text = stack.Amount > 0 ? stack.Amount.ToString() : "";
+            }
+
+            float baseIconScale = _tableSettings != null ? _tableSettings.Queue2DIconScale : 1.5f;
+            float zoomMultiplier = 1f;
+            if (_tableSettings != null && _tableSettings.ScaleWithCamera && _cameraController != null)
+            {
+                float zoom = _cameraController.CameraZoomFactor;
+                float multiplier = _tableSettings.FoodQueueScaleMultiplier;
+                zoomMultiplier = 1f + (zoom - 1f) * multiplier;
+            }
+
+            _queue2DHolder.transform.localScale = Vector3.one * (baseIconScale * zoomMultiplier);
+            _queue2DHolder.transform.localPosition = _tableSettings != null ? _tableSettings.Queue2DOffset : new Vector3(0f, 0.5f, 0f);
+
+            Align2DWithCamera();
+        }
+
+        private void Align2DWithCamera()
+        {
+            if (_queue2DHolder == null || !_queue2DHolder.activeSelf) return;
+
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                _queue2DHolder.transform.rotation = cam.transform.rotation;
+            }
+        }
+
         private void ApplyStack(FoodStackData stack)
         {
+            bool is2D = ShouldUse2DQueue();
+
+            if (is2D)
+            {
+                ApplyQueue2DVisual(stack);
+                Set3DVisualsActive(false);
+                if (_conveyorAmountBadge != null) _conveyorAmountBadge.SetActive(false);
+                return;
+            }
+
+            if (_queue2DHolder != null) _queue2DHolder.SetActive(false);
+            Set3DVisualsActive(true);
+            ApplyConveyorAmountBadge(stack);
+
             FoodMeshSettings.MeshVisual closedVisual = default, openedVisual = default;
             bool hasClosed = _foodMeshSettings != null &&
                               _foodMeshSettings.TryGetVisual(stack.Type, FoodVisualState.Closed, out closedVisual);
@@ -159,6 +357,19 @@ namespace RestaurantLoop.Runtime.Conveyor
             else
             {
                 ApplyStackedUnits(stack, closedVisual, openedVisual, hasClosed, hasOpened);
+            }
+        }
+
+        private void Set3DVisualsActive(bool active)
+        {
+            for (int i = 0; i < _units.Count; i++)
+            {
+                if (_units[i] != null) _units[i].SetActive(active);
+            }
+
+            if (_fixedSlotInstance != null)
+            {
+                _fixedSlotInstance.SetActive(active);
             }
         }
 
@@ -391,12 +602,30 @@ namespace RestaurantLoop.Runtime.Conveyor
             return combined;
         }
 
-        private float ResolveScale(FoodType type, FoodVisualState state) =>
-            _placement == null ? 1f : _placement.ResolveScale(type, _location, state);
+        private float ResolveScale(FoodType type, FoodVisualState state)
+        {
+            float baseScale = _placement == null ? 1f : _placement.ResolveScale(type, _location, state);
+            if (_location == FoodLocation.Queue && _tableSettings != null && _tableSettings.ScaleWithCamera && _cameraController != null)
+            {
+                float zoom = _cameraController.CameraZoomFactor;
+                float multiplier = _tableSettings.FoodQueueScaleMultiplier;
+                float factor = 1f + (zoom - 1f) * multiplier;
+                baseScale *= factor;
+            }
+            return baseScale;
+        }
 
         // Picks up scale / spacing tweaks made in the placement asset while the game is running.
         private void LateUpdate()
         {
+            if (ShouldUse2DQueue())
+            {
+                Align2DWithCamera();
+                return;
+            }
+
+            AlignConveyorBadgeWithCamera();
+
             if (_usesFixedChildSlots)
             {
                 float scale = ResolveScale(Stack.Type, _visualState);

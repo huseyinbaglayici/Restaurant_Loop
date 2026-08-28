@@ -72,17 +72,20 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             float cellSize = _prefabSettings.CellWorldSize;
             float slotSpacing = _tuning.ExitStackSlotSpacing > 0f ? _tuning.ExitStackSlotSpacing : cellSize;
-            // Manual X placement — no longer derived from the grid's width, so slots stop re-centering
-            // themselves whenever a level's grid changes shape. Tweak ExitStackXOffset instead.
-            float startX = _tuning.WorldOrigin.x + _tuning.ExitStackXOffset - slotSpacing * BaseSlotCount * 0.5f;
+            
+            var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
 
-            float nearestRowEdgeZ = minY * cellSize - cellSize * 0.5f + _tuning.WorldOrigin.z;
+            // Center exactly at WorldOrigin.x + ExitStackXOffset
+            float centerX = _tuning.WorldOrigin.x + _tuning.ExitStackXOffset;
+            float startX = centerX - slotSpacing * (BaseSlotCount - 1) * 0.5f;
+
+            float nearestRowEdgeZ = minY * cellSize - cellSize * 0.5f + beltOrigin.z;
             float z = nearestRowEdgeZ - _tuning.ExitStackZOffsetFromGrid;
 
             var positions = new Vector3[BaseSlotCount];
             for (int i = 0; i < BaseSlotCount; i++)
             {
-                float x = startX + slotSpacing * (i + 0.5f);
+                float x = startX + slotSpacing * i;
                 positions[i] = new Vector3(x, _tuning.ExitStackGroundHeight + _tuning.WorldOrigin.y, z);
             }
 

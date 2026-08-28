@@ -13,21 +13,27 @@ MonoBehaviour:
   m_Name: ConveyorTuning
   m_EditorClassIdentifier: 
   WorldOrigin: {x: 0.38, y: 0, z: 0.45}
+  EnableDynamicCameraScale: 1
+  AutoCenterBeltGrid: 1
+  ReferenceGridWidth: 7
+  ReferenceGridHeight: 9
+  CameraZoomSensitivity: 0.5
   BeltFoodHeight: -3.8
   QueueFoodHeight: -3.9
   ExitStackFoodHeight: -3.75
   BeltSpeed: 3
   BeltTrackHeight: -4.45
+  MinEntrySpacing: 1.5
   QueueLaneSpacing: 1.47
   QueueZOffsetFromExitStack: 1.8
-  QueueRowSpacing: 2
+  QueueRowSpacing: 1.5
   QueueShiftSpeed: 4
   TrayDispenserHeight: -3.9
   TrayBeltHeight: -3.9
-  TrayDispenserOffset: {x: -1, y: 0, z: 0}
+  TrayDispenserOffset: {x: -0.7, y: 0, z: 0}
   ExitStackGroundHeight: -4.05
   ExitStackZOffsetFromGrid: 1
-  ExitStackXOffset: 3
+  ExitStackXOffset: 2.7
   ExitStackSlotSpacing: 0.97
   ExtraRackVisualOffset: {x: 0, y: 0, z: 0}
   ExtraRackVisualRotation: {x: -90, y: -180, z: 0}
@@ -36,3 +42,11 @@ MonoBehaviour:
   LinkLineWidth: 0.06
   LinkLineSag: 0.35
   LinkLineSegments: 16
+  EnvironmentPrefab: {fileID: 3467055403277191821, guid: 3b4804461d41c804e98d30a49b43619a,
+    type: 3}
+  EnvironmentBasePosition: {x: 9.58, y: -2.75, z: 10}
+  EnvironmentBaseRotation: {x: 0, y: 0, z: 0}
+  EnvironmentBaseScale: {x: 1, y: 1, z: 1}
+  AutoAlignEnvironment: 1
+  EnvironmentMinZGap: 2
+  EnvironmentExtraZOffset: 0
