@@ -236,6 +236,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             var flyer = ResolveConsumeFlyer(id, sourceVisual, takenStack, fullyConsumed);
             if (flyer == null) return;
 
+            flyer.SetAmountBadgeVisible(false);
             _ownedVisuals.Add(flyer);
 
             _flightService.Launch(
