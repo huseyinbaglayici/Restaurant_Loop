@@ -400,7 +400,12 @@ namespace RestaurantLoop.Runtime.Conveyor
             bool hasClosed,
             bool hasOpened)
         {
-            int visibleCount = Mathf.Min(stack.Amount, MaxVisibleUnits);
+            // Clamped to at least 1: an authored/linked stack can sit at Amount 0 (e.g. a decoy half of a
+            // linked pair) while still occupying a real slot — it must stay visible and clickable there,
+            // never silently disappear. Genuine consumption never leaves an in-place item at exactly 0
+            // (ConsumeFromItem removes a fully-eaten belt item outright before this runs), so this only
+            // ever affects that authored-zero case.
+            int visibleCount = Mathf.Clamp(stack.Amount, 1, MaxVisibleUnits);
 
             while (_units.Count > visibleCount)
             {
@@ -484,7 +489,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             var container = ResolveFixedSlotContainer();
             int slotCount = container != null ? container.childCount : 0;
-            int visibleCount = Mathf.Clamp(stack.Amount, 0, slotCount);
+            // Same Amount-0-stays-visible rule as ApplyStackedUnits — see comment there.
+            int visibleCount = slotCount == 0 ? 0 : Mathf.Clamp(stack.Amount, 1, slotCount);
 
             for (int i = 0; i < slotCount; i++)
                 container.GetChild(i).gameObject.SetActive(i < visibleCount);

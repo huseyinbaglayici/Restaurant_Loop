@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd53d1ee04a2b2469a77ffed9efc74c, type: 3}
+  m_Name: CustomerVisualVariantSettings
+  m_EditorClassIdentifier: 
+  Variants:
+  - Variant: 0
+    Prefab: {fileID: 8866175589919473486, guid: 38a069b61c4ce0245aa62bb62039afaa,
+      type: 3}
+  - Variant: 1
+    Prefab: {fileID: 7837758678909829120, guid: 4da8a8158e4c03749862dd246db671cd,
+      type: 3}
+  - Variant: 2
+    Prefab: {fileID: 4558547293907595832, guid: 0103b27fb5c2e2a4fa0c9ca4cfa91846,
+      type: 3}
+  - Variant: 3
+    Prefab: {fileID: 1094723711792154376, guid: 65fd42d4e75f21846b0e2246ea649439,
+      type: 3}
+  - Variant: 4
+    Prefab: {fileID: 6554614814854421525, guid: cb1878ab7a46d4944a685fd0bf7ff566,
+      type: 3}
+  - Variant: 5
+    Prefab: {fileID: 8030962489440441855, guid: 611e01fd3e7038b4a8c704601c62a4ce,
+      type: 3}

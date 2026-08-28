@@ -12,13 +12,14 @@ namespace RestaurantLoop.Installers
     public class ConveyorInstaller : MonoInstaller
     {
         [Inject] private CurrentLevelProvider _currentLevelProvider;
+        [Inject] private CustomerPrefabSettings _customerPrefabSettings;
+        [Inject(Id = "CustomerPoolSize")] private int _customerInitialSize;
         [SerializeField] private Camera _mainCamera;
         [SerializeField] private TextMeshProUGUI _levelText;
         [SerializeField] private Transform _trayDispenserRoot;
         [SerializeField] private RectTransform _customerOrderCanvasRoot;
         [SerializeField] private Transform _orderIconsGroup;
         [SerializeField] private Transform _orderTextsGroup;
-        [SerializeField] private int _customerInitialSize = 10;
 
         public override void InstallBindings()
         {
@@ -58,41 +59,17 @@ namespace RestaurantLoop.Installers
             Container.BindInstance(_levelText).AsSingle();
             Container.BindInterfacesTo<LevelOverlayPresenter>().AsSingle();
 
-            BindCustomerPool();
+            BindCustomerOrderWidgetPool();
         }
 
-        private void BindCustomerPool()
+        // CustomerController.Pool and the per-variant visual pools live in PoolInstaller
+        // (ProjectContext/DDOL) so customers survive GameplayScene unload/reload instead of being
+        // destroyed and reprewarmed every level. Only the order widget pool stays scene-scoped here
+        // — it needs GameplayScene's own Canvas refs, which SceneLoader recreates every reload.
+        private void BindCustomerOrderWidgetPool()
         {
-            var customerSettings = Resources.Load<CustomerPrefabSettings>("CustomerPrefabSettings");
-            if (customerSettings == null || customerSettings.CustomerPrefab == null)
-            {
-                Debug.LogError(
-                    "[ConveyorInstaller] CustomerPrefabSettings.asset missing or has no CustomerPrefab assigned " +
-                    "under Assets/Resources — customer pool not bound.");
-                return;
-            }
-
-            Container.BindInstance(customerSettings).AsSingle();
-
-            var animationSet = Resources.Load<CustomerAnimationSet>("CustomerAnimationSet");
-            if (animationSet == null)
-            {
-                Debug.LogError(
-                    "[ConveyorInstaller] CustomerAnimationSet.asset not found under Assets/Resources — " +
-                    "create it via RestaurantLoop/Customer Animation Set, customer pool not bound.");
-                return;
-            }
-
-            Container.BindInstance(animationSet).AsSingle();
-
-            Container.BindMemoryPool<CustomerController, CustomerController.Pool>()
-                .WithInitialSize(_customerInitialSize)
-                .FromComponentInNewPrefab(customerSettings.CustomerPrefab)
-                .UnderTransformGroup("Customers")
-                .NonLazy();
-
-            if (customerSettings.CustomerOrderWidgetPrefab == null || _customerOrderCanvasRoot == null ||
-                _orderIconsGroup == null || _orderTextsGroup == null)
+            if (_customerPrefabSettings == null || _customerPrefabSettings.CustomerOrderWidgetPrefab == null ||
+                _customerOrderCanvasRoot == null || _orderIconsGroup == null || _orderTextsGroup == null)
             {
                 Debug.LogError(
                     "[ConveyorInstaller] CustomerOrderWidgetPrefab, _customerOrderCanvasRoot, _orderIconsGroup " +
@@ -107,7 +84,7 @@ namespace RestaurantLoop.Installers
 
             Container.BindMemoryPool<CustomerOrderWidget, CustomerOrderWidget.Pool>()
                 .WithInitialSize(_customerInitialSize)
-                .FromComponentInNewPrefab(customerSettings.CustomerOrderWidgetPrefab)
+                .FromComponentInNewPrefab(_customerPrefabSettings.CustomerOrderWidgetPrefab)
                 .UnderTransform(_customerOrderCanvasRoot)
                 .NonLazy();
         }

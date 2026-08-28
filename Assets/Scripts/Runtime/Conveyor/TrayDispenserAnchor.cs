@@ -159,7 +159,22 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return _slotPoses[i];
             }
 
-            return default;
+            // Every TryAcquire is supposed to be paired with exactly one of these calls, so an Empty slot
+            // for this tray should always exist — landing here means that invariant already broke somewhere
+            // upstream. Returning default() used to be the actual bug: an all-zero pose sends the tray to
+            // world origin with zero scale, and since it was never written into _slotOccupant, ConfirmReturn
+            // can't find it either — _idleCount never increments and the tray is gone from the pool for the
+            // rest of the level (which is exactly what "tray never came back" looked like). Recovering into
+            // the tray's own home slot — reasserting it, whatever stale entry was there — is what keeps a
+            // single bookkeeping slip from permanently costing a tray instead of just needing this warning.
+            int homeIndex = _traysHighToLow.IndexOf(tray);
+            if (homeIndex < 0) return default;
+
+            Debug.LogWarning("[TrayDispenserAnchor] ReserveReturnSlot found no Empty slot — dispenser " +
+                "bookkeeping is out of sync. Recovered by reclaiming the tray's own home slot.");
+            _slotOccupant[homeIndex] = tray;
+            _slotState[homeIndex] = SlotState.Reserved;
+            return _slotPoses[homeIndex];
         }
 
         public void ConfirmReturn(TrayController tray)

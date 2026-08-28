@@ -1,4 +1,4 @@
-#if !NOT_UNITY3D
+#if UNITY_EDITOR
 
 using System.IO;
 using UnityEditor;

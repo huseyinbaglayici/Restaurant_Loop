@@ -20,6 +20,7 @@ namespace RestaurantLoop.Installers
             Container.DeclareSignal<LoadRequestedSignal>();
 
             // conveyor feel layer (logical fires, ConveyorVisualService replays)
+            Container.DeclareSignal<FoodQueuedForEntrySignal>().OptionalSubscriber();
             Container.DeclareSignal<FoodEnteredBeltSignal>().OptionalSubscriber();
             Container.DeclareSignal<FoodBeltEntryLandedSignal>().OptionalSubscriber();
             Container.DeclareSignal<FoodDockedSignal>().OptionalSubscriber();

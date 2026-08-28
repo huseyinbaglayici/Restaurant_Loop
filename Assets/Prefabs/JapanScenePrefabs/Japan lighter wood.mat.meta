@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Prefabs/JapanScenePrefabs/Japan lighter wood.mat.meta
 guid: 81d3612bd26e53b4eb3722825ea1deaa
 NativeFormatImporter:
+========
+guid: 8837988a8ffea564b973c6f647e05145
+DefaultImporter:
+>>>>>>>> 3f518182e09f6e329560fb0ac1a2641d3c943f32:Assets/JMO Assets/Toony Colors Pro/Demo TCP2/_Legacy Demos BIRP.unitypackage.meta
   externalObjects: {}
   mainObjectFileID: 2100000
   userData: 

@@ -49,6 +49,10 @@ namespace RestaurantLoop.Runtime.Data
                  "spawn there — blocks rapid-click stacking at the belt entry without a fixed input cooldown.")]
         public float MinEntrySpacing = 0.5f;
 
+        [Tooltip("World Y offset above the belt entry an item floats at while it waits for MinEntrySpacing to " +
+                 "clear (rapid clicks) — stacked once per queued item so simultaneous holds don't overlap.")]
+        public float EntryHoverHeight = 1f;
+
         [Header("Queue (QueueAnchor, QueueSpawner)")]
         [Tooltip("World units between consecutive lanes on X, centered under the exit stack's midpoint.")]
         public float QueueLaneSpacing = 1.2f;
