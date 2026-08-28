@@ -16,8 +16,11 @@ namespace RestaurantLoop.Runtime.Conveyor
     // there is nothing of the food's own rotation (a flight's rotation reset, belt spin, a consume punch)
     // for it to ever inherit, on any frame, including the one where the food gets eaten a cell or two in.
     // Leaves the dispenser on the same FoodEnteredBeltSignal that starts the food's own entry flight, so the
-    // two set off together; releases back to the dispenser either with a shrink punch (food fully eaten) or
-    // without one (food completed its lap and docked).
+    // two set off together. If the pool is empty when a food enters, it rides trayless and joins a wait
+    // list — the moment any tray frees up it's handed straight to whoever's been waiting longest (see
+    // HandleItemLeavingBelt) instead of always finishing a trip home first. Only goes back to the dispenser,
+    // with a shrink punch (food fully eaten) or without one (food completed its lap and docked), when
+    // nobody's waiting.
     public class TrayVisualService : IInitializable, ITickable, IDisposable
     {
         private readonly struct DeferredCommand
@@ -46,6 +49,11 @@ namespace RestaurantLoop.Runtime.Conveyor
         // frame. Split from _rides so a tray recalled mid-flight (food eaten on piece 1 or 2, see
         // ReturnRide) is never mistaken for one Tick() should be moving.
         private readonly HashSet<int> _ridingIds = new();
+
+        // Items riding trayless because the pool was empty when they entered, oldest first. The instant any
+        // tray frees up (a food fully eaten or docked), it's handed straight to whichever of these has been
+        // waiting longest — see HandleTrayFreed — instead of always completing a trip home first.
+        private readonly List<int> _traylessIds = new();
 
         private readonly Queue<DeferredCommand> _deferred = new();
 
@@ -126,8 +134,21 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             int id = signal.ItemId;
             if (signal.Visual == null) return;
-            if (!_trayAnchor.TryAcquire(out var tray)) return; // no tray free — item rides without one
 
+            if (!_trayAnchor.TryAcquire(out var tray))
+            {
+                _traylessIds.Add(id); // no tray free now — first in line for the next one that frees up
+                return;
+            }
+
+            StartTrayEntry(id, tray);
+        }
+
+        // Shared by a fresh entry and a tray handed off mid-belt to whichever item has been waiting longest
+        // (see HandleTrayFreed) — either way it's the same trip: fly from wherever the tray currently is to
+        // this item's live position, turning flat alongside it, then ride it from Tick() once landed.
+        private void StartTrayEntry(int id, TrayController tray)
+        {
             _rides[id] = tray;
 
             Vector3 TargetPosition()
@@ -151,26 +172,43 @@ namespace RestaurantLoop.Runtime.Conveyor
                 () => _ridingIds.Add(id));
         }
 
-        private void OnFoodDocked(FoodDockedSignal signal) => ReturnRide(signal.ItemId, withPunch: false);
+        private void OnFoodDocked(FoodDockedSignal signal) => HandleItemLeavingBelt(signal.ItemId, withPunch: false);
 
         private void OnFoodConsumed(FoodConsumedSignal signal)
         {
             if (!signal.ItemFullyConsumed) return; // partial take: item (and its tray) stay on the belt
-            ReturnRide(signal.ItemId, withPunch: true);
+            HandleItemLeavingBelt(signal.ItemId, withPunch: true);
         }
 
-        private void ReturnRide(int id, bool withPunch)
+        // Every item that leaves the belt (docked or fully eaten) comes through here, tray or not — a
+        // trayless one just needs its place in line cleared so a later handoff never targets a food that's
+        // already gone.
+        private void HandleItemLeavingBelt(int id, bool withPunch)
         {
-            if (!_rides.TryGetValue(id, out var tray)) return;
+            _traylessIds.Remove(id);
+
+            if (!_rides.TryGetValue(id, out var tray)) return; // was trayless — nothing to return
             _rides.Remove(id);
             _ridingIds.Remove(id);
             if (tray == null) return;
 
             // Kills the entry flight outright if the food got eaten before this tray even landed (piece 1
             // or 2) — without this the old flight keeps ticking toward a Progress that no longer belongs
-            // to any belt item while the return pose-reset below also runs, and the two fight over the
-            // same transform. Harmless no-op if the tray had already landed and Tick() was driving it.
+            // to any belt item while the return/handoff below also runs, and the two fight over the same
+            // transform. Harmless no-op if the tray had already landed and Tick() was driving it.
             _flightService.Cancel(tray.transform);
+
+            // Someone's been waiting the whole time this tray was out — hand it straight to whoever's been
+            // waiting longest instead of sending it all the way home and dispatching a fresh one afterward.
+            // That round trip is exactly the gap the player saw a new food ride the whole belt with no tray
+            // under it even though one was about to be free: this closes it to roughly nothing.
+            if (_traylessIds.Count > 0)
+            {
+                int waitingId = _traylessIds[0];
+                _traylessIds.RemoveAt(0);
+                StartTrayEntry(waitingId, tray);
+                return;
+            }
 
             Defer(() =>
             {
@@ -202,6 +240,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _rides.Clear();
             _ridingIds.Clear();
+            _traylessIds.Clear();
             _trayAnchor.ResetAll();
         }
     }
