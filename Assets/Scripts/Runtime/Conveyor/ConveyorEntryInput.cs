@@ -104,7 +104,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 if (bestRow != 0 || !TryFindLinkedFrontPartner(stack.LinkId, bestLane, out int partnerLane, out var partnerVisual))
                     return true;
 
-                if (_conveyorManager.ItemCount + _exitStackAnchor.OccupiedCount + 2 > _exitStackAnchor.SlotCount)
+                if (_conveyorManager.ReservedItemCount + _exitStackAnchor.OccupiedCount + 2 > _exitStackAnchor.SlotCount)
                 {
                     TriggerRejectFeedback();
                     return true;
@@ -114,15 +114,17 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _queueSpawner.TryDetachAt(partnerLane, 0, out var linkedPartnerVisual);
                 _queueSpawner.PickFromBottomEnabled = false;
 
-                // The queue visuals themselves fly onto the belt — no despawn + respawn snap.
-                // Partner enters one grid cell behind so the linked pair doesn't spawn stacked on the same cell.
-                _conveyorManager.AddItemAtEntry(stack, linkedVisual, linkedVisual.transform.position);
-                _conveyorManager.AddItemAtEntry(partnerVisual.Stack, linkedPartnerVisual, linkedPartnerVisual.transform.position, -1f);
+                // The queue visuals themselves fly onto the belt — no despawn + respawn snap. Goes through
+                // the pair-atomic entry point so both always land together (1 cell apart) instead of
+                // independently racing the entry-spacing gate and potentially splitting apart.
+                _conveyorManager.AddLinkedPairAtEntry(
+                    stack, linkedVisual, linkedVisual.transform.position,
+                    partnerVisual.Stack, linkedPartnerVisual, linkedPartnerVisual.transform.position);
                 _audioService.PlaySfx(_audioLibrary.FoodSendSfx);
                 return true;
             }
 
-            if (_conveyorManager.ItemCount + _exitStackAnchor.OccupiedCount >= _exitStackAnchor.SlotCount)
+            if (_conveyorManager.ReservedItemCount + _exitStackAnchor.OccupiedCount >= _exitStackAnchor.SlotCount)
             {
                 TriggerRejectFeedback();
                 return false;

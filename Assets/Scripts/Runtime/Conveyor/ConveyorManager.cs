@@ -22,6 +22,21 @@ namespace RestaurantLoop.Runtime.Conveyor
             public int LastCrossedIndex;
         }
 
+        // A click that can't enter yet (MinEntrySpacing not clear) — already detached from its queue/exit-
+        // stack slot, floating above the entry cell (see FoodQueuedForEntrySignal) until Tick() lets it in.
+        private class PendingEntry
+        {
+            public FoodStackData Stack;
+            public FoodItemController Visual;
+            public Vector3 HoverWorldPosition;
+            public float EntryProgress;
+
+            // Set for a linked pair's first half — the second half, dequeued in the same Tick() so the
+            // pair always enters together instead of splitting apart based on however busy the entry
+            // happened to be when they were clicked (see AddLinkedPairAtEntry).
+            public PendingEntry Partner;
+        }
+
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ConveyorTuning _tuning;
@@ -31,28 +46,70 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private readonly List<Vector3> _pathWorldPositions = new();
         private readonly List<BeltItem> _items = new();
+        private readonly Queue<PendingEntry> _pendingEntries = new();
+
+        // Ids of items whose entry flight hasn't visually landed yet (see FoodBeltEntryLandedSignal below).
+        // MinEntrySpacing alone assumes every entry flight lands in about the time it takes Progress to
+        // clear the spacing — true for a short hop like the exit stack, false for a queue lane far from the
+        // belt: that flight can still be mid-air when Progress alone would've reopened the gate, so a
+        // same-frame second entry lands right on top of it. This tracks actual arrival instead of guessing.
+        private readonly HashSet<int> _entryFlightsInProgress = new();
 
         private readonly List<(int PathIndex, FoodItemController Visual)> _crossingsThisFrame = new();
         public IReadOnlyList<(int PathIndex, FoodItemController Visual)> CrossingsThisFrame => _crossingsThisFrame;
 
         private int _nextItemId;
 
+        // Belt items only — GetVisualAt(i) indexes _items, so QueueLinkVisualizer's 0..ItemCount loop
+        // must stay in bounds with it. Capacity checks that also need to count hovering entries should
+        // use ReservedItemCount instead.
         public int ItemCount => _items.Count;
+
+        // ItemCount plus items still hovering above the entry (already detached from queue/exit-stack,
+        // just not logically on the belt yet) — what ConveyorEntryInput should gate exit-stack capacity
+        // against, so a burst of rapid clicks can't reserve more slots than actually exist. A linked pair
+        // is one PendingEntry with a Partner, so it counts as 2.
+        public int ReservedItemCount
+        {
+            get
+            {
+                int count = _items.Count;
+                foreach (var pending in _pendingEntries)
+                    count += pending.Partner != null ? 2 : 1;
+                return count;
+            }
+        }
+
         public int PathLength => _pathWorldPositions.Count;
 
         // True once the belt's newest item has moved far enough past Progress 0 that a fresh spawn there
-        // won't visually overlap it. Checked by ConveyorEntryInput before it commits an item to the belt.
+        // won't visually overlap it. Checked internally by AddItemAtEntry/Tick to gate the pending-entry
+        // queue below — callers never need to check this themselves.
         public bool CanAcceptEntry()
         {
+            if (_entryFlightsInProgress.Count > 0) return false;
+
             for (int i = 0; i < _items.Count; i++)
                 if (_items[i].Progress < _tuning.MinEntrySpacing) return false;
 
             return true;
         }
 
+        private void OnFoodBeltEntryLanded(FoodBeltEntryLandedSignal signal) => _entryFlightsInProgress.Remove(signal.ItemId);
+
         // Mirrors QueueSpawner.TryGetVisual so callers (e.g. QueueLinkVisualizer) can enumerate belt
         // items the same way they enumerate queue items, without exposing the BeltItem type itself.
         public FoodItemController GetVisualAt(int index) => _items[index].Visual;
+
+        // Lets ConveyorVisualService re-sync its own (separately tracked) visual Progress to the real
+        // logical value once an entry flight lands — see the long comment on that call site for why.
+        public float GetProgressById(int itemId)
+        {
+            for (int i = 0; i < _items.Count; i++)
+                if (_items[i].Id == itemId) return _items[i].Progress;
+
+            return 0f;
+        }
 
         public ConveyorManager(
             ConveyorLevelDataSO level,
@@ -72,6 +129,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Initialize()
         {
+            _signalBus.Subscribe<FoodBeltEntryLandedSignal>(OnFoodBeltEntryLanded);
+
             var orderedPath = _level.BakedPath.OrderedPath;
             if (orderedPath.Count == 0)
             {
@@ -119,9 +178,11 @@ namespace RestaurantLoop.Runtime.Conveyor
         // from where it currently sits. Logically the item is on the belt entry right away — the flight
         // chases the belt slot's live position (SampleWorldPosition keeps advancing every Tick), so it
         // catches up naturally instead of either layer waiting on the other.
-        // entryProgress lets two items entering together (linked pair) land a grid apart instead of
-        // stacking on the same cell — pass a small negative value to place an item behind the entry.
-        // Callers are expected to have already checked CanAcceptEntry() — see ConveyorEntryInput.
+        // A linked pair must not come through here twice — see AddLinkedPairAtEntry below. Two separate
+        // calls can independently land on either side of the pending queue and end up entering many
+        // seconds apart depending on how busy the entry happens to be, which is the bug that method fixes.
+        // Callers don't need to check CanAcceptEntry() themselves: if the entry cell is occupied this
+        // holds the item above the belt and lets it in once Tick() sees room (see PendingEntry above).
         public void AddItemAtEntry(FoodStackData stack, FoodItemController reusedVisual, Vector3 sourceWorldPosition, float entryProgress = 0f)
         {
             if (_pathWorldPositions.Count == 0) return;
@@ -132,7 +193,68 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return;
             }
 
-            AddItem(stack, reusedVisual, entryProgress, sourceWorldPosition, playEntryFlight: true);
+            // Fast path: nothing else waiting and the entry cell is clear — enters immediately, same as
+            // before this queue existed. Only rapid-clicked overflow ever takes the pending path below.
+            if (_pendingEntries.Count == 0 && CanAcceptEntry())
+            {
+                AddItem(stack, reusedVisual, entryProgress, sourceWorldPosition, playEntryFlight: true);
+                return;
+            }
+
+            // Entry's occupied — hold it above the belt instead of dropping the click. Stacks one hover
+            // height per queued item so several rapid clicks float at distinct heights, not on top of
+            // each other. The oldest (lowest) one is exactly the one Tick() lets in first.
+            var hoverPosition = _pathWorldPositions[0] +
+                Vector3.up * (_tuning.EntryHoverHeight * (_pendingEntries.Count + 1));
+
+            _pendingEntries.Enqueue(new PendingEntry
+            {
+                Stack = stack,
+                Visual = reusedVisual,
+                HoverWorldPosition = hoverPosition,
+                EntryProgress = entryProgress
+            });
+
+            _signalBus.Fire(new FoodQueuedForEntrySignal
+            {
+                Visual = reusedVisual,
+                SourceWorldPosition = sourceWorldPosition,
+                HoverWorldPosition = hoverPosition
+            });
+        }
+
+        // Two linked queue items clicked as one: admits both on the same CanAcceptEntry() check so they
+        // always enter together, at their usual 1-cell gap (A at the entry, B one cell behind), instead
+        // of racing through AddItemAtEntry independently and potentially getting split across the pending
+        // queue by however busy the entry happens to be at that moment.
+        public void AddLinkedPairAtEntry(
+            FoodStackData stackA, FoodItemController visualA, Vector3 sourceA,
+            FoodStackData stackB, FoodItemController visualB, Vector3 sourceB)
+        {
+            if (_pathWorldPositions.Count == 0) return;
+            if (visualA == null || visualB == null) return;
+
+            if (_pendingEntries.Count == 0 && CanAcceptEntry())
+            {
+                AddItem(stackA, visualA, 0f, sourceA, playEntryFlight: true);
+                AddItem(stackB, visualB, -1f, sourceB, playEntryFlight: true);
+                return;
+            }
+
+            // Both hover at the same height, B one cell behind A along the entry direction — same visual
+            // relationship they'll have once they land, so the pair reads as linked the whole time it waits.
+            var hoverA = _pathWorldPositions[0] + Vector3.up * (_tuning.EntryHoverHeight * (_pendingEntries.Count + 1));
+            Vector3 entryDir = _pathWorldPositions.Count > 1
+                ? _pathWorldPositions[0] - _pathWorldPositions[1]
+                : Vector3.back;
+            var hoverB = hoverA + entryDir;
+
+            var pendingB = new PendingEntry { Stack = stackB, Visual = visualB, HoverWorldPosition = hoverB, EntryProgress = -1f };
+            var pendingA = new PendingEntry { Stack = stackA, Visual = visualA, HoverWorldPosition = hoverA, EntryProgress = 0f, Partner = pendingB };
+            _pendingEntries.Enqueue(pendingA);
+
+            _signalBus.Fire(new FoodQueuedForEntrySignal { Visual = visualA, SourceWorldPosition = sourceA, HoverWorldPosition = hoverA });
+            _signalBus.Fire(new FoodQueuedForEntrySignal { Visual = visualB, SourceWorldPosition = sourceB, HoverWorldPosition = hoverB });
         }
 
         // Entry cell (index 0) gets its own crossing on the item's first Tick(), same as every other
@@ -155,6 +277,10 @@ namespace RestaurantLoop.Runtime.Conveyor
             };
             _items.Add(item);
 
+            // Set before firing: for playEntryFlight the landed signal only ever comes back later (the
+            // flight is ticked over future frames), but staying correct even if that ever changed is cheap.
+            if (playEntryFlight) _entryFlightsInProgress.Add(item.Id);
+
             _signalBus.Fire(new FoodEnteredBeltSignal
             {
                 ItemId = item.Id,
@@ -176,6 +302,19 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _items.RemoveAt(i);
             }
 
+            // Hovering entries were already detached from their queue/exit-stack slot and never joined
+            // _items — without this they'd leak, floating forever with nothing left owning them.
+            while (_pendingEntries.Count > 0)
+            {
+                var pending = _pendingEntries.Dequeue();
+                _foodPool.Despawn(pending.Visual);
+                if (pending.Partner != null) _foodPool.Despawn(pending.Partner.Visual);
+            }
+
+            // The visual layer cancels in-flight flights silently on BeltClearedSignal (no landed signal
+            // ever fires for them) — without this the gate would stay shut forever after any belt clear.
+            _entryFlightsInProgress.Clear();
+
             _signalBus.Fire(new BeltClearedSignal());
         }
 
@@ -191,6 +330,17 @@ namespace RestaurantLoop.Runtime.Conveyor
             for (int i = _items.Count - 1; i >= 0; i--)
             {
                 var item = _items[i];
+
+                // Held at its entry value for as long as its visual is still flying in from the queue/
+                // hover/exit-stack — exactly mirroring ConveyorVisualService, which freezes its own copy of
+                // Progress the same way for the same reason (see BeltVisual.IsEnteringBelt). Advancing this
+                // one without the visual used to mean the logical item was already a cell or more down the
+                // belt by the time its flight landed — CanAcceptEntry() would read that as "clear" and let
+                // the next item in while this one's visual was still arriving, and landing itself meant
+                // jumping the visual forward to catch up, which is the snap this is here to prevent. Held
+                // equal the whole time, there's nothing to catch up to.
+                if (_entryFlightsInProgress.Contains(item.Id)) continue;
+
                 item.Progress += delta;
 
                 if (item.Progress >= lastIndex)
@@ -234,6 +384,20 @@ namespace RestaurantLoop.Runtime.Conveyor
                 for (int idx = Mathf.Max(0, item.LastCrossedIndex + 1); idx <= newIndex; idx++)
                     _crossingsThisFrame.Add((idx, item.Visual));
                 item.LastCrossedIndex = newIndex;
+            }
+
+            // Let waiting entries in now that this frame's movement may have cleared the entry cell.
+            // Adding one drops CanAcceptEntry() back to false immediately (its own Progress starts below
+            // MinEntrySpacing), so this never lets two in on the same frame.
+            while (_pendingEntries.Count > 0 && CanAcceptEntry())
+            {
+                var pending = _pendingEntries.Dequeue();
+                AddItem(pending.Stack, pending.Visual, pending.EntryProgress, pending.HoverWorldPosition, playEntryFlight: true);
+
+                // Partner goes in the same pass, unconditionally — re-checking CanAcceptEntry() here would
+                // always fail (the line above just added an item at Progress 0) and split the pair again.
+                if (pending.Partner != null)
+                    AddItem(pending.Partner.Stack, pending.Partner.Visual, pending.Partner.EntryProgress, pending.Partner.HoverWorldPosition, playEntryFlight: true);
             }
         }
 
@@ -297,8 +461,18 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Dispose()
         {
+            _signalBus.TryUnsubscribe<FoodBeltEntryLandedSignal>(OnFoodBeltEntryLanded);
+
             foreach (var item in _items) _foodPool.Despawn(item.Visual);
             _items.Clear();
+
+            foreach (var pending in _pendingEntries)
+            {
+                _foodPool.Despawn(pending.Visual);
+                if (pending.Partner != null) _foodPool.Despawn(pending.Partner.Visual);
+            }
+            _pendingEntries.Clear();
+            _entryFlightsInProgress.Clear();
         }
     }
 }

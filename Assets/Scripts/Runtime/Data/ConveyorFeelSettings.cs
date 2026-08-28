@@ -57,11 +57,12 @@ namespace RestaurantLoop.Runtime.Data
         public FlightTuning ConsumeToCustomer = new() { Speed = 14f, ArcHeight = 0.8f };
 
         [Header("Serving tray")]
+        // ResetRotationOnArrive off: TrayController drives its own rotation the whole way (a dedicated
+        // local-rotate tween in EnterBelt, timed to this flight's own duration) and is never reparented to
+        // the food it carries — if this flight also reset rotation on arrival, it would snap the tray back
+        // to its dispenser pose the instant it lands, undoing that tween a frame before it's done.
         [Tooltip("Dispenser -> belt entry flight (tray leaving its resting spot to catch up with its food).")]
-        public FlightTuning DispenserToBelt = new() { Speed = 12f, ArcHeight = 0.3f };
-
-        [Tooltip("Seconds for the tray's upright <-> flat rotation, played alongside the Dispenser->Belt flight.")]
-        public float TrayRotateDuration = 0.25f;
+        public FlightTuning DispenserToBelt = new() { Speed = 12f, ArcHeight = 0.3f, ResetRotationOnArrive = false };
 
         [Tooltip("Seconds for each half (shrink, then grow back) of the tray's return-to-dispenser pop — " +
                  "it shrinks away where it stands, teleports to its resting pose, then grows back in. No " +

@@ -1,55 +1,40 @@
 using System;
 using DG.Tweening;
-using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    public class CustomerController : MonoBehaviour, IPoolable<Vector3, float, FoodStackData>
+    // Order-widget lifecycle lives in CustomerSpawner, not here — this keeps CustomerController free
+    // of scene-scoped dependencies (CustomerOrderWidget.Pool needs GameplayScene's own Canvas refs),
+    // which is what lets CustomerController.Pool itself live in ProjectContext/DDOL and survive scene
+    // reloads instead of being torn down and reprewarmed every level.
+    public class CustomerController : MonoBehaviour, IPoolable<Vector3, float>
     {
         // World-space handoff point the consumed FoodItemController flies to (ConveyorVisualService).
         // Should sit on the character's hand bone, not the UI canvas.
         [SerializeField] private Transform _foodHandoffAnchor;
 
         [SerializeField] private CustomerPlayableAnimator _playableAnimator;
+        [SerializeField] private CustomerVisualVariantPicker _visualVariantPicker;
 
-        [Inject] private CustomerOrderWidget.Pool _orderWidgetPool;
-
-        // Matches the old per-customer Canvas's anchoredPosition.y — the bubble always sat this far
-        // above the customer's pivot, unaffected by the customer's own facing (see ApplySecondOrder
-        // history: canvasRoot's local rotation canceled the customer's Y rotation, net world rotation
-        // was always identity).
-        private const float OrderBubbleHeight = 3f;
-
-        private CustomerOrderWidget _orderWidget;
         private Tween _consumePunchTween;
 
         public Transform FoodHandoffAnchor => _foodHandoffAnchor;
 
-        public void OnSpawned(Vector3 position, float worldYRotation, FoodStackData order)
+        public void OnSpawned(Vector3 position, float worldYRotation)
         {
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, worldYRotation, 0f));
-
-            var widgetPosition = position + Vector3.up * OrderBubbleHeight;
-            _orderWidget = _orderWidgetPool.Spawn(widgetPosition, Quaternion.identity);
-            ApplyOrder(order);
-            ApplySecondOrder(false, default);
             gameObject.SetActive(true);
 
+            _visualVariantPicker?.PickRandom();
             if (_playableAnimator != null) _playableAnimator.PlayIdleWithRandomOffset();
         }
 
         public void OnDespawned()
         {
             _consumePunchTween?.Kill();
-
-            if (_orderWidget != null)
-            {
-                _orderWidgetPool.Despawn(_orderWidget);
-                _orderWidget = null;
-            }
-
+            _visualVariantPicker?.ReleaseActive();
             gameObject.SetActive(false);
         }
 
@@ -76,17 +61,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _playableAnimator.PlayServeReaction(hasSecondOrderRemaining, onComplete);
         }
 
-        // Fully served: the order UI should read as "done" the instant it happens, not linger through
-        // the reaction animation until the whole customer despawns.
-        public void HideOrderUI() => _orderWidget?.SetVisible(false);
-
-        public void ApplyOrder(FoodStackData order, bool isHidden = false) =>
-            _orderWidget?.ApplyOrder(order, isHidden);
-
-        public void ApplySecondOrder(bool hasSecondOrder, FoodStackData secondOrder) =>
-            _orderWidget?.ApplySecondOrder(hasSecondOrder, secondOrder);
-
-        public class Pool : MonoPoolableMemoryPool<Vector3, float, FoodStackData, CustomerController>
+        public class Pool : MonoPoolableMemoryPool<Vector3, float, CustomerController>
         {
         }
     }

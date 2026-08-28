@@ -160,17 +160,14 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
 
             half _Vibrance;
             half _Brightness;
-        CBUFFER_END
 
-        UNITY_INSTANCING_BUFFER_START(PerInstanceProps)
-            UNITY_DEFINE_INSTANCED_PROP(half4, _BaseColor)
-            UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)
-        UNITY_INSTANCING_BUFFER_END(PerInstanceProps)
+            half4 _BaseColor;
+            float4 _BaseMap_ST;
+        CBUFFER_END
 
         float2 CandyTransformTex(float2 uv)
         {
-            float4 st = UNITY_ACCESS_INSTANCED_PROP(PerInstanceProps, _BaseMap_ST);
-            return uv * st.xy + st.zw;
+            return uv * _BaseMap_ST.xy + _BaseMap_ST.zw;
         }
 
         TEXTURE2D(_BaseMap);
@@ -326,7 +323,7 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                half4 baseColor = UNITY_ACCESS_INSTANCED_PROP(PerInstanceProps, _BaseColor);
+                half4 baseColor = _BaseColor;
 
                 #if defined(_VERTEXCOLOR_ON)
                     half4 vertexColor = input.color;
@@ -484,7 +481,7 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 half a = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).a
-                    * UNITY_ACCESS_INSTANCED_PROP(PerInstanceProps, _BaseColor).a;
+                    * _BaseColor.a;
                 ClipAlpha(a);
                 return 0;
             }
@@ -543,7 +540,7 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 half a = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).a
-                    * UNITY_ACCESS_INSTANCED_PROP(PerInstanceProps, _BaseColor).a;
+                    * _BaseColor.a;
                 ClipAlpha(a);
                 return 0;
             }
@@ -609,7 +606,7 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 half a = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).a
-                    * UNITY_ACCESS_INSTANCED_PROP(PerInstanceProps, _BaseColor).a;
+                    * _BaseColor.a;
                 ClipAlpha(a);
                 return half4(normalize(input.normalWS), 0.0h);
             }

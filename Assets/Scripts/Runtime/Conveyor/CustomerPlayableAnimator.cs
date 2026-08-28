@@ -16,23 +16,31 @@ namespace RestaurantLoop.Runtime.Conveyor
         [Inject] private CustomerAnimationSet _clips;
 
         private Animator _animator;
+        private AnimationPlayableOutput _output;
         private PlayableGraph _graph;
         private AnimationMixerPlayable _mixer;
         private AnimationClipPlayable _current;
         private AnimationClipPlayable _incoming;
         private Coroutine _crossfadeRoutine;
 
-        private void Awake()
+private void Awake()
         {
-            _animator = GetComponentInChildren<Animator>();
-            if (_animator == null) return;
+            _animator = GetComponentInChildren<Animator>(true);
 
             _graph = PlayableGraph.Create($"CustomerAnim_{name}");
             _mixer = AnimationMixerPlayable.Create(_graph, 2);
 
-            var output = AnimationPlayableOutput.Create(_graph, "CustomerOutput", _animator);
-            output.SetSourcePlayable(_mixer);
+            _output = AnimationPlayableOutput.Create(_graph, "CustomerOutput", _animator);
+            _output.SetSourcePlayable(_mixer);
         }
+
+// Rebinds the graph's output to a different variant's Animator (see CustomerVisualVariantPicker).
+        public void SetAnimator(Animator animator)
+        {
+            _animator = animator;
+            if (_graph.IsValid()) _output.SetTarget(_animator);
+        }
+
 
         private void OnDestroy()
         {

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
@@ -9,6 +10,8 @@ namespace RestaurantLoop.Installers
     {
         [SerializeField] private int _conveyorPieceInitialSize = 30;
         [SerializeField] private int _foodItemInitialSize = 20;
+        [SerializeField] private int _customerInitialSize = 10;
+        [SerializeField] private int _customerVisualInitialSizePerVariant = 3;
 
         public override void InstallBindings()
         {
@@ -32,6 +35,82 @@ namespace RestaurantLoop.Installers
             BindFeelSettings();
             BindPlacementSettings();
             BindTableSettings();
+            BindCustomerPool();
+        }
+
+        // ProjectContext-scoped so customers survive GameplayScene unload/reload instead of being
+        // torn down and reprewarmed every level (see CustomerController — it no longer depends on
+        // anything scene-scoped, which is what makes this safe; CustomerOrderWidget.Pool stays in
+        // ConveyorInstaller since its Canvas refs are genuinely scene-local).
+        private void BindCustomerPool()
+        {
+            var customerSettings = Resources.Load<CustomerPrefabSettings>("CustomerPrefabSettings");
+            if (customerSettings == null || customerSettings.CustomerPrefab == null)
+            {
+                Debug.LogError(
+                    "[PoolInstaller] CustomerPrefabSettings.asset missing or has no CustomerPrefab assigned " +
+                    "under Assets/Resources — customer pool not bound.");
+                return;
+            }
+
+            Container.BindInstance(customerSettings).AsSingle();
+            Container.BindInstance(_customerInitialSize).WithId("CustomerPoolSize").AsCached();
+
+            var animationSet = Resources.Load<CustomerAnimationSet>("CustomerAnimationSet");
+            if (animationSet == null)
+            {
+                Debug.LogError(
+                    "[PoolInstaller] CustomerAnimationSet.asset not found under Assets/Resources — " +
+                    "create it via RestaurantLoop/Customer Animation Set, customer pool not bound.");
+                return;
+            }
+
+            Container.BindInstance(animationSet).AsSingle();
+
+            Container.BindMemoryPool<CustomerController, CustomerController.Pool>()
+                .WithInitialSize(_customerInitialSize)
+                .FromComponentInNewPrefab(customerSettings.CustomerPrefab)
+                .UnderTransformGroup("Customers")
+                .NonLazy();
+
+            BindCustomerVisualPools();
+        }
+
+        // One small pool per variant instead of every occupant slot pre-instantiating all 6 — sized
+        // for concurrent on-screen customers, not per-slot (see PF_Customer_Occupant history).
+        private void BindCustomerVisualPools()
+        {
+            var visualSettings = Resources.Load<CustomerVisualVariantSettings>("CustomerVisualVariantSettings");
+            if (visualSettings == null || visualSettings.Variants == null || visualSettings.Variants.Length == 0)
+            {
+                Debug.LogError(
+                    "[PoolInstaller] CustomerVisualVariantSettings.asset missing or empty under " +
+                    "Assets/Resources — customer visuals not bound.");
+                return;
+            }
+
+            var boundVariants = new List<CustomerVariant>();
+
+            foreach (var entry in visualSettings.Variants)
+            {
+                if (entry.Prefab == null)
+                {
+                    Debug.LogError($"[PoolInstaller] No prefab assigned for variant {entry.Variant} " +
+                                   "in CustomerVisualVariantSettings.");
+                    continue;
+                }
+
+                Container.BindMemoryPool<CustomerVisualInstance, CustomerVisualInstance.Pool>()
+                    .WithId(entry.Variant)
+                    .WithInitialSize(_customerVisualInitialSizePerVariant)
+                    .FromComponentInNewPrefab(entry.Prefab)
+                    .UnderTransformGroup("CustomerVisuals")
+                    .NonLazy();
+
+                boundVariants.Add(entry.Variant);
+            }
+
+            Container.Bind<IReadOnlyList<CustomerVariant>>().FromInstance(boundVariants.ToArray()).AsCached();
         }
 
         private void BindTableSettings()

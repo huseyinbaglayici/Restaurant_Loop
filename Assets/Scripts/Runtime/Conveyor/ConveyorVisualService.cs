@@ -70,6 +70,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Initialize()
         {
+            _signalBus.Subscribe<FoodQueuedForEntrySignal>(OnFoodQueuedForEntry);
             _signalBus.Subscribe<FoodEnteredBeltSignal>(OnFoodEnteredBelt);
             _signalBus.Subscribe<FoodDockedSignal>(OnFoodDocked);
             _signalBus.Subscribe<FoodConsumedSignal>(OnFoodConsumed);
@@ -78,6 +79,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Dispose()
         {
+            _signalBus.TryUnsubscribe<FoodQueuedForEntrySignal>(OnFoodQueuedForEntry);
             _signalBus.TryUnsubscribe<FoodEnteredBeltSignal>(OnFoodEnteredBelt);
             _signalBus.TryUnsubscribe<FoodDockedSignal>(OnFoodDocked);
             _signalBus.TryUnsubscribe<FoodConsumedSignal>(OnFoodConsumed);
@@ -132,6 +134,22 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
+        // Item was detached from its queue/exit-stack slot but the belt entry hasn't cleared MinEntrySpacing
+        // yet — flies it up to hover above the entry instead of leaving it mid-air where it was picked from.
+        // Not added to _beltVisuals: it isn't logically on the belt yet, so belt travel and the tray-follow
+        // signal (which keys off the item actually entering) both correctly ignore it until that happens.
+        private void OnFoodQueuedForEntry(FoodQueuedForEntrySignal signal)
+        {
+            var visual = signal.Visual;
+            if (visual == null) return;
+
+            visual.transform.position = signal.SourceWorldPosition;
+            visual.SetVisualState(FoodVisualState.Opened);
+            visual.SetLocation(FoodLocation.Conveyor);
+
+            _flightService.Launch(visual.transform, signal.HoverWorldPosition, _feel.QueueToBelt);
+        }
+
         private void OnFoodEnteredBelt(FoodEnteredBeltSignal signal)
         {
             int id = signal.ItemId;
@@ -169,6 +187,10 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _feel.QueueToBelt,
                 () =>
                 {
+                    // ConveyorManager holds this same item's logical Progress at its entry value for as
+                    // long as its id is in _entryFlightsInProgress (cleared by the signal fired below) —
+                    // so beltVisual.Progress (frozen here at that same entry value the whole flight) is
+                    // already exactly right the instant this fires. Nothing to catch up on either side.
                     beltVisual.IsEnteringBelt = false;
                     _signalBus.Fire(new FoodBeltEntryLandedSignal { ItemId = id, Visual = visual, Progress = beltVisual.Progress });
                 });

@@ -33,6 +33,16 @@ namespace RestaurantLoop.Signals
         public float Progress;
     }
 
+    // Fired when a click wants an item on the belt but the entry cell hasn't cleared MinEntrySpacing yet.
+    // The item is already detached from its queue/exit-stack slot, so it can't just sit there — it floats
+    // above the entry until ConveyorManager.Tick() dequeues it once CanAcceptEntry() is true again.
+    public class FoodQueuedForEntrySignal
+    {
+        public FoodItemController Visual;
+        public Vector3 SourceWorldPosition;
+        public Vector3 HoverWorldPosition;
+    }
+
     public class FoodDockedSignal
     {
         public int ItemId;
