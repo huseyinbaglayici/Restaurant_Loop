@@ -48,7 +48,6 @@ MonoBehaviour:
     - KinoBloom.Runtime
     - UniTask.DOTween
     - ToonyColorsPro.Demo.Editor
-    - Sirenix.OdinInspector.Modules.UnityMathematics
     showAdvancedSettings: 0
   addMgrToSceneAutomatically: 0
   autoUpdateReferences: 1

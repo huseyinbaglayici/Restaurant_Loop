@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿#if UNITY_EDITOR
+using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -234,3 +235,4 @@ namespace Zenject.ReflectionBaking
         }
     }
 }
+#endif

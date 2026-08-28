@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using System.IO;
 using System.Reflection;
@@ -76,3 +77,4 @@ namespace Zenject.ReflectionBaking
         }
     }
 }
+#endif
