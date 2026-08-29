@@ -1,5 +1,6 @@
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Runtime.Tutorial;
 using RestaurantLoop.Runtime.UI;
 using RestaurantLoop.SceneFlow;
 using TMPro;
@@ -20,6 +21,7 @@ namespace RestaurantLoop.Installers
         [SerializeField] private RectTransform _customerOrderCanvasRoot;
         [SerializeField] private Transform _orderIconsGroup;
         [SerializeField] private Transform _orderTextsGroup;
+        [SerializeField] private TutorialView _tutorialView;
 
         public override void InstallBindings()
         {
@@ -58,6 +60,11 @@ namespace RestaurantLoop.Installers
 
             Container.BindInstance(_levelText).AsSingle();
             Container.BindInterfacesTo<LevelOverlayPresenter>().AsSingle();
+
+            Container.Bind<TutorialTargetRegistry>().AsSingle();
+            Container.BindInterfacesAndSelfTo<TutorialInputGate>().AsSingle();
+            Container.BindInstance(_tutorialView).AsSingle();
+            Container.BindInterfacesAndSelfTo<TutorialController>().AsSingle();
 
             BindCustomerOrderWidgetPool();
         }

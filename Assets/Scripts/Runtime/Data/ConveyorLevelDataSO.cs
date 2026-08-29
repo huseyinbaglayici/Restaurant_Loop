@@ -112,5 +112,9 @@ namespace RestaurantLoop.Runtime.Data
 
         [Header("Queue — fixed supply lanes feeding the belt (always present)")]
         public List<QueueLaneData> Queues = new();
+
+        [Header("Tutorial")]
+        public bool IsTutorial;
+        public List<TutorialStepData> TutorialSteps = new();
     }
 }

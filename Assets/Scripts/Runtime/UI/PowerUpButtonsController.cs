@@ -1,4 +1,7 @@
 using RestaurantLoop.Runtime.Conveyor;
+using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Runtime.Tutorial;
+using RestaurantLoop.Signals;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
@@ -13,18 +16,39 @@ namespace RestaurantLoop.Runtime.UI
         [SerializeField] private Button _buttonExtraTray;
 
         private PowerUpService _powerUpService;
+        private TutorialInputGate _gate;
+        private SignalBus _signalBus;
 
         [Inject]
-        public void Construct(PowerUpService powerUpService)
+        public void Construct(PowerUpService powerUpService, TutorialInputGate gate, SignalBus signalBus)
         {
             _powerUpService = powerUpService;
+            _gate = gate;
+            _signalBus = signalBus;
         }
 
         private void Start()
         {
-            _buttonShuffle.onClick.AddListener(() => _powerUpService.ActivateShuffle());
-            _buttonPickFromBottom.onClick.AddListener(() => _powerUpService.ActivatePickFromBottom());
-            _buttonExtraTray.onClick.AddListener(() => _powerUpService.ActivateExtraTray());
+            _buttonShuffle.onClick.AddListener(() =>
+            {
+                if (!_gate.CanClickPowerUpButton(PowerUpButtonId.Shuffle)) return;
+                _powerUpService.ActivateShuffle();
+                FireActionPerformed(PowerUpButtonId.Shuffle);
+            });
+            _buttonPickFromBottom.onClick.AddListener(() =>
+            {
+                if (!_gate.CanClickPowerUpButton(PowerUpButtonId.PickFromBottom)) return;
+                _powerUpService.ActivatePickFromBottom();
+                FireActionPerformed(PowerUpButtonId.PickFromBottom);
+            });
+            _buttonExtraTray.onClick.AddListener(() =>
+            {
+                if (!_gate.CanClickPowerUpButton(PowerUpButtonId.ExtraTray)) return;
+                if (_powerUpService.ActivateExtraTray()) FireActionPerformed(PowerUpButtonId.ExtraTray);
+            });
         }
+
+        private void FireActionPerformed(PowerUpButtonId id) =>
+            _signalBus.Fire(new TutorialActionPerformedSignal { Kind = TutorialHoverTargetKind.PowerUpButton, PowerUpButton = id });
     }
 }

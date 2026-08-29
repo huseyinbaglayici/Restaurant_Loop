@@ -47,6 +47,10 @@ namespace Editor.LevelEditor
         private bool _eraseMode;
         private Vector2Int? _hoverCell;
         private readonly VisualElement _entityLabelLayer;
+        private Vector2Int? _pickedCell;
+        private System.Action<Vector2Int> _pickCallback;
+
+        public void BeginPick(System.Action<Vector2Int> onPicked) => _pickCallback = onPicked;
 
         public ConveyorGridCanvas()
         {
@@ -169,6 +173,17 @@ namespace Editor.LevelEditor
 
             var cell = CellAt(evt.localPosition);
             if (!InBounds(cell)) return;
+
+            if (_pickCallback != null)
+            {
+                var callback = _pickCallback;
+                _pickCallback = null;
+                _pickedCell = cell;
+                callback(cell);
+                MarkDirtyRepaint();
+                evt.StopPropagation();
+                return;
+            }
 
             if (evt.button == 0 && evt.shiftKey && Mode == CanvasMode.Path)
             {
@@ -496,6 +511,20 @@ namespace Editor.LevelEditor
                 var r = new Rect(_hoverCell.Value.x * CellSize, (GridHeight - 1 - _hoverCell.Value.y) * CellSize, CellSize, CellSize);
                 painter.strokeColor = new Color(1f, 1f, 1f, 0.35f);
                 painter.lineWidth = 1.5f;
+                painter.BeginPath();
+                painter.MoveTo(r.position);
+                painter.LineTo(new Vector2(r.xMax, r.yMin));
+                painter.LineTo(new Vector2(r.xMax, r.yMax));
+                painter.LineTo(new Vector2(r.xMin, r.yMax));
+                painter.ClosePath();
+                painter.Stroke();
+            }
+
+            if (_pickedCell.HasValue)
+            {
+                var r = new Rect(_pickedCell.Value.x * CellSize, (GridHeight - 1 - _pickedCell.Value.y) * CellSize, CellSize, CellSize);
+                painter.strokeColor = new Color(0.95f, 0.75f, 0.15f, 0.9f);
+                painter.lineWidth = 2.5f;
                 painter.BeginPath();
                 painter.MoveTo(r.position);
                 painter.LineTo(new Vector2(r.xMax, r.yMin));

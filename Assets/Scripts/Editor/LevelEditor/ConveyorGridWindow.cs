@@ -25,6 +25,8 @@ namespace Editor.LevelEditor
         private QueueGridCanvas _queueCanvas;
         [SerializeField] private int _queueDepthValue = 6;
         private IntegerField _levelIdField, _widthField, _heightField, _queueDepthField, _amountField;
+        private Toggle _isTutorialField;
+        private Button _tutorialStepsButton;
         private EnumField _difficultyField;
         private Label _cellCountLabel;
         private readonly List<Button> _paletteButtons = new();
@@ -44,6 +46,21 @@ namespace Editor.LevelEditor
             var w = GetWindow<ConveyorGridWindow>();
             w.titleContent = new GUIContent("Conveyor Grid");
             w.minSize = new Vector2(460, 620);
+        }
+
+        public static bool TryBeginCellPick(ConveyorLevelDataSO forDraft, System.Action<Vector2Int> onPicked)
+        {
+            var w = GetWindow<ConveyorGridWindow>();
+            w.Focus();
+
+            if (w._draft != forDraft)
+            {
+                Debug.LogWarning("[ConveyorGridWindow] Open level does not match the tutorial step's level — pick cancelled.");
+                return false;
+            }
+
+            w._canvas.BeginPick(onPicked);
+            return true;
         }
 
         public void CreateGUI()
@@ -102,6 +119,8 @@ namespace Editor.LevelEditor
             _difficultyField.SetValueWithoutNotify(_draft.Difficulty);
             _widthField.SetValueWithoutNotify(_draft.GridWidth);
             _heightField.SetValueWithoutNotify(_draft.GridHeight);
+            _isTutorialField.SetValueWithoutNotify(_draft.IsTutorial);
+            _tutorialStepsButton.SetEnabled(_draft.IsTutorial);
 
             _canvas.GridWidth = _draft.GridWidth;
             _canvas.GridHeight = _draft.GridHeight;
@@ -126,6 +145,18 @@ namespace Editor.LevelEditor
             _difficultyField = new EnumField("Difficulty", LevelDifficulty.None);
             _difficultyField.AddToClassList(Css.Num);
             bar.Add(_difficultyField);
+
+            _isTutorialField = new Toggle("Tutorial");
+            _isTutorialField.RegisterValueChangedCallback(evt =>
+            {
+                _draft.IsTutorial = evt.newValue;
+                _tutorialStepsButton.SetEnabled(evt.newValue);
+            });
+            bar.Add(_isTutorialField);
+
+            _tutorialStepsButton = MakeButton("Edit Tutorial Steps...", () => TutorialStepsWindow.Open(_draft), Css.Btn);
+            _tutorialStepsButton.SetEnabled(false);
+            bar.Add(_tutorialStepsButton);
 
             var sep = new VisualElement();
             sep.AddToClassList(Css.TopbarSep);
@@ -156,6 +187,8 @@ namespace Editor.LevelEditor
             _draft.ConveyorEntities.Clear();
             _draft.Customers.Clear();
             _draft.Queues = Enumerable.Range(0, QueueLaneCount).Select(_ => new QueueLaneData()).ToList();
+            _draft.IsTutorial = false;
+            _draft.TutorialSteps.Clear();
 
             RefreshUiFromDraft();
         }
@@ -179,6 +212,15 @@ namespace Editor.LevelEditor
             asset.ConveyorEntities = new List<ConveyorEntityPlacement>(_draft.ConveyorEntities);
             asset.Customers = new List<CustomerEntity>(_draft.Customers);
             asset.Queues = _draft.Queues.Select(q => new QueueLaneData { Entries = new List<FoodStackData>(q.Entries) })
+                .ToList();
+            asset.IsTutorial = _draft.IsTutorial;
+            asset.TutorialSteps = _draft.TutorialSteps
+                .Select(s => new TutorialStepData
+                {
+                    Text = s.Text, Trigger = s.Trigger, HoverKind = s.HoverKind,
+                    PowerUpButton = s.PowerUpButton, QueueLaneIndex = s.QueueLaneIndex,
+                    QueueRowIndex = s.QueueRowIndex, ConveyorCell = s.ConveyorCell
+                })
                 .ToList();
 
             if (ConveyorPathBaker.TryBake(_draft, out var orderedPath, out var bakeError))
@@ -260,6 +302,15 @@ namespace Editor.LevelEditor
                 .Select(i => i < loaded.Queues.Count
                     ? new QueueLaneData { Entries = new List<FoodStackData>(loaded.Queues[i].Entries) }
                     : new QueueLaneData())
+                .ToList();
+            _draft.IsTutorial = loaded.IsTutorial;
+            _draft.TutorialSteps = loaded.TutorialSteps
+                .Select(s => new TutorialStepData
+                {
+                    Text = s.Text, Trigger = s.Trigger, HoverKind = s.HoverKind,
+                    PowerUpButton = s.PowerUpButton, QueueLaneIndex = s.QueueLaneIndex,
+                    QueueRowIndex = s.QueueRowIndex, ConveyorCell = s.ConveyorCell
+                })
                 .ToList();
 
             RefreshUiFromDraft();

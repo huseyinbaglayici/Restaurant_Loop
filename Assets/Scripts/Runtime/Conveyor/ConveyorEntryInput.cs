@@ -1,6 +1,8 @@
 using RestaurantLoop.Audio;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Runtime.Tutorial;
+using RestaurantLoop.Signals;
 using UnityEngine;
 using Zenject;
 
@@ -19,6 +21,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly Camera _camera;
         private readonly IAudioService _audioService;
         private readonly AudioLibrary _audioLibrary;
+        private readonly TutorialInputGate _gate;
+        private readonly SignalBus _signalBus;
 
         private bool _wasMouseDown;
 
@@ -32,7 +36,9 @@ namespace RestaurantLoop.Runtime.Conveyor
             [Inject(Optional = true)] CameraController cameraController,
             [Inject(Optional = true)] Camera camera,
             IAudioService audioService,
-            AudioLibrary audioLibrary)
+            AudioLibrary audioLibrary,
+            TutorialInputGate gate,
+            SignalBus signalBus)
         {
             _queueAnchor = queueAnchor;
             _queueSpawner = queueSpawner;
@@ -44,6 +50,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             _camera = camera;
             _audioService = audioService;
             _audioLibrary = audioLibrary;
+            _gate = gate;
+            _signalBus = signalBus;
         }
 
         public void Tick()
@@ -94,6 +102,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             if (bestLane < 0) return false;
+            if (!_gate.CanClickQueueLane(bestLane, bestRow)) return true;
 
             var stack = bestVisual.Stack;
             _audioService.PlaySfx(_audioLibrary.FoodClickSfx != null ? _audioLibrary.FoodClickSfx : _audioLibrary.DefaultClickSfx);
@@ -121,6 +130,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                     stack, linkedVisual, linkedVisual.transform.position,
                     partnerVisual.Stack, linkedPartnerVisual, linkedPartnerVisual.transform.position);
                 _audioService.PlaySfx(_audioLibrary.FoodSendSfx);
+                _signalBus.Fire(new TutorialActionPerformedSignal
+                    { Kind = TutorialHoverTargetKind.QueueLane, QueueLaneIndex = bestLane, QueueRowIndex = bestRow });
                 return true;
             }
 
@@ -134,6 +145,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             _queueSpawner.PickFromBottomEnabled = false;
             _conveyorManager.AddItemAtEntry(stack, pickedVisual, pickedVisual.transform.position);
             _audioService.PlaySfx(_audioLibrary.FoodSendSfx);
+            _signalBus.Fire(new TutorialActionPerformedSignal
+                { Kind = TutorialHoverTargetKind.QueueLane, QueueLaneIndex = bestLane, QueueRowIndex = bestRow });
             return true;
         }
 
@@ -181,6 +194,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             if (bestSlot < 0) return false;
+            if (!_gate.CanClickExitStack()) return true;
 
             _audioService.PlaySfx(_audioLibrary.FoodClickSfx != null ? _audioLibrary.FoodClickSfx : _audioLibrary.DefaultClickSfx);
 
