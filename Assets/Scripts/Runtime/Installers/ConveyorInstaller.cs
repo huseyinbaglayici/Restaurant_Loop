@@ -17,6 +17,7 @@ namespace RestaurantLoop.Installers
         [Inject(Id = "CustomerPoolSize")] private int _customerInitialSize;
         [SerializeField] private Camera _mainCamera;
         [SerializeField] private TextMeshProUGUI _levelText;
+        [SerializeField] private TextMeshProUGUI _moneyText;
         [SerializeField] private Transform _trayDispenserRoot;
         [SerializeField] private RectTransform _customerOrderCanvasRoot;
         [SerializeField] private Transform _orderIconsGroup;
@@ -60,6 +61,7 @@ namespace RestaurantLoop.Installers
             Container.Bind<PowerUpService>().AsSingle();
 
             Container.BindInstance(_levelText).AsSingle();
+            Container.Bind<TextMeshProUGUI>().WithId("GameplayMoneyText").FromInstance(_moneyText).AsCached();
             Container.BindInterfacesTo<LevelOverlayPresenter>().AsSingle();
 
             Container.Bind<TutorialTargetRegistry>().AsSingle();

@@ -2,7 +2,9 @@ using RestaurantLoop.Audio;
 using RestaurantLoop.Lives;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.SceneFlow;
 using RestaurantLoop.Signals;
+using TMPro;
 using UnityEngine;
 using Zenject;
 
@@ -16,6 +18,10 @@ namespace RestaurantLoop.Runtime.UI
         [SerializeField] private UnityEngine.UI.Button _buttonKeepPlayingClose;
         [SerializeField] private UnityEngine.UI.Button _buttonTryAgain;
         [SerializeField] private UnityEngine.UI.Button _buttonExit;
+        [SerializeField] private TMP_Text _keepPlayingLevelText;
+        [SerializeField] private TMP_Text _failedLevelText;
+        [SerializeField] private TMP_Text _failedRibbonLevelText;
+        [SerializeField] private TMP_Text _coinRewardText;
 
         private CustomerConsumeService _consumeService;
         private ConveyorManager _conveyorManager;
@@ -26,6 +32,7 @@ namespace RestaurantLoop.Runtime.UI
         private IAudioService _audioService;
         private AudioLibrary _audioLibrary;
         private ILivesService _livesService;
+        private CurrentLevelProvider _currentLevelProvider;
 
         [Inject]
         public void Construct(
@@ -37,7 +44,8 @@ namespace RestaurantLoop.Runtime.UI
             PowerUpService powerUpService,
             [Inject(Optional = true)] IAudioService audioService = null,
             [Inject(Optional = true)] AudioLibrary audioLibrary = null,
-            [Inject(Optional = true)] ILivesService livesService = null)
+            [Inject(Optional = true)] ILivesService livesService = null,
+            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;
@@ -48,6 +56,7 @@ namespace RestaurantLoop.Runtime.UI
             _audioService = audioService;
             _audioLibrary = audioLibrary;
             _livesService = livesService;
+            _currentLevelProvider = currentLevelProvider;
         }
 
         private void Start()
@@ -72,6 +81,7 @@ namespace RestaurantLoop.Runtime.UI
 
         private void ShowKeepPlaying()
         {
+            UpdateKeepPlayingTexts();
             _panelKeepPlaying.SetActive(true);
             Time.timeScale = 0f;
 
@@ -85,6 +95,45 @@ namespace RestaurantLoop.Runtime.UI
                 {
                     _audioService.PlaySfx(_audioLibrary.FailSfx);
                 }
+            }
+        }
+
+        private void UpdateKeepPlayingTexts()
+        {
+            if (_currentLevelProvider == null || _currentLevelProvider.Current == null) return;
+            int levelId = _currentLevelProvider.Current.LevelId;
+
+            if (_keepPlayingLevelText != null)
+            {
+                _keepPlayingLevelText.text = $"LEVEL {levelId}";
+            }
+        }
+
+        private void UpdateFailedTexts()
+        {
+            if (_currentLevelProvider == null || _currentLevelProvider.Current == null) return;
+            int levelId = _currentLevelProvider.Current.LevelId;
+
+            if (_failedLevelText != null)
+            {
+                _failedLevelText.text = $"Level {levelId}";
+            }
+
+            if (_failedRibbonLevelText != null)
+            {
+                _failedRibbonLevelText.text = $"LEVEL {levelId}";
+            }
+
+            if (_coinRewardText != null)
+            {
+                int reward = _currentLevelProvider.Current.Difficulty switch
+                {
+                    LevelDifficulty.Hard => 75,
+                    LevelDifficulty.SuperHard => 100,
+                    LevelDifficulty.Bonus => 100,
+                    _ => 50
+                };
+                _coinRewardText.text = reward.ToString();
             }
         }
 
@@ -109,6 +158,7 @@ namespace RestaurantLoop.Runtime.UI
         {
             _livesService?.ConsumeLife();
             _panelKeepPlaying.SetActive(false);
+            UpdateFailedTexts();
             _panelFailed.SetActive(true);
             Time.timeScale = 0f;
         }

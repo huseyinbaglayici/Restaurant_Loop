@@ -5,6 +5,7 @@ using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Save;
 using RestaurantLoop.SceneFlow;
 using RestaurantLoop.Signals;
+using TMPro;
 using UnityEngine;
 using Zenject;
 
@@ -14,6 +15,8 @@ namespace RestaurantLoop.Runtime.UI
     {
         [SerializeField] private GameObject _panelCompleted;
         [SerializeField] private UnityEngine.UI.Button _buttonNext;
+        [SerializeField] private TMP_Text _levelText;
+        [SerializeField] private TMP_Text _coinRewardText;
 
         private CustomerConsumeService _consumeService;
         private ConveyorManager _conveyorManager;
@@ -75,6 +78,7 @@ namespace RestaurantLoop.Runtime.UI
             Time.timeScale = 0f;
             _panelCompleted.SetActive(true);
 
+            UpdateTexts();
             AwardLevelCoins();
 
             if (_audioService != null)
@@ -90,18 +94,39 @@ namespace RestaurantLoop.Runtime.UI
             }
         }
 
-        private void AwardLevelCoins()
+        private void UpdateTexts()
         {
-            if (_economyService == null || _currentLevelProvider == null || _currentLevelProvider.Current == null) return;
+            if (_currentLevelProvider == null || _currentLevelProvider.Current == null) return;
 
-            int reward = _currentLevelProvider.Current.Difficulty switch
+            int levelId = _currentLevelProvider.Current.LevelId;
+            if (_levelText != null)
+            {
+                _levelText.text = $"Level {levelId}";
+            }
+
+            int reward = GetRewardCoins(_currentLevelProvider.Current.Difficulty);
+            if (_coinRewardText != null)
+            {
+                _coinRewardText.text = reward.ToString();
+            }
+        }
+
+        private int GetRewardCoins(LevelDifficulty difficulty)
+        {
+            return difficulty switch
             {
                 LevelDifficulty.Hard => 75,
                 LevelDifficulty.SuperHard => 100,
                 LevelDifficulty.Bonus => 100,
                 _ => 50
             };
+        }
 
+        private void AwardLevelCoins()
+        {
+            if (_economyService == null || _currentLevelProvider == null || _currentLevelProvider.Current == null) return;
+
+            int reward = GetRewardCoins(_currentLevelProvider.Current.Difficulty);
             _economyService.AddCoins(reward);
         }
 
