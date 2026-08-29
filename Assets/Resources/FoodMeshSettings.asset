@@ -17,7 +17,7 @@ MonoBehaviour:
   CustomerBubbleHeight: 3
   ScaleBubbleWithCamera: 0
   BubbleCameraScaleMultiplier: 1
-  StackAmountFont: {fileID: 11400000, guid: 91ae6420076e95449b0bc5fbf8519245, type: 2}
+  StackAmountFont: {fileID: 11400000, guid: 48caf0496452fbe4593cb66fb79f3861, type: 2}
   _entries:
   - Type: 0
     OpenedPrefab: {fileID: 2050022874529901392, guid: f72e0b0ffc690824db8ceee7d07c2bc2,

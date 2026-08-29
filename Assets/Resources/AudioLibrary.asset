@@ -26,7 +26,7 @@ MonoBehaviour:
   ConveyorLoopSfx: {fileID: 8300000, guid: c01822a72c26d954380c93f5956d99d4, type: 3}
   CustomerRevealSfx: {fileID: 8300000, guid: a1bc371ee08942a49b7a133941e4420b, type: 3}
   FoodDropToRackSfx: {fileID: 8300000, guid: f73ea7870852a034e8e363788e2e715e, type: 3}
-  WinSfx: {fileID: 8300000, guid: 05ebc9793dca8f542b1660c64876ad3a, type: 3}
-  FailSfx: {fileID: 8300000, guid: 9e2e51321a4a17244bd9224864d84664, type: 3}
+  WinSfx: {fileID: 8300000, guid: 6f6ec5fd0ca0eab4b92084978cbdbaf8, type: 3}
+  FailSfx: {fileID: 8300000, guid: 17bb5916feead7544a3720489e3c70fb, type: 3}
   SfxVolume: 0.2
   ConveyorVolume: 0.5

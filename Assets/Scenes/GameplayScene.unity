@@ -4553,7 +4553,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -9640,6 +9640,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _panelCompleted: {fileID: 736949798}
   _buttonNext: {fileID: 2142684842}
+  _levelText: {fileID: 0}
+  _coinRewardText: {fileID: 667325878}
 --- !u!1 &1104618127
 GameObject:
   m_ObjectHideFlags: 0
@@ -14839,7 +14841,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -15747,6 +15749,10 @@ MonoBehaviour:
   _buttonKeepPlayingClose: {fileID: 458361169}
   _buttonTryAgain: {fileID: 930367015}
   _buttonExit: {fileID: 1386281564}
+  _keepPlayingLevelText: {fileID: 0}
+  _failedLevelText: {fileID: 275085023}
+  _failedRibbonLevelText: {fileID: 1497055662}
+  _coinRewardText: {fileID: 1497055662}
 --- !u!1 &1632121047
 GameObject:
   m_ObjectHideFlags: 0
@@ -20798,7 +20804,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
