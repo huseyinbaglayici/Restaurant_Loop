@@ -257,7 +257,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _queue2DHolder.SetActive(true);
 
-            if (_foodMeshSettings != null && _foodMeshSettings.TryGetIcon(stack.Type, out var icon))
+            if (_foodMeshSettings != null && _foodMeshSettings.TryGetQueueIcon(stack.Type, out var icon))
             {
                 _queue2DSpriteRenderer.sprite = icon;
             }

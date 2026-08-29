@@ -28,11 +28,27 @@ namespace RestaurantLoop.Runtime.Conveyor
         [Inject(Id = "OrderTextsGroup")] private Transform _textsGroup;
 
         [Inject(Optional = true)] private FoodMeshSettings _foodMeshSettings;
+        [Inject(Optional = true)] private CameraController _cameraController;
 
         private float _secondFoodDimAlpha = 1f;
         private float _secondAmountDimAlpha = 1f;
         private bool _dimAlphaCaptured;
         private bool _hasSecondOrder;
+
+        private float GetBaseScale()
+        {
+            float scale = _foodMeshSettings != null && _foodMeshSettings.CustomerBubbleScale > 0f
+                ? _foodMeshSettings.CustomerBubbleScale
+                : 1f;
+
+            if (_foodMeshSettings != null && _foodMeshSettings.ScaleBubbleWithCamera && _cameraController != null)
+            {
+                float zoom = _cameraController.CameraZoomFactor;
+                scale *= (1f + (zoom - 1f) * _foodMeshSettings.BubbleCameraScaleMultiplier);
+            }
+
+            return scale;
+        }
 
         public void OnSpawned(Vector3 position, Quaternion rotation)
         {
@@ -44,8 +60,12 @@ namespace RestaurantLoop.Runtime.Conveyor
             _secondFoodImage.transform.SetParent(_iconsGroup, true);
             _secondAmountText.transform.SetParent(_textsGroup, true);
 
-            _foodImage.transform.localScale = Vector3.one;
-            if (_amountText != null) _amountText.transform.localScale = Vector3.one;
+            float scale = GetBaseScale();
+            _rectTransform.localScale = Vector3.one * scale;
+            _foodImage.transform.localScale = Vector3.one * scale;
+            if (_amountText != null) _amountText.transform.localScale = Vector3.one * scale;
+            _secondFoodImage.transform.localScale = Vector3.one * (scale * 0.75f);
+            if (_secondAmountText != null) _secondAmountText.transform.localScale = Vector3.one * (scale * 0.75f);
         }
 
         public void OnDespawned()
@@ -119,15 +139,16 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void PlayRevealAnimation()
         {
+            float scale = GetBaseScale();
             _foodImage.transform.DOKill(true);
-            _foodImage.transform.localScale = Vector3.one * 0.3f;
-            _foodImage.transform.DOScale(1f, 0.4f).SetEase(Ease.OutBack);
+            _foodImage.transform.localScale = Vector3.one * (scale * 0.3f);
+            _foodImage.transform.DOScale(scale, 0.4f).SetEase(Ease.OutBack);
 
             if (_amountText != null)
             {
                 _amountText.transform.DOKill(true);
-                _amountText.transform.localScale = Vector3.one * 0.3f;
-                _amountText.transform.DOScale(1f, 0.4f).SetEase(Ease.OutBack);
+                _amountText.transform.localScale = Vector3.one * (scale * 0.3f);
+                _amountText.transform.DOScale(scale, 0.4f).SetEase(Ease.OutBack);
             }
         }
 
@@ -163,7 +184,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             if (image == null) return;
 
-            if (_foodMeshSettings != null && _foodMeshSettings.TryGetIcon(type, out var icon))
+            if (_foodMeshSettings != null && _foodMeshSettings.TryGetCustomerIcon(type, out var icon))
             {
                 image.sprite = icon;
                 image.color = new Color(1f, 1f, 1f, image.color.a);

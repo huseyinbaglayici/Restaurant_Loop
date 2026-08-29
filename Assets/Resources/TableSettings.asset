@@ -12,18 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a81464acbdd63424ea17478d599ad498, type: 3}
   m_Name: TableSettings
   m_EditorClassIdentifier: 
-  TablePrefab: {fileID: 919132149155446097, guid: 230ea9ac3e228674497693fe34718277,
+  TablePrefab: {fileID: 707737151484778837, guid: a656b9ea0d2323d4dba66bf2d105fa59,
     type: 3}
-  BasePosition: {x: 3.2, y: -4.19, z: -5.4}
-  BaseRotation: {x: 90, y: 0, z: -90}
-  BaseScale: {x: 420, y: 239, z: 239}
-  GapFromExitRack: 1.8
+  BasePosition: {x: 3, y: -4, z: 7}
+  BaseRotation: {x: -90, y: 0, z: 0}
+  BaseScale: {x: 272, y: 125, z: 150}
+  GapFromExitRack: 2.5
   TableXOffset: 0
-  QueueFoodZOffsetOnTable: 0
+  QueueFoodZOffsetOnTable: -0.5
   QueueFoodXOffsetOnTable: 0
   QueueCenterOffset: {x: 0, y: 0, z: 0}
   Enable2DQueueVisuals: 1
-  Queue2DIconScale: 0.07
+  Queue2DIconScale: 0.09
   Queue2DOffset: {x: 0, y: 0.5, z: 0}
   ScaleWithCamera: 1
   TableScaleMultiplier: 1

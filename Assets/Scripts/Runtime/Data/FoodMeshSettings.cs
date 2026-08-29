@@ -31,7 +31,14 @@ namespace RestaurantLoop.Runtime.Data
             [Tooltip("Same as Opened Rotation Euler, for the packaged prefab.")]
             public Vector3 ClosedRotationEuler;
 
-            [Tooltip("UI sprite for this food type (order icons, recipe cards, etc).")]
+            [Header("2D Sprites")]
+            [Tooltip("Müşteri sipariş baloncuğunda çıkacak 2D ikon.")]
+            public Sprite CustomerIcon;
+
+            [Tooltip("Aşağıdaki kuyrukta (Queue) tabakta/masada çıkacak 2D ikon.")]
+            public Sprite QueueIcon;
+
+            [Tooltip("UI sprite for this food type (fallback if specific icons are not set).")]
             public Sprite Icon;
 
             [Tooltip("This prefab is one fixed rack holding several pre-placed items (e.g. a shelf of drinks), " +
@@ -56,9 +63,21 @@ namespace RestaurantLoop.Runtime.Data
             }
         }
 
-        [Header("Hidden Customer")]
+        [Header("Customer Order Bubble")]
         [Tooltip("UI sprite shown when a customer is hidden (question mark / mystery bubble).")]
         public Sprite HiddenOrderBubble;
+
+        [Tooltip("Müşteri sipariş baloncuğunun genel büyüklüğü / ölçeği (Scale).")]
+        [Range(0.5f, 5f)] public float CustomerBubbleScale = 1.0f;
+
+        [Tooltip("Sipariş baloncuğunun müşterinin ne kadar yukarısında duracağı (Y Yüksekliği).")]
+        public float CustomerBubbleHeight = 3.0f;
+
+        [Tooltip("Kamera zoom yaptıkça baloncuğun da büyümesini sağlar.")]
+        public bool ScaleBubbleWithCamera = false;
+
+        [Tooltip("Kamera zoom çarpanı.")]
+        public float BubbleCameraScaleMultiplier = 1.0f;
 
         [Header("Fonts")]
         [Tooltip("Font asset used for stack amount numbers across 2D queue and 3D conveyor.")]
@@ -84,18 +103,34 @@ namespace RestaurantLoop.Runtime.Data
             return false;
         }
 
-        public bool TryGetIcon(FoodType type, out Sprite icon)
+        public bool TryGetCustomerIcon(FoodType type, out Sprite icon)
         {
             foreach (var entry in _entries)
             {
                 if (entry.Type != type) continue;
 
-                icon = entry.Icon;
+                icon = entry.CustomerIcon != null ? entry.CustomerIcon : entry.Icon;
                 return icon != null;
             }
 
             icon = null;
             return false;
         }
+
+        public bool TryGetQueueIcon(FoodType type, out Sprite icon)
+        {
+            foreach (var entry in _entries)
+            {
+                if (entry.Type != type) continue;
+
+                icon = entry.QueueIcon != null ? entry.QueueIcon : entry.Icon;
+                return icon != null;
+            }
+
+            icon = null;
+            return false;
+        }
+
+        public bool TryGetIcon(FoodType type, out Sprite icon) => TryGetCustomerIcon(type, out icon);
     }
 }

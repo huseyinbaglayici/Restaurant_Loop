@@ -19,25 +19,31 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorTuning _tuning;
         private readonly CustomerController.Pool _customerPool;
         private readonly CustomerOrderWidget.Pool _orderWidgetPool;
+        private readonly FoodMeshSettings _foodMeshSettings;
 
         // keyed by coord
         private readonly Dictionary<Vector2Int, CustomerController> _spawnedCustomers = new();
         private readonly Dictionary<Vector2Int, CustomerOrderWidget> _spawnedWidgets = new();
 
         public CustomerSpawner(ConveyorLevelDataSO level, ConveyorPrefabSettings prefabSettings, ConveyorTuning tuning,
-            CustomerController.Pool customerPool, CustomerOrderWidget.Pool orderWidgetPool)
+            CustomerController.Pool customerPool, CustomerOrderWidget.Pool orderWidgetPool,
+            [Inject(Optional = true)] FoodMeshSettings foodMeshSettings = null)
         {
             _level = level;
             _prefabSettings = prefabSettings;
             _tuning = tuning;
             _customerPool = customerPool;
             _orderWidgetPool = orderWidgetPool;
+            _foodMeshSettings = foodMeshSettings;
         }
 
         public void Initialize()
         {
             float cellSize = _prefabSettings.CellWorldSize;
             var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
+            float bubbleHeight = _foodMeshSettings != null && _foodMeshSettings.CustomerBubbleHeight > 0f
+                ? _foodMeshSettings.CustomerBubbleHeight
+                : OrderBubbleHeight;
 
             foreach (var customer in _level.Customers)
             {
@@ -45,7 +51,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
                 var visual = _customerPool.Spawn(position, 0f);
 
-                var widget = _orderWidgetPool.Spawn(position + Vector3.up * OrderBubbleHeight, Quaternion.identity);
+                var widget = _orderWidgetPool.Spawn(position + Vector3.up * bubbleHeight, Quaternion.identity);
                 widget.ApplyOrder(customer.Order, customer.IsHidden);
                 widget.ApplySecondOrder(customer.HasSecondOrder, customer.SecondOrder);
 
