@@ -17,9 +17,15 @@ MonoBehaviour:
   BasePosition: {x: 3.2, y: -4.19, z: -5.4}
   BaseRotation: {x: 90, y: 0, z: -90}
   BaseScale: {x: 420, y: 239, z: 239}
+  GapFromExitRack: 1.8
+  TableXOffset: 0
+  QueueFoodZOffsetOnTable: 0
+  QueueFoodXOffsetOnTable: 0
+  QueueCenterOffset: {x: 0, y: 0, z: 0}
   Enable2DQueueVisuals: 1
   Queue2DIconScale: 0.07
-  Queue2DOffset: {x: -0.15, y: 0, z: 0}
+  Queue2DOffset: {x: 0, y: 0.5, z: 0}
   ScaleWithCamera: 1
   TableScaleMultiplier: 1
+  ZoomOffsetCompensation: {x: 0, y: 0, z: 0}
   FoodQueueScaleMultiplier: 1

@@ -1,4 +1,7 @@
+using RestaurantLoop.Audio;
+using RestaurantLoop.Lives;
 using RestaurantLoop.Runtime.Conveyor;
+using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Signals;
 using UnityEngine;
 using Zenject;
@@ -20,6 +23,9 @@ namespace RestaurantLoop.Runtime.UI
         private FoodItemController.Pool _foodPool;
         private SignalBus _signalBus;
         private PowerUpService _powerUpService;
+        private IAudioService _audioService;
+        private AudioLibrary _audioLibrary;
+        private ILivesService _livesService;
 
         [Inject]
         public void Construct(
@@ -28,7 +34,10 @@ namespace RestaurantLoop.Runtime.UI
             ExitStackAnchor exitStackAnchor,
             FoodItemController.Pool foodPool,
             SignalBus signalBus,
-            PowerUpService powerUpService)
+            PowerUpService powerUpService,
+            [Inject(Optional = true)] IAudioService audioService = null,
+            [Inject(Optional = true)] AudioLibrary audioLibrary = null,
+            [Inject(Optional = true)] ILivesService livesService = null)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;
@@ -36,6 +45,9 @@ namespace RestaurantLoop.Runtime.UI
             _foodPool = foodPool;
             _signalBus = signalBus;
             _powerUpService = powerUpService;
+            _audioService = audioService;
+            _audioLibrary = audioLibrary;
+            _livesService = livesService;
         }
 
         private void Start()
@@ -62,6 +74,18 @@ namespace RestaurantLoop.Runtime.UI
         {
             _panelKeepPlaying.SetActive(true);
             Time.timeScale = 0f;
+
+            if (_audioService != null)
+            {
+                _audioService.PauseMusic();
+                _audioService.PauseAmbience();
+                _audioService.StopConveyorLoop();
+
+                if (_audioLibrary != null && _audioLibrary.FailSfx != null)
+                {
+                    _audioService.PlaySfx(_audioLibrary.FailSfx);
+                }
+            }
         }
 
         private void OnPlayOnClicked()
@@ -73,10 +97,17 @@ namespace RestaurantLoop.Runtime.UI
 
             _panelKeepPlaying.SetActive(false);
             Time.timeScale = 1f;
+
+            if (_audioService != null)
+            {
+                _audioService.ResumeMusic();
+                _audioService.ResumeAmbience();
+            }
         }
 
         private void OnKeepPlayingCloseClicked()
         {
+            _livesService?.ConsumeLife();
             _panelKeepPlaying.SetActive(false);
             _panelFailed.SetActive(true);
             Time.timeScale = 0f;
@@ -86,6 +117,13 @@ namespace RestaurantLoop.Runtime.UI
         {
             _panelFailed.SetActive(false);
             Time.timeScale = 1f;
+
+            if (_audioService != null)
+            {
+                _audioService.StopMusic();
+                _audioService.StopAmbience();
+            }
+
             _signalBus.Fire<RestartLevelSignal>();
         }
 
@@ -93,6 +131,13 @@ namespace RestaurantLoop.Runtime.UI
         {
             _panelFailed.SetActive(false);
             Time.timeScale = 1f;
+
+            if (_audioService != null)
+            {
+                _audioService.StopMusic();
+                _audioService.StopAmbience();
+            }
+
             _signalBus.Fire<LevelEndedSignal>();
         }
     }

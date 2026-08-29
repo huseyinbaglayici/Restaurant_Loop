@@ -9,14 +9,20 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorTuning _tuning;
         private readonly ExitStackAnchor _exitStackAnchor;
+        private readonly TableSettings _tableSettings;
 
         public Vector3[] LanePositions { get; private set; }
 
-        public QueueAnchor(ConveyorLevelDataSO level, ConveyorTuning tuning, ExitStackAnchor exitStackAnchor)
+        public QueueAnchor(
+            ConveyorLevelDataSO level,
+            ConveyorTuning tuning,
+            ExitStackAnchor exitStackAnchor,
+            [Inject(Optional = true)] TableSettings tableSettings = null)
         {
             _level = level;
             _tuning = tuning;
             _exitStackAnchor = exitStackAnchor;
+            _tableSettings = tableSettings;
             LanePositions = ComputeLanePositions();
         }
 
@@ -31,13 +37,21 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             float leftX = _exitStackAnchor.SlotPositions[0].x;
             float rightX = _exitStackAnchor.SlotPositions[^1].x;
-            float centerX = (leftX + rightX) * 0.5f;
-            float z = _exitStackAnchor.SlotPositions[0].z - _tuning.QueueZOffsetFromExitStack;
+            float rackCenterX = (leftX + rightX) * 0.5f;
+
+            float tableX = rackCenterX + (_tableSettings != null ? _tableSettings.TableXOffset : 0f);
+            float queueCenterX = tableX + (_tableSettings != null ? _tableSettings.QueueFoodXOffsetOnTable : 0f);
+
+            float gapFromRack = _tableSettings != null && _tableSettings.GapFromExitRack > 0f
+                ? _tableSettings.GapFromExitRack
+                : _tuning.QueueZOffsetFromExitStack;
+            float foodZOffset = _tableSettings != null ? _tableSettings.QueueFoodZOffsetOnTable : 0f;
+            float z = _exitStackAnchor.SlotPositions[0].z - (gapFromRack + foodZOffset);
 
             var positions = new Vector3[laneCount];
             for (int i = 0; i < laneCount; i++)
             {
-                float x = centerX + (i - (laneCount - 1) * 0.5f) * _tuning.QueueLaneSpacing;
+                float x = queueCenterX + (i - (laneCount - 1) * 0.5f) * _tuning.QueueLaneSpacing;
                 positions[i] = new Vector3(x, _tuning.QueueFoodHeight + _tuning.WorldOrigin.y, z);
             }
 

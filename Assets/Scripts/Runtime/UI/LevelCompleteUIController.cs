@@ -1,3 +1,5 @@
+using RestaurantLoop.Audio;
+using RestaurantLoop.Economy;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Save;
@@ -21,6 +23,9 @@ namespace RestaurantLoop.Runtime.UI
         private ISaveManager _saveManager;
         private CurrentLevelProvider _currentLevelProvider;
         private LevelDatabase _levelDatabase;
+        private IAudioService _audioService;
+        private AudioLibrary _audioLibrary;
+        private IEconomyService _economyService;
 
         [Inject]
         public void Construct(
@@ -31,7 +36,10 @@ namespace RestaurantLoop.Runtime.UI
             SignalBus signalBus,
             ISaveManager saveManager,
             CurrentLevelProvider currentLevelProvider,
-            LevelDatabase levelDatabase)
+            LevelDatabase levelDatabase,
+            [Inject(Optional = true)] IAudioService audioService = null,
+            [Inject(Optional = true)] AudioLibrary audioLibrary = null,
+            [Inject(Optional = true)] IEconomyService economyService = null)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;
@@ -41,6 +49,9 @@ namespace RestaurantLoop.Runtime.UI
             _saveManager = saveManager;
             _currentLevelProvider = currentLevelProvider;
             _levelDatabase = levelDatabase;
+            _audioService = audioService;
+            _audioLibrary = audioLibrary;
+            _economyService = economyService;
         }
 
         private void Start()
@@ -63,6 +74,35 @@ namespace RestaurantLoop.Runtime.UI
         {
             Time.timeScale = 0f;
             _panelCompleted.SetActive(true);
+
+            AwardLevelCoins();
+
+            if (_audioService != null)
+            {
+                _audioService.StopMusic();
+                _audioService.StopAmbience();
+                _audioService.StopConveyorLoop();
+
+                if (_audioLibrary != null && _audioLibrary.WinSfx != null)
+                {
+                    _audioService.PlaySfx(_audioLibrary.WinSfx);
+                }
+            }
+        }
+
+        private void AwardLevelCoins()
+        {
+            if (_economyService == null || _currentLevelProvider == null || _currentLevelProvider.Current == null) return;
+
+            int reward = _currentLevelProvider.Current.Difficulty switch
+            {
+                LevelDifficulty.Hard => 75,
+                LevelDifficulty.SuperHard => 100,
+                LevelDifficulty.Bonus => 100,
+                _ => 50
+            };
+
+            _economyService.AddCoins(reward);
         }
 
         private void OnNextClicked()

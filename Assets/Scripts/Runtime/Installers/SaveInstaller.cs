@@ -1,3 +1,5 @@
+using RestaurantLoop.Economy;
+using RestaurantLoop.Lives;
 using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Save;
 using UnityEngine;
@@ -18,6 +20,8 @@ namespace RestaurantLoop.Installers
 
             Container.BindInstance(levelDatabase).AsSingle();
             Container.BindInterfacesTo<SaveManager>().AsSingle();
+            Container.BindInterfacesTo<EconomyService>().AsSingle();
+            Container.BindInterfacesTo<LivesService>().AsSingle();
         }
     }
 }

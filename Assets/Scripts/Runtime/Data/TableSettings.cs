@@ -19,6 +19,19 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Base scale of the table authored for the default reference grid.")]
         public Vector3 BaseScale = new Vector3(420f, 239f, 239f);
 
+        [Header("Exit Rack & Table Spacing")]
+        [Tooltip("Exit Rack (üstteki raf) ile Masa arasındaki Z ekseni boşluk mesafesi.")]
+        public float GapFromExitRack = 1.8f;
+
+        [Tooltip("Masanın X eksenindeki ofseti (0 = Exit Rack ve Dünya merkezine tam ortalı).")]
+        public float TableXOffset = 0f;
+
+        [Tooltip("Masa üzerinde yemek kuyruğunun Z eksenindeki yerleşim ofseti.")]
+        public float QueueFoodZOffsetOnTable = 0f;
+
+        [Tooltip("Masa üzerinde yemek kuyruğunun X eksenindeki ekstra ofseti (0 = masaya tam ortalı).")]
+        public float QueueFoodXOffsetOnTable = 0f;
+
         [Tooltip("Local offset added to table position relative to the queue lanes center.")]
         public Vector3 QueueCenterOffset = Vector3.zero;
 
@@ -38,6 +51,9 @@ namespace RestaurantLoop.Runtime.Data
 
         [Tooltip("Extra multiplier applied on top of the camera scale factor for the table.")]
         public float TableScaleMultiplier = 1f;
+
+        [Tooltip("Offset compensation vector applied as the table scales with camera zoom, to prevent pivot drift on Z/Y/X.")]
+        public Vector3 ZoomOffsetCompensation = Vector3.zero;
 
         [Tooltip("Extra multiplier applied on top of the camera scale factor for queue food items.")]
         public float FoodQueueScaleMultiplier = 1f;

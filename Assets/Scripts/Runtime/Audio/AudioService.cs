@@ -128,6 +128,16 @@ namespace RestaurantLoop.Audio
 
         public void StopMusic() => _musicSource.Stop();
 
+        public void PauseMusic() => _musicSource.Pause();
+
+        public void ResumeMusic()
+        {
+            if (!_musicSource.isPlaying && _musicSource.clip != null)
+            {
+                _musicSource.UnPause();
+            }
+        }
+
         public void PlayAmbience(AudioClip clip)
         {
             if (clip == null)
@@ -144,5 +154,15 @@ namespace RestaurantLoop.Audio
         }
 
         public void StopAmbience() => _ambienceSource.Stop();
+
+        public void PauseAmbience() => _ambienceSource.Pause();
+
+        public void ResumeAmbience()
+        {
+            if (!_ambienceSource.isPlaying && _ambienceSource.clip != null)
+            {
+                _ambienceSource.UnPause();
+            }
+        }
     }
 }
