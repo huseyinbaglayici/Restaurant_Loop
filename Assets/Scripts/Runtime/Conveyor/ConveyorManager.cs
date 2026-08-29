@@ -82,6 +82,19 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public int PathLength => _pathWorldPositions.Count;
 
+        // 1 = authored BeltSpeed. Set by ConveyorAutoClearService once the queue drains and every
+        // remaining item is guaranteed to fit back on the exit stack — read by ConveyorVisualService too,
+        // so both layers stay on the same speed with a single source of truth instead of two copies of
+        // BeltSpeed drifting apart.
+        public float SpeedMultiplier { get; set; } = 1f;
+
+        // Once true, an item reaching the belt end loops back to the entry (FoodLoopedSignal + a normal
+        // reused-visual AddItemAtEntry) instead of docking at the exit stack. Set by
+        // ConveyorAutoClearService; never cleared — the level only exits this state by being won.
+        public bool LoopModeActive { get; private set; }
+
+        public void EnableLoopMode() => LoopModeActive = true;
+
         // True once the belt's newest item has moved far enough past Progress 0 that a fresh spawn there
         // won't visually overlap it. Checked internally by AddItemAtEntry/Tick to gate the pending-entry
         // queue below — callers never need to check this themselves.
@@ -322,7 +335,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             if (_pathWorldPositions.Count == 0) return;
 
-            float delta = _tuning.BeltSpeed * Time.deltaTime;
+            float delta = _tuning.BeltSpeed * SpeedMultiplier * Time.deltaTime;
             float lastIndex = _pathWorldPositions.Count - 1;
 
             int finalIndex = Mathf.FloorToInt(lastIndex);
@@ -354,6 +367,18 @@ namespace RestaurantLoop.Runtime.Conveyor
                             _crossingsThisFrame.Add((idx, item.Visual));
                         item.LastCrossedIndex = finalIndex;
                         item.Progress = lastIndex;
+                        continue;
+                    }
+
+                    if (LoopModeActive)
+                    {
+                        var stack = item.Visual.Stack;
+                        var visual = item.Visual;
+                        var endPosition = SampleWorldPosition(item.Progress);
+
+                        _items.RemoveAt(i);
+                        _signalBus.Fire(new FoodLoopedSignal { ItemId = item.Id });
+                        AddItemAtEntry(stack, visual, endPosition);
                         continue;
                     }
 

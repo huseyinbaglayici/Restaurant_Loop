@@ -73,6 +73,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _signalBus.Subscribe<FoodQueuedForEntrySignal>(OnFoodQueuedForEntry);
             _signalBus.Subscribe<FoodEnteredBeltSignal>(OnFoodEnteredBelt);
             _signalBus.Subscribe<FoodDockedSignal>(OnFoodDocked);
+            _signalBus.Subscribe<FoodLoopedSignal>(OnFoodLooped);
             _signalBus.Subscribe<FoodConsumedSignal>(OnFoodConsumed);
             _signalBus.Subscribe<BeltClearedSignal>(OnBeltCleared);
         }
@@ -82,6 +83,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _signalBus.TryUnsubscribe<FoodQueuedForEntrySignal>(OnFoodQueuedForEntry);
             _signalBus.TryUnsubscribe<FoodEnteredBeltSignal>(OnFoodEnteredBelt);
             _signalBus.TryUnsubscribe<FoodDockedSignal>(OnFoodDocked);
+            _signalBus.TryUnsubscribe<FoodLoopedSignal>(OnFoodLooped);
             _signalBus.TryUnsubscribe<FoodConsumedSignal>(OnFoodConsumed);
             _signalBus.TryUnsubscribe<BeltClearedSignal>(OnBeltCleared);
 
@@ -114,7 +116,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (_beltVisuals.Count == 0) return;
 
             float deltaTime = Time.deltaTime;
-            float delta = _tuning.BeltSpeed * deltaTime;
+            float delta = _tuning.BeltSpeed * _conveyorManager.SpeedMultiplier * deltaTime;
             float lastProgress = Mathf.Max(0, _conveyorManager.PathLength - 1);
 
             foreach (var beltVisual in _beltVisuals.Values)
@@ -211,6 +213,11 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _audioService.PlaySfx(_audioLibrary.FoodDropToRackSfx);
             });
         }
+
+        // No flight here — the FoodEnteredBeltSignal ConveyorManager fires right after this (same reused
+        // visual, new item id) drives the transform from here on. Without dropping this dictionary entry
+        // first, both belt-visual handles would fight over the same transform's position every frame.
+        private void OnFoodLooped(FoodLoopedSignal signal) => _beltVisuals.Remove(signal.ItemId);
 
         private void OnFoodConsumed(FoodConsumedSignal signal)
         {

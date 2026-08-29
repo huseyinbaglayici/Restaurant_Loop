@@ -51,6 +51,15 @@ namespace RestaurantLoop.Signals
         public Vector3 SlotWorldPosition;
     }
 
+    // Fired instead of FoodDockedSignal when ConveyorManager.LoopModeActive is true and an item reaches
+    // the belt end — tells the visual layer to drop its old belt-visual handle for this id without a
+    // dock flight, since the FoodEnteredBeltSignal that immediately follows (same reused visual, new id)
+    // takes over the transform and flies it back to the entry instead.
+    public class FoodLoopedSignal
+    {
+        public int ItemId;
+    }
+
     public class FoodConsumedSignal
     {
         public int ItemId;

@@ -48,6 +48,7 @@ namespace RestaurantLoop.Installers
             Container.BindInterfacesAndSelfTo<ConveyorManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<CustomerConsumeService>().AsSingle();
             Container.BindInterfacesTo<ConveyorEntryInput>().AsSingle();
+            Container.BindInterfacesTo<ConveyorAutoClearService>().AsSingle();
 
             Container.BindInstance(ResolveTrayDispenserRoot()).AsCached();
             Container.BindInterfacesAndSelfTo<TrayDispenserAnchor>().AsSingle();
