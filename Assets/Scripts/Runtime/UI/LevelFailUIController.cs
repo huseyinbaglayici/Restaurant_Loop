@@ -140,8 +140,13 @@ namespace RestaurantLoop.Runtime.UI
         private void OnPlayOnClicked()
         {
             _conveyorManager.ClearBelt();
+
+            // Capture the deadlocked occupant's slot before growing SlotCount — ActivateExtraTray()
+            // appends a new (empty) slot, so reading SlotCount - 1 afterward would target that empty
+            // slot instead of freeing the one actually blocking the stack.
+            int slotToClear = _exitStackAnchor.SlotCount - 1;
             _powerUpService.ActivateExtraTray(); // Extra Tray power-up: adds another slot each time Keep Playing is used.
-            _exitStackAnchor.TryRemoveFromSlot(_exitStackAnchor.SlotCount - 1, out var visual);
+            _exitStackAnchor.TryRemoveFromSlot(slotToClear, out var visual);
             if (visual != null) _foodPool.Despawn(visual);
 
             _panelKeepPlaying.SetActive(false);

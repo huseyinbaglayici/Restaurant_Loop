@@ -390,7 +390,19 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void OnBeltCleared()
         {
-            _flightService.CancelAll();
+            // Scoped to belt/owned visuals only — a global CancelAll() would also freeze an
+            // already-docked item's BeltToStack flight mid-flight (dock happens, then a same-frame
+            // deadlock can pause the game before the flight lands), stranding its visual on the belt
+            // forever even though the exit stack already logically holds it.
+            foreach (var beltVisual in _beltVisuals.Values)
+            {
+                if (beltVisual.Visual != null) _flightService.Cancel(beltVisual.Visual.transform);
+            }
+            foreach (var visual in _ownedVisuals)
+            {
+                if (visual != null) _flightService.Cancel(visual.transform);
+            }
+
             _beltVisuals.Clear();
             DespawnOwnedVisuals();
         }

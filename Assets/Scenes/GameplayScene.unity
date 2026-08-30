@@ -9640,6 +9640,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _panelCompleted: {fileID: 736949798}
   _buttonNext: {fileID: 2142684842}
+  _levelText: {fileID: 0}
+  _coinRewardText: {fileID: 0}
 --- !u!1 &1104618127
 GameObject:
   m_ObjectHideFlags: 0
@@ -15747,6 +15749,10 @@ MonoBehaviour:
   _buttonKeepPlayingClose: {fileID: 458361169}
   _buttonTryAgain: {fileID: 930367015}
   _buttonExit: {fileID: 1386281564}
+  _keepPlayingLevelText: {fileID: 0}
+  _failedLevelText: {fileID: 0}
+  _failedRibbonLevelText: {fileID: 0}
+  _coinRewardText: {fileID: 0}
 --- !u!1 &1632121047
 GameObject:
   m_ObjectHideFlags: 0
