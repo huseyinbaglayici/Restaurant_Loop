@@ -127,7 +127,7 @@ namespace RestaurantLoop.Runtime.Tutorial
         // gameplay effect actually happened, not just once it was allowed.
         private void OnActionPerformed(TutorialActionPerformedSignal signal)
         {
-            if (!_isRunning || _currentStepIndex >= _level.TutorialSteps.Count) return;
+            if (!_isRunning || !_isStepActive || _currentStepIndex >= _level.TutorialSteps.Count) return;
 
             var step = _level.TutorialSteps[_currentStepIndex];
             if (step.HoverKind != signal.Kind) return;
