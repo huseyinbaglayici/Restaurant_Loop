@@ -421,10 +421,16 @@ Shader "RestaurantLoop/SoftMatte"
                 directional = lerp(half3(1.0h, 1.0h, 1.0h), directional, _DirectionalStrength);
 
                 // ---- Realtime shadow, tinted and floored -------------------------
-                Light mainLight = GetMainLight(input.shadowCoord);
-                half atten = lerp(1.0h, mainLight.shadowAttenuation, saturate(_ReceiveShadowStrength));
-                atten = max(atten, _ShadowBrightness);
-                half3 shadowTerm = lerp(_ShadowColorTint.rgb, half3(1.0h, 1.0h, 1.0h), atten);
+                // VAT customers are unlit by design (fixed _FakeLightDirection, no scene-light
+                // dependency) — skip the real shadow sample entirely instead of just discarding it.
+                #if defined(_VAT_ON)
+                    half3 shadowTerm = half3(1.0h, 1.0h, 1.0h);
+                #else
+                    Light mainLight = GetMainLight(input.shadowCoord);
+                    half atten = lerp(1.0h, mainLight.shadowAttenuation, saturate(_ReceiveShadowStrength));
+                    atten = max(atten, _ShadowBrightness);
+                    half3 shadowTerm = lerp(_ShadowColorTint.rgb, half3(1.0h, 1.0h, 1.0h), atten);
+                #endif
 
                 // ---- Ambient occlusion -------------------------------------------
                 half texAO = SAMPLE_TEXTURE2D(_AOMap, sampler_AOMap, input.uv).r;

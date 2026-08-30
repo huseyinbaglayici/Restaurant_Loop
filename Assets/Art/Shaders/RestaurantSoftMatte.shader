@@ -362,10 +362,16 @@ Shader "RestaurantLoop/SoftMatte"
                 // ---- Realtime shadow ----------------------------------------------
                 //  Tinted and floored. A cast shadow here darkens and cools a surface;
                 //  it never drives it toward black.
-                Light mainLight = GetMainLight(input.shadowCoord);
-                half atten = lerp(1.0h, mainLight.shadowAttenuation, saturate(_ReceiveShadowStrength));
-                atten = max(atten, _ShadowBrightness);
-                half3 shadowTerm = lerp(_ShadowColorTint.rgb, half3(1.0h, 1.0h, 1.0h), atten);
+                // VAT customers are unlit by design (fixed _FakeLightDirection, no scene-light
+                // dependency) — skip the real shadow sample entirely instead of just discarding it.
+                #if defined(_VAT_ON)
+                    half3 shadowTerm = half3(1.0h, 1.0h, 1.0h);
+                #else
+                    Light mainLight = GetMainLight(input.shadowCoord);
+                    half atten = lerp(1.0h, mainLight.shadowAttenuation, saturate(_ReceiveShadowStrength));
+                    atten = max(atten, _ShadowBrightness);
+                    half3 shadowTerm = lerp(_ShadowColorTint.rgb, half3(1.0h, 1.0h, 1.0h), atten);
+                #endif
 
                 // ---- Ambient occlusion --------------------------------------------
                 //  A white AO map with any strength darkens nothing, and the floor stops
