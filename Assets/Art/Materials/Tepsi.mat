@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Tepsi
-  m_Shader: {fileID: 4800000, guid: c6e7332f6f55ef149830f390e3e43b78, type: 3}
+  m_Shader: {fileID: 4800000, guid: 4bf5e337892e7dd4b8f8fa5a74a4b863, type: 3}
   m_Parent: {fileID: 2100000, guid: 160ecd618f7299c4db644171e21021c2, type: 2}
   m_ModifiedSerializedProperties: 12
   m_ValidKeywords: []
