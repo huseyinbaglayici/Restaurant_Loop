@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
 using TMPro;
 using UnityEngine;
@@ -221,6 +222,20 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
+        public void PopAmountBadge()
+        {
+            if (Stack.Amount <= 0) return;
+
+            EnsureConveyorAmountBadge();
+            _conveyorAmountBadge.SetActive(true);
+            _conveyorAmountText.text = Stack.Amount.ToString();
+            AlignConveyorBadgeWithCamera();
+
+            _conveyorAmountBadge.transform.DOKill(true);
+            _conveyorAmountBadge.transform.localScale = Vector3.zero;
+            _conveyorAmountBadge.transform.DOScale(Vector3.one, 0.25f).SetEase(Ease.OutBack);
+        }
+
         private void ApplyConveyorAmountBadge(FoodStackData stack)
         {
             if (stack.Amount <= 0)
@@ -233,10 +248,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             _conveyorAmountBadge.SetActive(true);
             _conveyorAmountText.text = stack.Amount.ToString();
 
-            // Place slightly to the top right and above the top unit
-            float height = _usesFixedChildSlots ? 0.7f : (Mathf.Min(stack.Amount, MaxVisibleUnits) * ResolveSpacing(stack.Type) + 0.3f);
-            _conveyorAmountBadge.transform.localPosition = new Vector3(0.4f, height, 0f);
-
             AlignConveyorBadgeWithCamera();
         }
 
@@ -247,7 +258,13 @@ namespace RestaurantLoop.Runtime.Conveyor
             var cam = Camera.main;
             if (cam != null)
             {
+                // Yemeğin dönüşünden etkilenmemesi için dünya ekseninde kameraya bakar
                 _conveyorAmountBadge.transform.rotation = cam.transform.rotation;
+
+                // Yemeğin yüksekliğine göre tepesinde ve hafif sağında duracak dünya ofseti
+                float height = _usesFixedChildSlots ? 0.7f : (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) + 0.35f);
+                Vector3 worldOffset = Vector3.up * height + cam.transform.right * 0.35f;
+                _conveyorAmountBadge.transform.position = transform.position + worldOffset;
             }
         }
 

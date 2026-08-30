@@ -18,17 +18,30 @@ namespace RestaurantLoop.Runtime.UI
         private PowerUpService _powerUpService;
         private TutorialInputGate _gate;
         private SignalBus _signalBus;
+        private CustomerConsumeService _consumeService;
 
         [Inject]
-        public void Construct(PowerUpService powerUpService, TutorialInputGate gate, SignalBus signalBus)
+        public void Construct(
+            PowerUpService powerUpService,
+            TutorialInputGate gate,
+            SignalBus signalBus,
+            [Inject(Optional = true)] CustomerConsumeService consumeService = null)
         {
             _powerUpService = powerUpService;
             _gate = gate;
             _signalBus = signalBus;
+            _consumeService = consumeService;
         }
 
         private void Start()
         {
+            if (_consumeService != null)
+            {
+                _consumeService.OnLevelEnded += HandleLevelEnded;
+            }
+
+            _signalBus?.Subscribe<LevelResumedSignal>(HandleLevelResumed);
+
             _buttonShuffle.onClick.AddListener(() =>
             {
                 if (!_gate.CanClickPowerUpButton(PowerUpButtonId.Shuffle)) return;
@@ -46,6 +59,26 @@ namespace RestaurantLoop.Runtime.UI
                 if (!_gate.CanClickPowerUpButton(PowerUpButtonId.ExtraTray)) return;
                 if (_powerUpService.ActivateExtraTray()) FireActionPerformed(PowerUpButtonId.ExtraTray);
             });
+        }
+
+        private void OnDestroy()
+        {
+            if (_consumeService != null)
+            {
+                _consumeService.OnLevelEnded -= HandleLevelEnded;
+            }
+
+            _signalBus?.Unsubscribe<LevelResumedSignal>(HandleLevelResumed);
+        }
+
+        private void HandleLevelEnded(bool won)
+        {
+            gameObject.SetActive(false);
+        }
+
+        private void HandleLevelResumed()
+        {
+            gameObject.SetActive(true);
         }
 
         private void FireActionPerformed(PowerUpButtonId id) =>

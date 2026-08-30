@@ -26,13 +26,28 @@ namespace RestaurantLoop.Runtime.Tutorial
             _root.SetActive(true);
             _text.text = text;
 
-            // Steps driven by a real gameplay action (queue click, power-up button) must stop the
-            // blocker from eating the click — otherwise the power-up Button's own EventSystem
-            // raycast never sees it, and a plain queue click would double-fire the advance.
-            _advanceBlocker.image.raycastTarget = tapToAdvance;
+            // Eğer hover seçilmemişse (sadece bilgilendirme metni) blocker görünür ve ekrana basarak ilerlenir.
+            // Eğer bir hedef seçilmişse (hoverKind != None) blocker tamamen gizlenir, sadece el ikonu (finger) gözükür.
+            if (_advanceBlocker != null)
+            {
+                _advanceBlocker.gameObject.SetActive(tapToAdvance);
+                if (_advanceBlocker.image != null)
+                {
+                    _advanceBlocker.image.raycastTarget = tapToAdvance;
+                }
+            }
 
             _finger.gameObject.SetActive(screenPos.HasValue);
             if (screenPos.HasValue) _finger.position = screenPos.Value;
+        }
+
+        public void UpdateFingerPosition(Vector3 screenPos)
+        {
+            if (_finger != null)
+            {
+                if (!_finger.gameObject.activeSelf) _finger.gameObject.SetActive(true);
+                _finger.position = screenPos;
+            }
         }
 
         public void Hide() => _root.SetActive(false);

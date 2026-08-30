@@ -10,7 +10,7 @@ namespace RestaurantLoop.Runtime.Tutorial
     // Plays a tutorial level's ordered TutorialSteps: each step waits for its trigger, then either
     // a matching gameplay action or a blocker tap advances it. Non-tutorial levels are untouched —
     // Initialize() bails out immediately and no signal is ever fired.
-    public class TutorialController : IInitializable, IDisposable
+    public class TutorialController : IInitializable, ITickable, IDisposable
     {
         private readonly ConveyorLevelDataSO _level;
         private readonly SignalBus _signalBus;
@@ -24,6 +24,7 @@ namespace RestaurantLoop.Runtime.Tutorial
 
         private int _currentStepIndex;
         private bool _isRunning;
+        private bool _isStepActive;
         private float _cellSize;
         private Vector3 _beltOrigin;
 
@@ -63,6 +64,19 @@ namespace RestaurantLoop.Runtime.Tutorial
             _signalBus.Subscribe<TutorialActionPerformedSignal>(OnActionPerformed);
 
             TryShowCurrentStep(TutorialTriggerCondition.OnGameplaySceneLoaded);
+        }
+
+        public void Tick()
+        {
+            if (!_isRunning || !_isStepActive || _currentStepIndex >= _level.TutorialSteps.Count) return;
+
+            // Kamera veya UI oturdukça parmak pozisyonunu sürekli güncel tut
+            var step = _level.TutorialSteps[_currentStepIndex];
+            var screenPos = ResolveScreenPos(step);
+            if (screenPos.HasValue && _view != null)
+            {
+                _view.UpdateFingerPosition(screenPos.Value);
+            }
         }
 
         public void Dispose()
@@ -106,6 +120,7 @@ namespace RestaurantLoop.Runtime.Tutorial
             var step = _level.TutorialSteps[_currentStepIndex];
             if (step.Trigger != firedTrigger) return;
 
+            _isStepActive = true;
             bool tapToAdvance = step.HoverKind is TutorialHoverTargetKind.None or TutorialHoverTargetKind.ConveyorCell;
             _view.Show(step.Text, ResolveScreenPos(step), tapToAdvance);
             _signalBus.Fire(new TutorialStepActivatedSignal { Step = step });
@@ -113,6 +128,7 @@ namespace RestaurantLoop.Runtime.Tutorial
 
         private void OnAdvance()
         {
+            _isStepActive = false;
             _currentStepIndex++;
 
             if (_currentStepIndex >= _level.TutorialSteps.Count)
@@ -124,7 +140,9 @@ namespace RestaurantLoop.Runtime.Tutorial
                 return;
             }
 
-            TryShowCurrentStep(_level.TutorialSteps[_currentStepIndex].Trigger);
+            var nextStep = _level.TutorialSteps[_currentStepIndex];
+            // Eğer sıradaki adım doğrudan devam eden bir adımsa (aynı tetikleyici veya None) kesintisiz göster
+            TryShowCurrentStep(nextStep.Trigger);
         }
 
         private Vector3? ResolveScreenPos(TutorialStepData step) => step.HoverKind switch
