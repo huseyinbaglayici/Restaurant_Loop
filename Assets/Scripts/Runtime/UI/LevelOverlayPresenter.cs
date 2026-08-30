@@ -29,7 +29,7 @@ namespace RestaurantLoop.Runtime.UI
         {
             if (_levelText != null && _currentLevelProvider != null && _currentLevelProvider.Current != null)
             {
-                _levelText.text = $"Level {_currentLevelProvider.Current.LevelId}";
+                _levelText.text = $"LEVEL {_currentLevelProvider.Current.LevelId}";
             }
 
             if (_moneyText != null && _economyService != null)

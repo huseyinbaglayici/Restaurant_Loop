@@ -27,7 +27,6 @@ public class CozyButtonFeedback : MonoBehaviour, IPointerDownHandler, IPointerUp
     private Vector3 originalScale;
     private Vector3 targetScale;
     private Coroutine activeScaleRoutine;
-    private bool isPointerDown = false;
 
     private IAudioService _audioService;
 
@@ -59,13 +58,11 @@ public class CozyButtonFeedback : MonoBehaviour, IPointerDownHandler, IPointerUp
     // --- UI Butonları İçin Pointer Olayları ---
     public void OnPointerDown(PointerEventData eventData)
     {
-        isPointerDown = true;
         SetTargetScale(originalScale * pressedScaleMultiplier);
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        isPointerDown = false;
         SetTargetScale(originalScale);
     }
 
@@ -77,13 +74,11 @@ public class CozyButtonFeedback : MonoBehaviour, IPointerDownHandler, IPointerUp
     // --- 3D Sahne Objeleri İçin Mouse Olayları (Collider varsa çalışır) ---
     private void OnMouseDown()
     {
-        isPointerDown = true;
         SetTargetScale(originalScale * pressedScaleMultiplier);
     }
 
     private void OnMouseUp()
     {
-        isPointerDown = false;
         StartPunchEffect();
     }
 

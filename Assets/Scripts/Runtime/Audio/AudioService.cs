@@ -1,3 +1,4 @@
+using System;
 using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Signals;
 using UnityEngine;
@@ -6,12 +7,11 @@ using Zenject;
 
 namespace RestaurantLoop.Audio
 {
-    // ProjectContext-scoped singleton — outlives every scene load/unload, so it's the one place
-    // that knows what's currently playing. MainMenuScene stays loaded (additive) underneath
-    // GameplayScene for the whole play session, so per-scene AudioSources would double up; routing
-    // every play call through here means a new track always stops the previous one first.
     public class AudioService : IAudioService, IInitializable
     {
+        private const string PrefsMusicKey = "Audio_MusicVolume";
+        private const string PrefsSfxKey = "Audio_SfxVolume";
+
         private readonly SignalBus _signalBus;
         private readonly AudioLibrary _settings;
 
@@ -20,18 +20,73 @@ namespace RestaurantLoop.Audio
         private readonly AudioSource _sfxSource;
         private readonly AudioSource _conveyorSource;
 
+        public float MusicVolume => _settings != null ? _settings.MusicVolume : 0.5f;
+        public float SfxVolume => _settings != null ? _settings.SfxVolume : 0.5f;
+
+        public event Action<float, float> OnAudioSettingsChanged;
+
         public AudioService(SignalBus signalBus, AudioLibrary settings)
         {
             _signalBus = signalBus;
             _settings = settings;
 
-            var root = new GameObject("AudioService");
-            Object.DontDestroyOnLoad(root);
+            // PlayerPrefs'ten önceden kaydedilmiş değerleri yükle (ilk açılışta AudioLibrary'deki varsayılanı kullanır)
+            if (PlayerPrefs.HasKey(PrefsMusicKey))
+            {
+                _settings.MusicVolume = PlayerPrefs.GetFloat(PrefsMusicKey);
+            }
+            if (PlayerPrefs.HasKey(PrefsSfxKey))
+            {
+                _settings.SfxVolume = PlayerPrefs.GetFloat(PrefsSfxKey);
+            }
 
-            _musicSource = CreateSource(root.transform, "Music", loop: true, volume: settings.MusicVolume);
-            _ambienceSource = CreateSource(root.transform, "Ambience", loop: true, volume: settings.AmbienceVolume);
+            var root = new GameObject("AudioService");
+            UnityEngine.Object.DontDestroyOnLoad(root);
+
+            _musicSource = CreateSource(root.transform, "Music", loop: true, volume: _settings.MusicVolume);
+            _ambienceSource = CreateSource(root.transform, "Ambience", loop: true, volume: _settings.AmbienceVolume);
             _sfxSource = CreateSource(root.transform, "Sfx", loop: false, volume: 1f);
-            _conveyorSource = CreateSource(root.transform, "Conveyor", loop: true, volume: settings.ConveyorVolume > 0f ? settings.ConveyorVolume : settings.SfxVolume * 2f);
+            _conveyorSource = CreateSource(root.transform, "Conveyor", loop: true, volume: _settings.ConveyorVolume > 0f ? _settings.ConveyorVolume : _settings.SfxVolume * 2f);
+        }
+
+        public void SetMusicVolume(float volume)
+        {
+            volume = Mathf.Clamp(volume, 0f, 0.2f); // Max 0.2
+            if (_settings != null)
+            {
+                _settings.MusicVolume = volume;
+                _settings.AmbienceVolume = volume * 0.5f; // Ambiyans da müzik seviyesine orantılı ayarlanır
+            }
+            if (_musicSource != null)
+            {
+                _musicSource.volume = volume;
+            }
+            if (_ambienceSource != null)
+            {
+                _ambienceSource.volume = volume * 0.5f;
+            }
+            PlayerPrefs.SetFloat(PrefsMusicKey, volume);
+            PlayerPrefs.Save();
+
+            OnAudioSettingsChanged?.Invoke(MusicVolume, SfxVolume);
+        }
+
+        public void SetSfxVolume(float volume)
+        {
+            volume = Mathf.Clamp(volume, 0f, 0.2f); // Max 0.2
+            if (_settings != null)
+            {
+                _settings.SfxVolume = volume;
+                _settings.ConveyorVolume = volume;
+            }
+            if (_conveyorSource != null)
+            {
+                _conveyorSource.volume = volume;
+            }
+            PlayerPrefs.SetFloat(PrefsSfxKey, volume);
+            PlayerPrefs.Save();
+
+            OnAudioSettingsChanged?.Invoke(MusicVolume, SfxVolume);
         }
 
         private static AudioSource CreateSource(Transform parent, string name, bool loop, float volume)

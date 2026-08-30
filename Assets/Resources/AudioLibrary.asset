@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MenuMusic: {fileID: 8300000, guid: 0b74fdc3462458e42841e389c970035f, type: 3}
   GameplayMusic: {fileID: 8300000, guid: d33437845d8d67e4b9fe21f2f5ba5a65, type: 3}
-  MusicVolume: 0.2
+  MusicVolume: 0.05263722
   GameplayAmbience: {fileID: 8300000, guid: 454dc65fa2c8b1042861e05cf626e7ac, type: 3}
-  AmbienceVolume: 0.1
+  AmbienceVolume: 0.02631861
   DefaultClickSfx: {fileID: 8300000, guid: 85bd6dbce48d98149afbad74bde02e20, type: 3}
   FoodClickSfx: {fileID: 8300000, guid: 85bd6dbce48d98149afbad74bde02e20, type: 3}
   FoodSendSfx: {fileID: 8300000, guid: f73ea7870852a034e8e363788e2e715e, type: 3}
@@ -29,5 +29,5 @@ MonoBehaviour:
   CelebrationSfx: {fileID: 8300000, guid: 6f6ec5fd0ca0eab4b92084978cbdbaf8, type: 3}
   WinSfx: {fileID: 8300000, guid: fc84ae5fec9fcb844a76636e2d1867f2, type: 3}
   FailSfx: {fileID: 8300000, guid: 17bb5916feead7544a3720489e3c70fb, type: 3}
-  SfxVolume: 0.2
-  ConveyorVolume: 0.5
+  SfxVolume: 0.08119853
+  ConveyorVolume: 0.08119853
