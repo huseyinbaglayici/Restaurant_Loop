@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
+using Runtime.Data;
 using UnityEngine;
 using Zenject;
 

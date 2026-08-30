@@ -37,16 +37,14 @@ MonoBehaviour:
     SpinYDegreesPerSecond: 0
     ResetRotationOnArrive: 1
     Ease: 6
-  DispenserToBelt:
-    Speed: 8
-    MinDuration: 0.05
-    MaxDuration: 1.2
-    ArcHeight: 0.3
+  TrayDispenserFlight:
+    Speed: 16
+    MinDuration: 0.25
+    MaxDuration: 0.25
+    ArcHeight: 0.35
     SpinYDegreesPerSecond: 0
     ResetRotationOnArrive: 0
-    Ease: 6
-  TrayVanishDuration: 0.25
-  TrayVanishPunchOvershoot: 1.7
+    Ease: 27
   BeltSpinYDegreesPerSecond: 0
   ConsumePunchStrength: {x: 0.05, y: 0.05, z: 0.05}
   ConsumePunchDuration: 0.15

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
+using Runtime.Data;
 using UnityEngine;
 using Zenject;
 

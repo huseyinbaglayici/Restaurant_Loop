@@ -1,15 +1,11 @@
 using DG.Tweening;
 using UnityEngine;
 
-namespace RestaurantLoop.Runtime.Data
+namespace Runtime.Data
 {
-    // Everything about how the conveyor *feels* — nothing here changes what the logical layer decides,
-    // only how (and how late) the visual layer plays that decision out.
     [CreateAssetMenu(fileName = "ConveyorFeelSettings", menuName = "RestaurantLoop/Conveyor Feel Settings")]
     public class ConveyorFeelSettings : ScriptableObject
     {
-        // One A -> B hop of a food visual. Each hop type (queue entry, exit dock, customer delivery)
-        // gets its own instance so they can be tuned independently.
         [System.Serializable]
         public class FlightTuning
         {
@@ -47,34 +43,24 @@ namespace RestaurantLoop.Runtime.Data
                  "immediately; the visual layer executes that decision this many seconds later.")]
         public float VisualLagSeconds = 0.05f;
 
-        [Header("Queue -> belt entry")]
-        public FlightTuning QueueToBelt = new() { Speed = 12f, ArcHeight = 0.6f };
+        [Header("Queue -> belt entry")] public FlightTuning QueueToBelt = new() { Speed = 12f, ArcHeight = 0.6f };
 
-        [Header("Belt -> exit stack")]
-        public FlightTuning BeltToStack = new() { Speed = 8f, ArcHeight = 0.45f };
+        [Header("Belt -> exit stack")] public FlightTuning BeltToStack = new() { Speed = 8f, ArcHeight = 0.45f };
 
         [Header("Belt -> customer (consume)")]
         public FlightTuning ConsumeToCustomer = new() { Speed = 14f, ArcHeight = 0.8f };
 
         [Header("Serving tray")]
-        // ResetRotationOnArrive off: TrayController drives its own rotation the whole way (a dedicated
-        // local-rotate tween in EnterBelt, timed to this flight's own duration) and is never reparented to
-        // the food it carries — if this flight also reset rotation on arrival, it would snap the tray back
-        // to its dispenser pose the instant it lands, undoing that tween a frame before it's done.
-        [Tooltip("Dispenser -> belt entry flight (tray leaving its resting spot to catch up with its food).")]
-        public FlightTuning DispenserToBelt = new() { Speed = 12f, ArcHeight = 0.3f, ResetRotationOnArrive = false };
+        [Tooltip("Dispenser <-> belt flight, shared by the tray leaving to catch its food and by its return trip " +
+                 "(lap completed and docked, or food eaten mid-belt) — same feel every time, independent of " +
+                 "how far the hop actually is.")]
+        public FlightTuning TrayDispenserFlight = new()
+        {
+            Speed = 16f, MinDuration = 0.25f, MaxDuration = 0.25f, ArcHeight = 0.35f, ResetRotationOnArrive = false,
+            Ease = Ease.OutBack
+        };
 
-        [Tooltip("Seconds for each half (shrink, then grow back) of the tray's return-to-dispenser pop — " +
-                 "it shrinks away where it stands, teleports to its resting pose, then grows back in. No " +
-                 "flight across the belt for the return trip.")]
-        public float TrayVanishDuration = 0.18f;
-
-        [Tooltip("Overshoot on the punchier version of the vanish/reappear pop, played when a tray's food was " +
-                 "fully eaten mid-belt (vs. the calmer pop when it completed its lap and docked instead).")]
-        public float TrayVanishPunchOvershoot = 1.7f;
-
-        [Header("Belt ride")]
-        [Tooltip("Degrees per second spun around world Y while riding the belt. 0 = no spin.")]
+        [Header("Belt ride")] [Tooltip("Degrees per second spun around world Y while riding the belt. 0 = no spin.")]
         public float BeltSpinYDegreesPerSecond;
 
         [Header("Customer consume reaction")]
