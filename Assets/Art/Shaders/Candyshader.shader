@@ -79,6 +79,11 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
 
         [Header(Mobile Performance)]
         [Toggle(_MOBILE_SIMPLE)] _MobileSimpleToggle("Mobile Simple Mode", Float) = 0
+
+        [Header(Vertex Animation Texture)]
+        [Toggle(_VAT_ON)] _VATToggle("VAT Enabled", Float) = 0
+        _VATPositions("VAT Position Texture", 2D) = "black" {}
+        _VATTexHeight("VAT Texture Height (Total Frames)", Float) = 1
     }
 
     SubShader
@@ -163,6 +168,10 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
 
             half4 _BaseColor;
             float4 _BaseMap_ST;
+
+            #if defined(_VAT_ON)
+                float _VATTexHeight;
+            #endif
         CBUFFER_END
 
         float2 CandyTransformTex(float2 uv)
@@ -172,6 +181,48 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
 
         TEXTURE2D(_BaseMap);
         SAMPLER(sampler_BaseMap);
+
+        // Per-instance playback + tint written by VATCustomerVisual via MaterialPropertyBlock —
+        // UNITY_INSTANCING_BUFFER keeps both batchable across GPU-instanced draws instead of
+        // forcing a draw call per customer/hair-variant. _InstanceColor lets the body (white,
+        // no-op — its look comes from baked vertex color) and hair (random tint) share one
+        // mechanism. Position-only VAT: normals stay bind-pose (see VATBaker).
+        #if defined(_VAT_ON)
+            TEXTURE2D(_VATPositions);
+            SAMPLER(sampler_VATPositions);
+
+            UNITY_INSTANCING_BUFFER_START(CandyVATProps)
+                UNITY_DEFINE_INSTANCED_PROP(float, _VATFrameA)
+                UNITY_DEFINE_INSTANCED_PROP(float, _VATFrameB)
+                UNITY_DEFINE_INSTANCED_PROP(float, _VATBlend)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _InstanceColor)
+            UNITY_INSTANCING_BUFFER_END(CandyVATProps)
+        #endif
+
+        float3 ApplyVAT(float3 positionOS, float2 vatUV)
+        {
+            #if defined(_VAT_ON)
+                float frameA = UNITY_ACCESS_INSTANCED_PROP(CandyVATProps, _VATFrameA);
+                float frameB = UNITY_ACCESS_INSTANCED_PROP(CandyVATProps, _VATFrameB);
+                float blend = UNITY_ACCESS_INSTANCED_PROP(CandyVATProps, _VATBlend);
+                float vA = (frameA + 0.5) / _VATTexHeight;
+                float vB = (frameB + 0.5) / _VATTexHeight;
+                float3 posA = SAMPLE_TEXTURE2D_LOD(_VATPositions, sampler_VATPositions, float2(vatUV.x, vA), 0).xyz;
+                float3 posB = SAMPLE_TEXTURE2D_LOD(_VATPositions, sampler_VATPositions, float2(vatUV.x, vB), 0).xyz;
+                return lerp(posA, posB, blend);
+            #else
+                return positionOS;
+            #endif
+        }
+
+        half4 ApplyInstanceColor(half4 baseColor)
+        {
+            #if defined(_VAT_ON)
+                return baseColor * UNITY_ACCESS_INSTANCED_PROP(CandyVATProps, _InstanceColor);
+            #else
+                return baseColor;
+            #endif
+        }
 
         void ClipAlpha(half alpha)
         {
@@ -260,6 +311,7 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _VERTEXCOLOR_ON
             #pragma shader_feature_local _MOBILE_SIMPLE
+            #pragma shader_feature_local _VAT_ON
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _SHADOWS_SOFT
@@ -272,6 +324,9 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
                 float3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
                 float4 color : COLOR;
+                #if defined(_VAT_ON)
+                    float2 vatUV : TEXCOORD1;
+                #endif
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -303,8 +358,13 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-                float3 candyNormalOS = CandyNormalOS(input.positionOS.xyz, input.normalOS);
-                float3 positionOS = input.positionOS.xyz + normalize(input.normalOS) * _Inflate;
+                float3 animatedOS = input.positionOS.xyz;
+                #if defined(_VAT_ON)
+                    animatedOS = ApplyVAT(animatedOS, input.vatUV);
+                #endif
+
+                float3 candyNormalOS = CandyNormalOS(animatedOS, input.normalOS);
+                float3 positionOS = animatedOS + normalize(input.normalOS) * _Inflate;
 
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(positionOS);
 
@@ -323,7 +383,7 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                half4 baseColor = _BaseColor;
+                half4 baseColor = ApplyInstanceColor(_BaseColor);
 
                 #if defined(_VERTEXCOLOR_ON)
                     half4 vertexColor = input.color;
@@ -426,6 +486,7 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
             #pragma vertex vertShadow
             #pragma fragment fragShadow
             #pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature_local _VAT_ON
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
 
@@ -437,6 +498,9 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
+                #if defined(_VAT_ON)
+                    float2 vatUV : TEXCOORD1;
+                #endif
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -453,8 +517,13 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
 
+                float3 animatedOS = input.positionOS.xyz;
+                #if defined(_VAT_ON)
+                    animatedOS = ApplyVAT(animatedOS, input.vatUV);
+                #endif
+
                 float3 positionWS = TransformObjectToWorld(
-                    input.positionOS.xyz + normalize(input.normalOS) * _Inflate);
+                    animatedOS + normalize(input.normalOS) * _Inflate);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
 
                 #if _CASTING_PUNCTUAL_LIGHT_SHADOW
@@ -508,6 +577,7 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
             #pragma vertex vertDepthOnly
             #pragma fragment fragDepthOnly
             #pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature_local _VAT_ON
             #pragma multi_compile_instancing
 
             struct AttributesDO
@@ -515,6 +585,9 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
+                #if defined(_VAT_ON)
+                    float2 vatUV : TEXCOORD1;
+                #endif
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -530,8 +603,14 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
                 VaryingsDO output = (VaryingsDO)0;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
+
+                float3 animatedOS = input.positionOS.xyz;
+                #if defined(_VAT_ON)
+                    animatedOS = ApplyVAT(animatedOS, input.vatUV);
+                #endif
+
                 output.positionCS = TransformObjectToHClip(
-                    input.positionOS.xyz + normalize(input.normalOS) * _Inflate);
+                    animatedOS + normalize(input.normalOS) * _Inflate);
                 output.uv = CandyTransformTex(input.uv);
                 return output;
             }
@@ -566,6 +645,7 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
             #pragma vertex vertDepthNormals
             #pragma fragment fragDepthNormals
             #pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature_local _VAT_ON
             #pragma multi_compile_instancing
 
             struct AttributesDN
@@ -573,6 +653,9 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
+                #if defined(_VAT_ON)
+                    float2 vatUV : TEXCOORD1;
+                #endif
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -590,13 +673,18 @@ Shader "RestaurantLoop/CandyGloss_MobileOptimized"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
 
-                float3 radial = input.positionOS.xyz - _RoundPivot.xyz;
+                float3 animatedOS = input.positionOS.xyz;
+                #if defined(_VAT_ON)
+                    animatedOS = ApplyVAT(animatedOS, input.vatUV);
+                #endif
+
+                float3 radial = animatedOS - _RoundPivot.xyz;
                 float len = length(radial);
                 radial = (len > 1e-4) ? radial / len : normalize(input.normalOS);
                 float3 candyOS = normalize(lerp(normalize(input.normalOS), radial, saturate(_Roundness)));
 
                 output.positionCS = TransformObjectToHClip(
-                    input.positionOS.xyz + normalize(input.normalOS) * _Inflate);
+                    animatedOS + normalize(input.normalOS) * _Inflate);
                 output.normalWS = TransformObjectToWorldNormal(candyOS);
                 output.uv = CandyTransformTex(input.uv);
                 return output;

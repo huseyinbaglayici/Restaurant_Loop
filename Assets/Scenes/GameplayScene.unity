@@ -10402,25 +10402,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fca3cc44df47bc244b74331843cfbf10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _previewLoopInEditMode: 0
-  _celebrationPanel: {fileID: 537909973}
-  _logoTransform: {fileID: 990701103}
-  _logoTargetScale: {x: 7, y: 7, z: 7}
-  _logoStartOffset: {x: 0, y: 0}
-  _logoMoveDuration: 3
+  _previewLoopInEditMode: 1
+  _celebrationPanel: {fileID: 0}
+  _logoTransform: {fileID: 0}
+  _logoTargetScale: {x: 1.35, y: 1.35, z: 1.35}
+  _logoStartOffset: {x: 0, y: -600}
+  _logoMoveDuration: 1.2
   _logoEase: 27
-  _celebrationDuration: 5
-  _confettiParticles:
-  - {fileID: 9169966119468206341, guid: ed962e35f7fa6f34f8d27aa6d19ea293, type: 3}
-  _confettiPrefabs:
-  - {fileID: 5700784828077083704, guid: ed962e35f7fa6f34f8d27aa6d19ea293, type: 3}
-  _confettiSpawnPoints:
-  - {fileID: 2062287070}
-  _confettiScaleMultiplier: 0.7
-  _burstCount: 4
-  _burstInterval: 1
-  _randomSpreadRadius: 0
-  _confettiSortingOrder: 100
+  _celebrationDuration: 2.5
+  _confettiParticles: []
+  _confettiPrefabs: []
+  _confettiSpawnPoints: []
+  _confettiScaleMultiplier: 1.5
+  _burstCount: 3
+  _burstInterval: 0.35
+  _randomSpreadRadius: 150
+  _confettiSortingOrder: 10
   _confettiSortingLayerName: UI
   _panelCompleted: {fileID: 736949798}
   _buttonNext: {fileID: 2142684842}

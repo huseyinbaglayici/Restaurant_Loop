@@ -6,8 +6,24 @@ namespace Editor.LevelEditor
 {
     internal static class EntityLabelFactory
     {
-        public static Label CreateIcon(FoodType type, Vector2 cellCenter, float cellSize)
+        // sprite: the food's actual icon art (already includes its own background/bubble look).
+        // Falls back to an emoji label when no sprite is set for this food type yet.
+        public static VisualElement CreateIcon(FoodType type, Vector2 cellCenter, float cellSize, Sprite sprite = null)
         {
+            if (sprite != null)
+            {
+                var image = new VisualElement();
+                float size = cellSize * 0.86f;
+                image.style.position = Position.Absolute;
+                image.style.left = cellCenter.x - size * 0.5f;
+                image.style.top = cellCenter.y - size * 0.5f;
+                image.style.width = size;
+                image.style.height = size;
+                image.style.backgroundImage = new StyleBackground(sprite);
+                image.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                return image;
+            }
+
             var icon = new Label(FoodTypeUtil.ToIcon(type));
             icon.style.position = Position.Absolute;
             icon.style.left = cellCenter.x - cellSize * 0.5f;

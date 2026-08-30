@@ -41,6 +41,11 @@ namespace RestaurantLoop.Runtime.Data
             [Tooltip("UI sprite for this food type (fallback if specific icons are not set).")]
             public Sprite Icon;
 
+            [Tooltip("Grid cell background tint in the level editor. Leave as transparent black (default) " +
+                     "to fall back to FoodTypeUtil.ToColor — set it to keep the editor grid in sync when this " +
+                     "food's art gets a new palette.")]
+            public Color GridColor;
+
             [Tooltip("This prefab is one fixed rack holding several pre-placed items (e.g. a shelf of drinks), " +
                      "not a single item to be stacked N times. One instance is spawned regardless of Amount; " +
                      "individual items are shown/hidden as the stack is consumed instead. Structure: child[0] " +
@@ -132,5 +137,19 @@ namespace RestaurantLoop.Runtime.Data
         }
 
         public bool TryGetIcon(FoodType type, out Sprite icon) => TryGetCustomerIcon(type, out icon);
+
+        public bool TryGetGridColor(FoodType type, out Color color)
+        {
+            foreach (var entry in _entries)
+            {
+                if (entry.Type != type) continue;
+
+                color = entry.GridColor;
+                return color != default;
+            }
+
+            color = default;
+            return false;
+        }
     }
 }

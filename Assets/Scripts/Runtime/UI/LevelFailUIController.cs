@@ -141,8 +141,6 @@ namespace RestaurantLoop.Runtime.UI
         {
             _conveyorManager.ClearBelt();
             _powerUpService.ActivateExtraTray(); // Extra Tray power-up: adds another slot each time Keep Playing is used.
-            _exitStackAnchor.TryRemoveFromSlot(_exitStackAnchor.SlotCount - 1, out var visual);
-            if (visual != null) _foodPool.Despawn(visual);
 
             _panelKeepPlaying.SetActive(false);
             Time.timeScale = 1f;
