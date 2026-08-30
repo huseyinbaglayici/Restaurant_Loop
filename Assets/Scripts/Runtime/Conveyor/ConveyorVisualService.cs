@@ -211,6 +211,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _flightService.Launch(visual.transform, slotPosition, _feel.BeltToStack, () =>
             {
                 _audioService.PlaySfx(_audioLibrary.FoodDropToRackSfx);
+                _signalBus.Fire(new FoodDockLandedSignal { ItemId = id });
             });
         }
 

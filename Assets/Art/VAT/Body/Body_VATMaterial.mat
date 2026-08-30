@@ -8,24 +8,79 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Body_VATMaterial
-  m_Shader: {fileID: 4800000, guid: 3040ca0a2e6ff484797d5c87d2274f22, type: 3}
+  m_Shader: {fileID: 4800000, guid: 83b42c5003fa12746a72ecb10ce62d07, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _VAT_ON
   - _VERTEXCOLOR_ON
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _DROPSHADOW_ON
+  - _MOBILE_SIMPLE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
-  disabledShaderPasses: []
+  disabledShaderPasses:
+  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _AOMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MatCapTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -33,13 +88,52 @@ Material:
         m_Texture: {fileID: 2800000, guid: 9be23953678d53c4f96729b646ec198c, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AOFloor: 0.45
+    - _AOStrength: 0.6
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
     - _AlphaClipToggle: 0
+    - _AlphaToMask: 0
+    - _AmbientStrength: 1
+    - _Blend: 0
+    - _BlendModePreserveSpecular: 1
     - _BounceStrength: 0.35
     - _Brightness: 1
+    - _BumpScale: 1
+    - _CanvasScale: 160
+    - _CanvasStrength: 0.05
+    - _ClearCoatMask: 0
+    - _ClearCoatSmoothness: 0
     - _Cull: 2
     - _Cutoff: 0.5
+    - _DepthFadeRange: 20
+    - _DepthFadeStart: 12
+    - _DepthFadeStrength: 0
+    - _DetailAlbedoMapScale: 1
+    - _DetailNormalMapScale: 1
+    - _DirectionalStrength: 0.55
+    - _DropShadowDepthBias: 0.0006
+    - _DropShadowSoftness: 0.55
+    - _DropShadowSpread: 0.012
+    - _DropShadowStrength: 0.32
+    - _DropShadowToggle: 1
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _EnvironmentReflections: 1
     - _Gloss1Angle: 35
     - _Gloss1Soft: 0.35
     - _Gloss1Strength: 0.95
@@ -47,6 +141,20 @@ Material:
     - _Gloss2Soft: 0.45
     - _Gloss2Strength: 0.7
     - _Gloss2Wobble: 0.12
+    - _GlossMapScale: 1
+    - _Glossiness: 0.5
+    - _GlossyReflections: 1
+    - _GradientCenter: 0
+    - _GradientEnd: 0.5
+    - _GradientIntensity: 0.1
+    - _GradientSize: 2
+    - _GradientSpace: 1
+    - _GradientStart: -0.5
+    - _GradientStrength: 0.2
+    - _HemisphereWrap: 0.77
+    - _HighlightSize: 0.3
+    - _HighlightSoftness: 0.5
+    - _HighlightStrength: 0.12
     - _Inflate: 0
     - _InnerEdgeHueShift: 0.06
     - _InnerEdgeSat: 1.45
@@ -57,37 +165,121 @@ Material:
     - _LightDepth: 0.35
     - _LightHueShift: -0.035
     - _LightSat: 0.95
+    - _LightSaturation: 1
+    - _LightThreshold: 0.95
     - _LightValue: 1.14
-    - _LightWrap: 0.22
+    - _LightWrap: 0.4
+    - _MacroDriftScale: 0.3
+    - _MacroDriftStrength: 0.14
     - _MainLightInfluence: 0
-    - _MobileSimpleToggle: 0
+    - _MatCapStrength: 0.12
+    - _MatCapToggle: 0
+    - _Metallic: 0
+    - _MinimumBrightness: 0.4
+    - _MobileSimpleToggle: 1
+    - _Mode: 0
+    - _NormalMapToggle: 0
+    - _NormalStrength: 0.5
+    - _OcclusionStrength: 1
+    - _OutlineReferenceHeight: 1080
+    - _OutlineToggle: 0
+    - _OutlineWidth: 2
+    - _PaintLevels: 12
+    - _PaintQuantizeStrength: 0.55
+    - _Parallax: 0.02
+    - _PigmentAmount: 0.65
+    - _QueueOffset: 0
+    - _RampLightEdge: 0.7
+    - _RampShadowEdge: 0.34
+    - _RampSoftness: 0.18
+    - _RampTintAmount: 0.55
+    - _ReceiveShadowStrength: 0
+    - _ReceiveShadows: 1
     - _RimPower: 3
+    - _RimStrength: 0.2
+    - _RimToggle: 0
     - _RimTopStrength: 0.5
     - _Roundness: 0.55
+    - _Saturation: 0.95
     - _ShadeHigh: 0.84
     - _ShadeLow: 0.3
     - _ShadeSoft: 0.17
+    - _ShadowBrightness: 0.62
     - _ShadowHueShift: 0.045
     - _ShadowReceive: 0
     - _ShadowSat: 1.42
+    - _ShadowSaturation: 1.12
+    - _ShadowStrength: 0.5
+    - _ShadowThreshold: 0.12
     - _ShadowValue: 0.62
     - _SheenEdge: 0.72
     - _SheenSoft: 0.28
     - _SheenStrength: 0.1
+    - _Smoothness: 0.5
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _StrokeAngle: 16
+    - _StrokeBumpStrength: 0.75
+    - _StrokeContrast: 1.5
+    - _StrokeElongation: 3
+    - _StrokeObjectScale: 11
+    - _StrokeScale: 22
+    - _StrokeShadowBoost: 0.6
+    - _StrokeSpace: 1
+    - _StrokeStrength: 0.22
+    - _StrokeUVWarp: 0.004
+    - _StrokeWarp: 0.75
+    - _StrokeWorldScale: 3
+    - _Surface: 0
+    - _TerminatorBreak: 0.7
+    - _UVSec: 0
+    - _UseMainLightDirection: 0
     - _VATTexHeight: 34
     - _VATToggle: 1
     - _VertexColorToggle: 1
-    - _Vibrance: 1.32
+    - _Vibrance: 1.1
+    - _WorkflowMode: 1
+    - _ZWrite: 1
     m_Colors:
+    - _AOColor: {r: 0.35999998, g: 0.24999997, b: 0.32999998, a: 1}
+    - _AmbientColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BottomColor: {r: 0.8399999, g: 0.85, b: 0.96, a: 1}
+    - _BottomGradientColor: {r: 0.92, g: 0.89, b: 0.91, a: 1}
     - _BounceColor: {r: 0.41999996, g: 0.62, b: 1, a: 1}
+    - _Color: {r: 0.7624907, g: 0.68344647, b: 0.5322497, a: 1}
+    - _DepthFadeColor: {r: 0.86, g: 0.87, b: 0.96, a: 1}
+    - _DropShadowColor: {r: 0.15999997, g: 0.09999997, b: 0.21999997, a: 1}
+    - _DropShadowOffset: {r: 0.01, g: -0.013, b: 0, a: 0}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
+    - _FakeLightDirection: {r: -0.35, g: 0.85, b: -0.4, a: 0}
     - _Gloss1Pos: {r: -0.42, g: 0.52, b: 0, a: 0}
     - _Gloss1Size: {r: 0.3, g: 0.2, b: 0, a: 0}
     - _Gloss2Pos: {r: -0.66, g: 0.16, b: 0, a: 0}
     - _Gloss2Size: {r: 0.11, g: 0.14, b: 0, a: 0}
     - _GlossColor: {r: 1, g: 1, b: 1, a: 1}
+    - _GroundColor: {r: 0.62, g: 0.56, b: 0.58, a: 1}
+    - _HighlightColor: {r: 1, g: 0.96999997, b: 0.88, a: 1}
+    - _LightColorTint: {r: 1, g: 0.96, b: 0.86, a: 1}
+    - _LightTint: {r: 1, g: 0.97999996, b: 0.94, a: 1}
+    - _MacroDriftColor: {r: 0.93, g: 0.96, b: 1.06, a: 1}
+    - _MatCapColor: {r: 1, g: 1, b: 1, a: 1}
+    - _MidColor: {r: 0.8, g: 0.74, b: 0.78, a: 1}
+    - _OutlineColor: {r: 0.09999997, g: 0.059999965, b: 0.11999995, a: 1}
+    - _PigmentCool: {r: 0.68, g: 0.65, b: 0.89, a: 1}
+    - _PigmentWarm: {r: 1, g: 0.91, b: 0.74, a: 1}
+    - _RimColor: {r: 1, g: 0.95, b: 0.9, a: 1}
     - _RimTopColor: {r: 1, g: 0.97999996, b: 0.92, a: 1}
     - _RoundPivot: {r: 0, g: 0, b: 0, a: 0}
+    - _ShadowColor: {r: 0.39999998, g: 0.29999998, b: 0.43999997, a: 1}
+    - _ShadowColorTint: {r: 0.7, g: 0.62, b: 0.65999997, a: 1}
     - _ShadowReceiveTint: {r: 0.54999995, g: 0.45, b: 0.68, a: 1}
+    - _ShadowTint: {r: 0.72, g: 0.65999997, b: 0.7, a: 1}
+    - _SkyColor: {r: 1.06, g: 1.03, b: 0.97999996, a: 1}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _TopColor: {r: 1.07, g: 1.02, b: 0.92, a: 1}
+    - _TopGradientColor: {r: 1.03, g: 1.01, b: 0.98999995, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

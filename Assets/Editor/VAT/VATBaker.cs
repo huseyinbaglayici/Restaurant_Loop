@@ -7,19 +7,25 @@ using UnityEngine.Rendering;
 
 namespace RestaurantLoop.Editor.VAT
 {
-    // Bakes the live customer rig (Assets/Art/Models/Character/Customer.prefab) into position-only
-    // Vertex Animation Textures. Two bakes: the 5 skinned body parts + the rigid Eyebrow merged into
-    // one mesh/texture (each part's flat material color baked into vertex COLOR so one shared
-    // material reproduces the look — see Candyshader's _VERTEXCOLOR_ON), and each of the 5 rigid
-    // hair variants baked separately (same clip/frame layout, so one instance's playback drives both
-    // its body and its active hair renderer). See VATCustomerVisual for runtime playback.
+    // Bakes the live customer rig (Assets/Art/Models/Character/Customer.prefab) into a position-only
+    // Vertex Animation Texture. Customer.prefab actually uses TWO different shaders across its parts
+    // (body/eyes on RestaurantLoop/SoftMatte v1, pants/shoes/tshirt/Eyebrow on Soft_Matte_2 v2) — one
+    // merged material can't reproduce both looks, so this bakes into TWO meshes/materials sharing one
+    // VAT position texture + one clip layout (still just 2 draw calls total, down from the original
+    // 7 unbatched skinned draws). Each part's flat material color is baked into vertex COLOR so each
+    // shared material reproduces all its parts' distinct tones. Single fixed character — no hair, no
+    // per-instance variation. See VATCustomerVisual for runtime playback.
     public static class VATBaker
     {
         private const float SampleFps = 30f;
         private const string CustomerPrefabPath = "Assets/Art/Models/Character/Customer.prefab";
-        private static readonly string[] BodyPartNames = { "body", "eyes", "pants", "shoes", "tshirt" };
-        private static readonly string[] HairNames = { "men_hair_1", "men_hair_2", "men_hair_3", "women_hair_1", "women_hair_2" };
         private const string EyebrowName = "Eyebrow";
+
+        private const string BodyShaderName = "RestaurantLoop/SoftMatte";
+        // Soft_Matte_2.shader also declares itself as "RestaurantLoop/SoftMatte" (name collision with
+        // RestaurantSoftMatte.shader) — resolve it by asset path instead of Shader.Find to avoid
+        // picking the wrong one.
+        private const string OutfitShaderPath = "Assets/Prefabs/JapanScenePrefabs/Soft_Matte_2.shader";
 
         private class SkinnedSource
         {
@@ -34,7 +40,30 @@ namespace RestaurantLoop.Editor.VAT
             public Color VertexColor;
         }
 
-        [MenuItem("RestaurantLoop/VAT/Bake Customer Body + Eyebrow")]
+        private class PartGroup
+        {
+            public string Name;
+            public Shader Shader;
+            // Source material whose full property set (hemisphere, directional, toon-step, AO,
+            // gradient, etc — not just _BaseColor) is copied onto the baked material, so the merged
+            // mesh reproduces Customer.prefab's actual tuned look, not shader defaults.
+            public Material TemplateMaterial;
+            public List<SkinnedSource> Skinned = new List<SkinnedSource>();
+            public List<RigidSource> Rigid = new List<RigidSource>();
+
+            public int VertexCount
+            {
+                get
+                {
+                    int n = 0;
+                    foreach (var s in Skinned) n += s.Renderer.sharedMesh.vertexCount;
+                    foreach (var r in Rigid) n += r.Mesh.vertexCount;
+                    return n;
+                }
+            }
+        }
+
+        [MenuItem("RestaurantLoop/VAT/Bake Customer Body")]
         public static void BakeBody()
         {
             var sourcePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CustomerPrefabPath);
@@ -43,42 +72,30 @@ namespace RestaurantLoop.Editor.VAT
             var idleClip = FindIdleClip(sourcePrefab);
             if (idleClip == null) return;
 
+            var bodyShader = Shader.Find(BodyShaderName);
+            var outfitShader = AssetDatabase.LoadAssetAtPath<Shader>(OutfitShaderPath);
+            if (bodyShader == null) { Debug.LogError($"[VATBaker] Shader '{BodyShaderName}' not found."); return; }
+            if (outfitShader == null) { Debug.LogError($"[VATBaker] Shader at '{OutfitShaderPath}' not found."); return; }
+
             var scratch = Object.Instantiate(sourcePrefab);
             scratch.hideFlags = HideFlags.HideAndDontSave;
             try
             {
-                var skinnedSources = new List<SkinnedSource>();
-                foreach (var partName in BodyPartNames)
-                {
-                    var t = FindDeepChild(scratch.transform, partName);
-                    var smr = t != null ? t.GetComponent<SkinnedMeshRenderer>() : null;
-                    if (smr == null || smr.sharedMesh == null)
-                    {
-                        Debug.LogError($"[VATBaker] Missing skinned body part '{partName}'.");
-                        continue;
-                    }
-                    skinnedSources.Add(new SkinnedSource { Renderer = smr, VertexColor = GetFlatColor(smr.sharedMaterial) });
-                }
+                var bodyGroup = new PartGroup { Name = "Body", Shader = bodyShader };
+                AddSkinned(scratch.transform, bodyGroup, "body");
+                AddSkinned(scratch.transform, bodyGroup, "eyes");
+                // body is the dominant visible surface in this group — use its tuning as the template.
+                bodyGroup.TemplateMaterial = bodyGroup.Skinned.Count > 0 ? bodyGroup.Skinned[0].Renderer.sharedMaterial : null;
 
-                var rigidSources = new List<RigidSource>();
-                var eyebrowT = FindDeepChild(scratch.transform, EyebrowName);
-                var eyebrowMf = eyebrowT != null ? eyebrowT.GetComponent<MeshFilter>() : null;
-                if (eyebrowMf != null && eyebrowMf.sharedMesh != null)
-                {
-                    var eyebrowMr = eyebrowT.GetComponent<MeshRenderer>();
-                    rigidSources.Add(new RigidSource
-                    {
-                        Source = eyebrowT,
-                        Mesh = eyebrowMf.sharedMesh,
-                        VertexColor = GetFlatColor(eyebrowMr != null ? eyebrowMr.sharedMaterial : null)
-                    });
-                }
-                else
-                {
-                    Debug.LogWarning("[VATBaker] Eyebrow mesh not found, baking body without it.");
-                }
+                var outfitGroup = new PartGroup { Name = "Outfit", Shader = outfitShader };
+                AddSkinned(scratch.transform, outfitGroup, "pants");
+                AddSkinned(scratch.transform, outfitGroup, "shoes");
+                AddSkinned(scratch.transform, outfitGroup, "tshirt");
+                AddEyebrow(scratch.transform, outfitGroup);
+                // pants matches 3 of the 4 outfit parts' _HemisphereWrap (0.92) — most representative template.
+                outfitGroup.TemplateMaterial = outfitGroup.Skinned.Count > 0 ? outfitGroup.Skinned[0].Renderer.sharedMaterial : null;
 
-                BakeCombined("Body", scratch.transform, skinnedSources, rigidSources, idleClip, "Assets/Art/VAT/Body");
+                BakeGroups(new[] { bodyGroup, outfitGroup }, scratch.transform, idleClip, "Assets/Art/VAT/Body");
             }
             finally
             {
@@ -86,52 +103,45 @@ namespace RestaurantLoop.Editor.VAT
             }
         }
 
-        [MenuItem("RestaurantLoop/VAT/Bake Customer Hair Variants")]
-        public static void BakeAllHair()
+        private static void AddSkinned(Transform root, PartGroup group, string partName)
         {
-            var sourcePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CustomerPrefabPath);
-            if (sourcePrefab == null) { Debug.LogError($"[VATBaker] {CustomerPrefabPath} not found."); return; }
-
-            var idleClip = FindIdleClip(sourcePrefab);
-            if (idleClip == null) return;
-
-            foreach (var hairName in HairNames) BakeHairVariant(sourcePrefab, idleClip, hairName);
+            var t = FindDeepChild(root, partName);
+            var smr = t != null ? t.GetComponent<SkinnedMeshRenderer>() : null;
+            if (smr == null || smr.sharedMesh == null)
+            {
+                Debug.LogError($"[VATBaker] Missing skinned body part '{partName}'.");
+                return;
+            }
+            group.Skinned.Add(new SkinnedSource { Renderer = smr, VertexColor = GetFlatColor(smr.sharedMaterial) });
         }
 
-        private static void BakeHairVariant(GameObject sourcePrefab, AnimationClip idleClip, string hairName)
+        private static void AddEyebrow(Transform root, PartGroup group)
         {
-            var scratch = Object.Instantiate(sourcePrefab);
-            scratch.hideFlags = HideFlags.HideAndDontSave;
-            try
+            var eyebrowT = FindDeepChild(root, EyebrowName);
+            var eyebrowMf = eyebrowT != null ? eyebrowT.GetComponent<MeshFilter>() : null;
+            if (eyebrowMf == null || eyebrowMf.sharedMesh == null)
             {
-                var hairT = FindDeepChild(scratch.transform, hairName);
-                var mf = hairT != null ? hairT.GetComponent<MeshFilter>() : null;
-                if (mf == null || mf.sharedMesh == null)
-                {
-                    Debug.LogError($"[VATBaker] Missing hair variant '{hairName}'.");
-                    return;
-                }
-
-                var rigidSources = new List<RigidSource> { new RigidSource { Source = hairT, Mesh = mf.sharedMesh, VertexColor = Color.white } };
-                BakeCombined(hairName, scratch.transform, new List<SkinnedSource>(), rigidSources, idleClip, $"Assets/Art/VAT/Hair/{hairName}");
+                Debug.LogWarning("[VATBaker] Eyebrow mesh not found, baking without it.");
+                return;
             }
-            finally
+            var eyebrowMr = eyebrowT.GetComponent<MeshRenderer>();
+            group.Rigid.Add(new RigidSource
             {
-                Object.DestroyImmediate(scratch);
-            }
+                Source = eyebrowT,
+                Mesh = eyebrowMf.sharedMesh,
+                VertexColor = GetFlatColor(eyebrowMr != null ? eyebrowMr.sharedMaterial : null)
+            });
         }
 
-        private static VATClipSet BakeCombined(string bakeName, Transform root, List<SkinnedSource> skinnedSources,
-            List<RigidSource> rigidSources, AnimationClip clip, string folder)
+        private static void BakeGroups(PartGroup[] groups, Transform root, AnimationClip clip, string folder)
         {
             int totalVerts = 0;
-            foreach (var s in skinnedSources) totalVerts += s.Renderer.sharedMesh.vertexCount;
-            foreach (var r in rigidSources) totalVerts += r.Mesh.vertexCount;
+            foreach (var g in groups) totalVerts += g.VertexCount;
 
             if (totalVerts == 0)
             {
-                Debug.LogError($"[VATBaker] {bakeName}: no source vertices to bake.");
-                return null;
+                Debug.LogError("[VATBaker] No source vertices to bake.");
+                return;
             }
 
             EnsureFolder(folder);
@@ -143,39 +153,38 @@ namespace RestaurantLoop.Editor.VAT
             var combinedUv = new Vector2[totalVerts];
             var combinedNormals = new Vector3[totalVerts];
             var combinedVerts = new Vector3[totalVerts];
-            var combinedTris = new List<int>();
 
-            // Static topology (uv0/triangles/vertex color) doesn't change per frame — build once.
+            // Per-group vertex range + local triangle list, built while laying out the shared
+            // global vertex space (order: group by group, skinned then rigid within each).
+            var groupRanges = new (int start, int count)[groups.Length];
+            var groupTris = new List<int>[groups.Length];
+
             int cursor = 0;
-            foreach (var s in skinnedSources)
+            for (int g = 0; g < groups.Length; g++)
             {
-                var mesh = s.Renderer.sharedMesh;
-                int count = mesh.vertexCount;
-                var uv0 = mesh.uv;
-                var tris = mesh.triangles;
-                for (int i = 0; i < count; i++)
+                int groupStart = cursor;
+                groupTris[g] = new List<int>();
+
+                void LayOut(Mesh mesh, Color color)
                 {
-                    vatId[cursor + i] = new Vector2((cursor + i + 0.5f) / totalVerts, 0f);
-                    combinedUv[cursor + i] = (uv0 != null && i < uv0.Length) ? uv0[i] : Vector2.zero;
-                    vertColor[cursor + i] = s.VertexColor;
+                    int count = mesh.vertexCount;
+                    var uv0 = mesh.uv;
+                    var tris = mesh.triangles;
+                    for (int i = 0; i < count; i++)
+                    {
+                        vatId[cursor + i] = new Vector2((cursor + i + 0.5f) / totalVerts, 0f);
+                        combinedUv[cursor + i] = (uv0 != null && i < uv0.Length) ? uv0[i] : Vector2.zero;
+                        vertColor[cursor + i] = color;
+                    }
+                    // Local to this group's own mesh (relative to groupStart), not the global cursor.
+                    for (int i = 0; i < tris.Length; i++) groupTris[g].Add(tris[i] + (cursor - groupStart));
+                    cursor += count;
                 }
-                for (int i = 0; i < tris.Length; i++) combinedTris.Add(tris[i] + cursor);
-                cursor += count;
-            }
-            foreach (var r in rigidSources)
-            {
-                var mesh = r.Mesh;
-                int count = mesh.vertexCount;
-                var uv0 = mesh.uv;
-                var tris = mesh.triangles;
-                for (int i = 0; i < count; i++)
-                {
-                    vatId[cursor + i] = new Vector2((cursor + i + 0.5f) / totalVerts, 0f);
-                    combinedUv[cursor + i] = (uv0 != null && i < uv0.Length) ? uv0[i] : Vector2.zero;
-                    vertColor[cursor + i] = r.VertexColor;
-                }
-                for (int i = 0; i < tris.Length; i++) combinedTris.Add(tris[i] + cursor);
-                cursor += count;
+
+                foreach (var s in groups[g].Skinned) LayOut(s.Renderer.sharedMesh, s.VertexColor);
+                foreach (var r in groups[g].Rigid) LayOut(r.Mesh, r.VertexColor);
+
+                groupRanges[g] = (groupStart, cursor - groupStart);
             }
 
             var bakedMesh = new Mesh();
@@ -188,50 +197,53 @@ namespace RestaurantLoop.Editor.VAT
                 int rowBase = f * totalVerts;
                 int writeCursor = 0;
 
-                foreach (var s in skinnedSources)
+                foreach (var group in groups)
                 {
-                    s.Renderer.BakeMesh(bakedMesh, false);
-                    var verts = bakedMesh.vertices;
-                    var normals = bakedMesh.normals;
-                    Matrix4x4 toRoot = rootInverse * s.Renderer.transform.localToWorldMatrix;
-                    for (int i = 0; i < verts.Length; i++)
+                    foreach (var s in group.Skinned)
                     {
-                        Vector3 p = toRoot.MultiplyPoint3x4(verts[i]);
-                        positions[rowBase + writeCursor + i] = new Color(p.x, p.y, p.z, 1f);
-                        if (f == 0)
+                        s.Renderer.BakeMesh(bakedMesh, false);
+                        var verts = bakedMesh.vertices;
+                        var normals = bakedMesh.normals;
+                        Matrix4x4 toRoot = rootInverse * s.Renderer.transform.localToWorldMatrix;
+                        for (int i = 0; i < verts.Length; i++)
                         {
-                            combinedVerts[writeCursor + i] = p;
-                            combinedNormals[writeCursor + i] = (normals != null && i < normals.Length)
-                                ? toRoot.MultiplyVector(normals[i]).normalized
-                                : Vector3.up;
+                            Vector3 p = toRoot.MultiplyPoint3x4(verts[i]);
+                            positions[rowBase + writeCursor + i] = new Color(p.x, p.y, p.z, 1f);
+                            if (f == 0)
+                            {
+                                combinedVerts[writeCursor + i] = p;
+                                combinedNormals[writeCursor + i] = (normals != null && i < normals.Length)
+                                    ? toRoot.MultiplyVector(normals[i]).normalized
+                                    : Vector3.up;
+                            }
                         }
+                        writeCursor += verts.Length;
                     }
-                    writeCursor += verts.Length;
-                }
 
-                foreach (var r in rigidSources)
-                {
-                    var verts = r.Mesh.vertices;
-                    var normals = r.Mesh.normals;
-                    Matrix4x4 toRoot = rootInverse * r.Source.localToWorldMatrix;
-                    for (int i = 0; i < verts.Length; i++)
+                    foreach (var r in group.Rigid)
                     {
-                        Vector3 p = toRoot.MultiplyPoint3x4(verts[i]);
-                        positions[rowBase + writeCursor + i] = new Color(p.x, p.y, p.z, 1f);
-                        if (f == 0)
+                        var verts = r.Mesh.vertices;
+                        var normals = r.Mesh.normals;
+                        Matrix4x4 toRoot = rootInverse * r.Source.localToWorldMatrix;
+                        for (int i = 0; i < verts.Length; i++)
                         {
-                            combinedVerts[writeCursor + i] = p;
-                            combinedNormals[writeCursor + i] = (normals != null && i < normals.Length)
-                                ? toRoot.MultiplyVector(normals[i]).normalized
-                                : Vector3.up;
+                            Vector3 p = toRoot.MultiplyPoint3x4(verts[i]);
+                            positions[rowBase + writeCursor + i] = new Color(p.x, p.y, p.z, 1f);
+                            if (f == 0)
+                            {
+                                combinedVerts[writeCursor + i] = p;
+                                combinedNormals[writeCursor + i] = (normals != null && i < normals.Length)
+                                    ? toRoot.MultiplyVector(normals[i]).normalized
+                                    : Vector3.up;
+                            }
                         }
+                        writeCursor += verts.Length;
                     }
-                    writeCursor += verts.Length;
                 }
             }
             Object.DestroyImmediate(bakedMesh);
 
-            string texPath = $"{folder}/{bakeName}_VATPositions.asset";
+            string texPath = $"{folder}/Body_VATPositions.asset";
             var tex = LoadOrCreate<Texture2D>(texPath, () => new Texture2D(totalVerts, frameCount, TextureFormat.RGBAHalf, false, true));
             if (tex.width != totalVerts || tex.height != frameCount)
                 tex.Reinitialize(totalVerts, frameCount, TextureFormat.RGBAHalf, false);
@@ -241,21 +253,7 @@ namespace RestaurantLoop.Editor.VAT
             tex.Apply(false, false);
             PersistAsset(tex, texPath);
 
-            string meshPath = $"{folder}/{bakeName}_VATMesh.asset";
-            var vatMesh = LoadOrCreate<Mesh>(meshPath, () => new Mesh());
-            vatMesh.Clear();
-            if (totalVerts > 65535) vatMesh.indexFormat = IndexFormat.UInt32;
-            vatMesh.vertices = combinedVerts;
-            vatMesh.normals = combinedNormals;
-            vatMesh.uv = combinedUv;
-            vatMesh.colors = vertColor;
-            vatMesh.uv2 = vatId;
-            vatMesh.triangles = combinedTris.ToArray();
-            vatMesh.RecalculateBounds();
-            vatMesh.name = bakeName + "_VATMesh";
-            PersistAsset(vatMesh, meshPath);
-
-            string clipSetPath = $"{folder}/{bakeName}_VATClipSet.asset";
+            string clipSetPath = $"{folder}/Body_VATClipSet.asset";
             var clipSet = LoadOrCreate<VATClipSet>(clipSetPath, ScriptableObject.CreateInstance<VATClipSet>);
             clipSet.PositionTexture = tex;
             clipSet.VertexCount = totalVerts;
@@ -264,9 +262,59 @@ namespace RestaurantLoop.Editor.VAT
             clipSet.Idle = new VATClipEntry { ClipName = clip.name, StartFrame = 0, FrameCount = frameCount, Loop = true };
             PersistAsset(clipSet, clipSetPath);
 
+            for (int g = 0; g < groups.Length; g++)
+            {
+                var (start, count) = groupRanges[g];
+                var groupVerts = new Vector3[count];
+                var groupNormals = new Vector3[count];
+                var groupUv = new Vector2[count];
+                var groupColors = new Color[count];
+                var groupVatId = new Vector2[count];
+                System.Array.Copy(combinedVerts, start, groupVerts, 0, count);
+                System.Array.Copy(combinedNormals, start, groupNormals, 0, count);
+                System.Array.Copy(combinedUv, start, groupUv, 0, count);
+                System.Array.Copy(vertColor, start, groupColors, 0, count);
+                System.Array.Copy(vatId, start, groupVatId, 0, count);
+
+                string meshPath = $"{folder}/{groups[g].Name}_VATMesh.asset";
+                var vatMesh = LoadOrCreate<Mesh>(meshPath, () => new Mesh());
+                vatMesh.Clear();
+                if (count > 65535) vatMesh.indexFormat = IndexFormat.UInt32;
+                vatMesh.vertices = groupVerts;
+                vatMesh.normals = groupNormals;
+                vatMesh.uv = groupUv;
+                vatMesh.colors = groupColors;
+                vatMesh.uv2 = groupVatId;
+                vatMesh.triangles = groupTris[g].ToArray();
+                vatMesh.RecalculateBounds();
+                vatMesh.name = groups[g].Name + "_VATMesh";
+                PersistAsset(vatMesh, meshPath);
+
+                string matPath = $"{folder}/{groups[g].Name}_VATMaterial.mat";
+                var mat = LoadOrCreate<Material>(matPath, () => new Material(groups[g].Shader));
+                if (groups[g].TemplateMaterial != null)
+                    EditorUtility.CopySerialized(groups[g].TemplateMaterial, mat);
+                mat.shader = groups[g].Shader;
+                mat.name = groups[g].Name + "_VATMaterial";
+                // Vertex color carries each part's own tone (baked from its own template's
+                // _BaseColor) — the merged material's own _BaseColor must be white so it doesn't
+                // double-tint on top.
+                mat.SetColor("_BaseColor", Color.white);
+                // Realtime shadow receiving is pointless overhead for a mobile top-down crowd —
+                // this project's own shader already prefers blob-shadow decals over it.
+                mat.SetFloat("_ReceiveShadowStrength", 0f);
+                mat.EnableKeyword("_VAT_ON");
+                mat.EnableKeyword("_VERTEXCOLOR_ON");
+                mat.SetFloat("_VATToggle", 1f);
+                mat.SetFloat("_VertexColorToggle", 1f);
+                mat.SetTexture("_VATPositions", tex);
+                mat.SetFloat("_VATTexHeight", frameCount);
+                mat.enableInstancing = true;
+                PersistAsset(mat, matPath);
+            }
+
             AssetDatabase.SaveAssets();
-            Debug.Log($"[VATBaker] Baked {bakeName}: {totalVerts} verts x {frameCount} frames -> {clipSetPath}");
-            return clipSet;
+            Debug.Log($"[VATBaker] Baked {totalVerts} verts x {frameCount} frames across {groups.Length} groups -> {folder}");
         }
 
         private static AnimationClip FindIdleClip(GameObject sourcePrefab)

@@ -63,7 +63,13 @@ Shader "RestaurantLoop/SoftMatte"
         [MainColor] _BaseColor("Base Color", Color) = (1,1,1,1)
         _Cutoff("Alpha Cutoff", Range(0,1)) = 0.5
         [Toggle(_ALPHATEST_ON)] _AlphaClipToggle("Enable Alpha Clipping", Float) = 0
+        [Toggle(_VERTEXCOLOR_ON)] _VertexColorToggle("Mesh Has Vertex Colors", Float) = 0
         [Enum(UnityEngine.Rendering.CullMode)] _Cull("Cull Mode", Float) = 2
+
+        [Header(Vertex Animation Texture)]
+        [Toggle(_VAT_ON)] _VATToggle("VAT Enabled", Float) = 0
+        _VATPositions("VAT Position Texture", 2D) = "black" {}
+        _VATTexHeight("VAT Texture Height (Total Frames)", Float) = 1
 
         [Header(Hemisphere    the top down look)]
         // The main volume cue. Up-facing surfaces take _SkyColor, down-facing surfaces
@@ -169,10 +175,44 @@ Shader "RestaurantLoop/SoftMatte"
 
             half _Saturation;
             half _Brightness;
+
+            #if defined(_VAT_ON)
+                float _VATTexHeight;
+            #endif
         CBUFFER_END
 
         TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
         TEXTURE2D(_AOMap);   SAMPLER(sampler_AOMap);
+
+        // Per-instance playback state written by VATCustomerVisual via MaterialPropertyBlock —
+        // UNITY_INSTANCING_BUFFER keeps it batchable across GPU-instanced draws instead of forcing
+        // a draw call per customer. Position-only VAT: normals stay bind-pose (see VATBaker).
+        #if defined(_VAT_ON)
+            TEXTURE2D(_VATPositions);
+            SAMPLER(sampler_VATPositions);
+
+            UNITY_INSTANCING_BUFFER_START(SoftMatteV1VATProps)
+                UNITY_DEFINE_INSTANCED_PROP(float, _VATFrameA)
+                UNITY_DEFINE_INSTANCED_PROP(float, _VATFrameB)
+                UNITY_DEFINE_INSTANCED_PROP(float, _VATBlend)
+            UNITY_INSTANCING_BUFFER_END(SoftMatteV1VATProps)
+        #endif
+
+        float3 ApplyVAT(float3 positionOS, float2 vatUV)
+        {
+            #if defined(_VAT_ON)
+                float frameA = UNITY_ACCESS_INSTANCED_PROP(SoftMatteV1VATProps, _VATFrameA);
+                float frameB = UNITY_ACCESS_INSTANCED_PROP(SoftMatteV1VATProps, _VATFrameB);
+                float blend = UNITY_ACCESS_INSTANCED_PROP(SoftMatteV1VATProps, _VATBlend);
+                float vA = (frameA + 0.5) / _VATTexHeight;
+                float vB = (frameB + 0.5) / _VATTexHeight;
+                float3 posA = SAMPLE_TEXTURE2D_LOD(_VATPositions, sampler_VATPositions, float2(vatUV.x, vA), 0).xyz;
+                float3 posB = SAMPLE_TEXTURE2D_LOD(_VATPositions, sampler_VATPositions, float2(vatUV.x, vB), 0).xyz;
+                return lerp(posA, posB, blend);
+            #else
+                return positionOS;
+            #endif
+        }
 
         // A mesh imported with normals disabled hands the shader a zero vector, and
         // normalize(0) is NaN - one NaN normal poisons everything downstream and the
@@ -214,6 +254,8 @@ Shader "RestaurantLoop/SoftMatte"
             #pragma fragment Frag
 
             #pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature_local _VERTEXCOLOR_ON
+            #pragma shader_feature_local _VAT_ON
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
@@ -225,6 +267,10 @@ Shader "RestaurantLoop/SoftMatte"
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 float2 uv         : TEXCOORD0;
+                float4 color      : COLOR;
+                #if defined(_VAT_ON)
+                    float2 vatUV : TEXCOORD1;
+                #endif
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -237,6 +283,7 @@ Shader "RestaurantLoop/SoftMatte"
                 float3 positionOS  : TEXCOORD3;
                 float4 shadowCoord : TEXCOORD4;
                 float  fogCoord    : TEXCOORD5;
+                float4 color       : TEXCOORD6;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -248,16 +295,22 @@ Shader "RestaurantLoop/SoftMatte"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-                VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+                float3 animatedOS = input.positionOS.xyz;
+                #if defined(_VAT_ON)
+                    animatedOS = ApplyVAT(animatedOS, input.vatUV);
+                #endif
+
+                VertexPositionInputs positionInputs = GetVertexPositionInputs(animatedOS);
                 float3 normalOS = SafeNormal(input.normalOS, float3(0.0, 1.0, 0.0));
 
                 output.positionCS  = positionInputs.positionCS;
                 output.positionWS  = positionInputs.positionWS;
-                output.positionOS  = input.positionOS.xyz;
+                output.positionOS  = animatedOS;
                 output.normalWS    = SafeNormal(TransformObjectToWorldNormal(normalOS), float3(0.0, 1.0, 0.0));
                 output.uv          = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.shadowCoord = GetShadowCoord(positionInputs);
                 output.fogCoord    = ComputeFogFactor(positionInputs.positionCS.z);
+                output.color       = input.color;
                 return output;
             }
 
@@ -269,6 +322,9 @@ Shader "RestaurantLoop/SoftMatte"
                 // ---- Albedo -------------------------------------------------------
                 half4 baseSample = SampleBaseMap(input.uv);
                 half3 albedo = baseSample.rgb;
+                #if defined(_VERTEXCOLOR_ON)
+                    albedo *= input.color.rgb;
+                #endif
                 ClipAlpha(baseSample.a);
 
                 half3 normalWS = (half3)SafeNormal(input.normalWS, float3(0.0, 1.0, 0.0));
@@ -364,6 +420,7 @@ Shader "RestaurantLoop/SoftMatte"
             #pragma fragment ShadowFrag
 
             #pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature_local _VAT_ON
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
 
@@ -376,6 +433,9 @@ Shader "RestaurantLoop/SoftMatte"
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 float2 uv         : TEXCOORD0;
+                #if defined(_VAT_ON)
+                    float2 vatUV : TEXCOORD1;
+                #endif
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -392,8 +452,13 @@ Shader "RestaurantLoop/SoftMatte"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
 
+                float3 animatedOS = input.positionOS.xyz;
+                #if defined(_VAT_ON)
+                    animatedOS = ApplyVAT(animatedOS, input.vatUV);
+                #endif
+
                 float3 normalOS   = SafeNormal(input.normalOS, float3(0.0, 1.0, 0.0));
-                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 positionWS = TransformObjectToWorld(animatedOS);
                 float3 normalWS   = SafeNormal(TransformObjectToWorldNormal(normalOS),
                                                float3(0.0, 1.0, 0.0));
 
@@ -446,12 +511,16 @@ Shader "RestaurantLoop/SoftMatte"
             #pragma fragment DepthFrag
 
             #pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature_local _VAT_ON
             #pragma multi_compile_instancing
 
             struct AttributesDepth
             {
                 float4 positionOS : POSITION;
                 float2 uv         : TEXCOORD0;
+                #if defined(_VAT_ON)
+                    float2 vatUV : TEXCOORD1;
+                #endif
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -470,7 +539,12 @@ Shader "RestaurantLoop/SoftMatte"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                float3 animatedOS = input.positionOS.xyz;
+                #if defined(_VAT_ON)
+                    animatedOS = ApplyVAT(animatedOS, input.vatUV);
+                #endif
+
+                output.positionCS = TransformObjectToHClip(animatedOS);
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 return output;
             }
@@ -506,6 +580,7 @@ Shader "RestaurantLoop/SoftMatte"
             #pragma fragment DepthNormalsFrag
 
             #pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature_local _VAT_ON
             #pragma multi_compile_instancing
 
             struct AttributesDN
@@ -513,6 +588,9 @@ Shader "RestaurantLoop/SoftMatte"
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 float2 uv         : TEXCOORD0;
+                #if defined(_VAT_ON)
+                    float2 vatUV : TEXCOORD1;
+                #endif
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -532,9 +610,14 @@ Shader "RestaurantLoop/SoftMatte"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
+                float3 animatedOS = input.positionOS.xyz;
+                #if defined(_VAT_ON)
+                    animatedOS = ApplyVAT(animatedOS, input.vatUV);
+                #endif
+
                 float3 normalOS = SafeNormal(input.normalOS, float3(0.0, 1.0, 0.0));
 
-                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.positionCS = TransformObjectToHClip(animatedOS);
                 output.normalWS   = SafeNormal(TransformObjectToWorldNormal(normalOS),
                                                float3(0.0, 1.0, 0.0));
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);

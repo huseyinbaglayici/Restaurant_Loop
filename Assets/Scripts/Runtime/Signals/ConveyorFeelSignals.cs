@@ -51,6 +51,14 @@ namespace RestaurantLoop.Signals
         public Vector3 SlotWorldPosition;
     }
 
+    // Fired by the visual layer once a docked item's fly-to-slot flight actually lands. Lets the logical
+    // layer defer decisions that depend on the item visually being in the stack (e.g. a deadlock fail)
+    // until the player can actually see it there, instead of firing the same frame the dock is decided.
+    public class FoodDockLandedSignal
+    {
+        public int ItemId;
+    }
+
     // Fired instead of FoodDockedSignal when ConveyorManager.LoopModeActive is true and an item reaches
     // the belt end — tells the visual layer to drop its old belt-visual handle for this id without a
     // dock flight, since the FoodEnteredBeltSignal that immediately follows (same reused visual, new id)
