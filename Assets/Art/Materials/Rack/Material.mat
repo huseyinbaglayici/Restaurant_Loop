@@ -8,8 +8,8 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Material
-  m_Shader: {fileID: 4800000, guid: c6e7332f6f55ef149830f390e3e43b78, type: 3}
-  m_Parent: {fileID: 2100000, guid: 160ecd618f7299c4db644171e21021c2, type: 2}
+  m_Shader: {fileID: 4800000, guid: 4bf5e337892e7dd4b8f8fa5a74a4b863, type: 3}
+  m_Parent: {fileID: 2100000, guid: e9365431d7ee9754aae409e3897cafdc, type: 2}
   m_ModifiedSerializedProperties: 12
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -32,7 +32,7 @@ Material:
     - _GlossyReflections: 1
     - _Parallax: 0.02
     m_Colors:
-    - _BaseColor: {r: 0.9063354, g: 0.760602, b: 0.4459206, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 0.9063354, g: 0.760602, b: 0.4459206, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

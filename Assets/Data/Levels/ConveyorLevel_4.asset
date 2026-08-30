@@ -15,7 +15,7 @@ MonoBehaviour:
   LevelId: 4
   Difficulty: 0
   GridWidth: 7
-  GridHeight: 9
+  GridHeight: 10
   ConveyorCells:
   - Coord: {x: 1, y: 0}
     Shape: 0
@@ -65,26 +65,6 @@ MonoBehaviour:
     Shape: 0
     Rotation: 90
     IsGate: 0
-  - Coord: {x: 5, y: 8}
-    Shape: 0
-    Rotation: 180
-    IsGate: 0
-  - Coord: {x: 4, y: 8}
-    Shape: 0
-    Rotation: 180
-    IsGate: 0
-  - Coord: {x: 3, y: 8}
-    Shape: 0
-    Rotation: 180
-    IsGate: 0
-  - Coord: {x: 2, y: 8}
-    Shape: 0
-    Rotation: 180
-    IsGate: 0
-  - Coord: {x: 1, y: 8}
-    Shape: 0
-    Rotation: 180
-    IsGate: 0
   - Coord: {x: 0, y: 7}
     Shape: 0
     Rotation: 270
@@ -121,13 +101,41 @@ MonoBehaviour:
     Shape: 1
     Rotation: 0
     IsGate: 0
-  - Coord: {x: 6, y: 8}
+  - Coord: {x: 0, y: 9}
+    Shape: 1
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 6, y: 9}
     Shape: 1
     Rotation: 90
     IsGate: 0
   - Coord: {x: 0, y: 8}
-    Shape: 1
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 1, y: 9}
+    Shape: 0
     Rotation: 180
+    IsGate: 0
+  - Coord: {x: 2, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 3, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 4, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 5, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 6, y: 8}
+    Shape: 0
+    Rotation: 90
     IsGate: 0
   ConveyorEntities: []
   BakedPath:
@@ -146,11 +154,13 @@ MonoBehaviour:
     - {x: 6, y: 6}
     - {x: 6, y: 7}
     - {x: 6, y: 8}
-    - {x: 5, y: 8}
-    - {x: 4, y: 8}
-    - {x: 3, y: 8}
-    - {x: 2, y: 8}
-    - {x: 1, y: 8}
+    - {x: 6, y: 9}
+    - {x: 5, y: 9}
+    - {x: 4, y: 9}
+    - {x: 3, y: 9}
+    - {x: 2, y: 9}
+    - {x: 1, y: 9}
+    - {x: 0, y: 9}
     - {x: 0, y: 8}
     - {x: 0, y: 7}
     - {x: 0, y: 6}
@@ -594,3 +604,5 @@ MonoBehaviour:
     - Type: 2
       Amount: 3
       LinkId: 0
+  IsTutorial: 0
+  TutorialSteps: []
