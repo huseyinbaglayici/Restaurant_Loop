@@ -30,6 +30,8 @@ namespace RestaurantLoop.Runtime.Data
         public AudioClip CustomerRevealSfx;
         [Tooltip("Yemek banttan çıkıp rafa düştüğünde çalacak ses")]
         public AudioClip FoodDropToRackSfx;
+        [Tooltip("Kutlama paneli açılıp logo ve konfetiler patlarken çalacak ses")]
+        public AudioClip CelebrationSfx;
         [Tooltip("Seviye kazanıldığında (Win ekranı açıldığında) çalacak ses")]
         public AudioClip WinSfx;
         [Tooltip("Seviye kaybedildiğinde (Fail ekranı açıldığında) çalacak ses")]
