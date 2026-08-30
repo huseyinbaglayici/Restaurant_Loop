@@ -19,9 +19,17 @@ namespace RestaurantLoop.Installers
             }
 
             Container.BindInstance(levelDatabase).AsSingle();
+
+            var powerUpSettings = Resources.Load<PowerUpSettings>("PowerUpSettings");
+            if (powerUpSettings != null)
+            {
+                Container.BindInstance(powerUpSettings).AsSingle();
+            }
+
             Container.BindInterfacesTo<SaveManager>().AsSingle();
             Container.BindInterfacesTo<EconomyService>().AsSingle();
             Container.BindInterfacesTo<LivesService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<PowerUpInventoryService>().AsSingle();
         }
     }
 }

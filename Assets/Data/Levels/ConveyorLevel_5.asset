@@ -474,5 +474,26 @@ MonoBehaviour:
     - Type: 2
       Amount: 5
       LinkId: 0
-  IsTutorial: 0
-  TutorialSteps: []
+  IsTutorial: 1
+  TutorialSteps:
+  - Text: You have a new type of customer!
+    Trigger: 0
+    HoverKind: 0
+    PowerUpButton: 0
+    QueueLaneIndex: 0
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}
+  - Text: Serve the customers near them...
+    Trigger: 0
+    HoverKind: 0
+    PowerUpButton: 0
+    QueueLaneIndex: 0
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}
+  - Text: ...and unlock their orders!
+    Trigger: 0
+    HoverKind: 0
+    PowerUpButton: 0
+    QueueLaneIndex: 0
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}

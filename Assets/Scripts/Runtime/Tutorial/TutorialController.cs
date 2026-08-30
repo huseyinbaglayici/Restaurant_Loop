@@ -22,6 +22,9 @@ namespace RestaurantLoop.Runtime.Tutorial
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ConveyorTuning _tuning;
 
+        private readonly CustomerConsumeService _consumeService;
+        private readonly PowerUpSettings _powerUpSettings;
+
         private int _currentStepIndex;
         private bool _isRunning;
         private bool _isStepActive;
@@ -30,7 +33,9 @@ namespace RestaurantLoop.Runtime.Tutorial
 
         public TutorialController(ConveyorLevelDataSO level, SignalBus signalBus, QueueSpawner queueSpawner,
             ExitStackAnchor exitStackAnchor, TutorialTargetRegistry registry, TutorialView view, Camera camera,
-            ConveyorPrefabSettings prefabSettings, ConveyorTuning tuning)
+            ConveyorPrefabSettings prefabSettings, ConveyorTuning tuning,
+            [Inject(Optional = true)] CustomerConsumeService consumeService = null,
+            [Inject(Optional = true)] PowerUpSettings powerUpSettings = null)
         {
             _level = level;
             _signalBus = signalBus;
@@ -41,6 +46,8 @@ namespace RestaurantLoop.Runtime.Tutorial
             _camera = camera;
             _prefabSettings = prefabSettings;
             _tuning = tuning;
+            _consumeService = consumeService;
+            _powerUpSettings = powerUpSettings;
         }
 
         public void Initialize()
@@ -62,6 +69,11 @@ namespace RestaurantLoop.Runtime.Tutorial
             _signalBus.Subscribe<FoodEnteredBeltSignal>(OnFoodEnteredBelt);
             _signalBus.Subscribe<FoodDockedSignal>(OnFoodDocked);
             _signalBus.Subscribe<TutorialActionPerformedSignal>(OnActionPerformed);
+
+            if (_consumeService != null)
+            {
+                _consumeService.OnLevelEnded += HandleLevelEnded;
+            }
 
             TryShowCurrentStep(TutorialTriggerCondition.OnGameplaySceneLoaded);
         }
@@ -87,6 +99,19 @@ namespace RestaurantLoop.Runtime.Tutorial
             _signalBus.TryUnsubscribe<FoodEnteredBeltSignal>(OnFoodEnteredBelt);
             _signalBus.TryUnsubscribe<FoodDockedSignal>(OnFoodDocked);
             _signalBus.TryUnsubscribe<TutorialActionPerformedSignal>(OnActionPerformed);
+
+            if (_consumeService != null)
+            {
+                _consumeService.OnLevelEnded -= HandleLevelEnded;
+            }
+        }
+
+        private void HandleLevelEnded(bool won)
+        {
+            if (!won)
+            {
+                TryShowCurrentStep(TutorialTriggerCondition.OnFirstLevelFail);
+            }
         }
 
         private void OnFoodEnteredBelt(FoodEnteredBeltSignal signal) =>
@@ -122,7 +147,27 @@ namespace RestaurantLoop.Runtime.Tutorial
 
             _isStepActive = true;
             bool tapToAdvance = step.HoverKind is TutorialHoverTargetKind.None or TutorialHoverTargetKind.ConveyorCell;
-            _view.Show(step.Text, ResolveScreenPos(step), tapToAdvance);
+
+            var settings = _powerUpSettings ?? Resources.Load<PowerUpSettings>("PowerUpSettings");
+            Vector2? customPanelPos = null;
+
+            bool isPowerUpRelated = step.HoverKind == TutorialHoverTargetKind.PowerUpButton ||
+                                   step.Trigger == TutorialTriggerCondition.OnFirstLevelFail;
+
+            if (isPowerUpRelated && settings != null)
+            {
+                var def = step.HoverKind == TutorialHoverTargetKind.PowerUpButton ? settings.GetDefinition(step.PowerUpButton) : null;
+                if (def != null && def.CustomTutorialPanelPos != Vector2.zero)
+                {
+                    customPanelPos = def.CustomTutorialPanelPos;
+                }
+                else
+                {
+                    customPanelPos = settings.PowerUpTutorialPanelPos;
+                }
+            }
+
+            _view.Show(step.Text, ResolveScreenPos(step), tapToAdvance, customPanelPos);
             _signalBus.Fire(new TutorialStepActivatedSignal { Step = step });
         }
 

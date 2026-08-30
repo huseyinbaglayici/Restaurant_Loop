@@ -2308,8 +2308,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 980, y: 1820}
+  m_AnchoredPosition: {x: 0, y: 41.499817}
+  m_SizeDelta: {x: 980, y: 1903.0004}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &182401845
 MonoBehaviour:
@@ -2369,7 +2369,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0.88235295}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -6241,8 +6241,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _buttonShuffle: {fileID: 255279103}
+  _lockShuffle: {fileID: 0}
+  _countShuffleText: {fileID: 0}
+  _plusShuffle: {fileID: 0}
   _buttonPickFromBottom: {fileID: 998223395}
+  _lockPickFromBottom: {fileID: 0}
+  _countPickFromBottomText: {fileID: 0}
+  _plusPickFromBottom: {fileID: 0}
   _buttonExtraTray: {fileID: 107856014}
+  _lockExtraTray: {fileID: 0}
+  _countExtraTrayText: {fileID: 0}
+  _plusExtraTray: {fileID: 0}
 --- !u!1 &620867160
 GameObject:
   m_ObjectHideFlags: 0
@@ -7274,8 +7283,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _buttonShuffle: {fileID: 1543603543}
+  _lockShuffle: {fileID: 0}
+  _countShuffleText: {fileID: 0}
+  _plusShuffle: {fileID: 0}
   _buttonPickFromBottom: {fileID: 1725762456}
+  _lockPickFromBottom: {fileID: 0}
+  _countPickFromBottomText: {fileID: 0}
+  _plusPickFromBottom: {fileID: 0}
   _buttonExtraTray: {fileID: 1232837416}
+  _lockExtraTray: {fileID: 0}
+  _countExtraTrayText: {fileID: 0}
+  _plusExtraTray: {fileID: 0}
 --- !u!1 &754571263
 GameObject:
   m_ObjectHideFlags: 0
@@ -7499,7 +7517,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -22, y: -53}
+  m_AnchoredPosition: {x: -22, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &772533441
@@ -10041,7 +10059,6 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1264202113}
   - {fileID: 1139659467}
   - {fileID: 1930912408}
   - {fileID: 1797408473}
@@ -10051,6 +10068,7 @@ RectTransform:
   - {fileID: 736949801}
   - {fileID: 1612802389}
   - {fileID: 1079806185}
+  - {fileID: 1264202113}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -10933,7 +10951,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4156863, g: 0.20392159, b: 0.92549026, a: 0.54509807}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -12611,6 +12629,7 @@ MonoBehaviour:
   _text: {fileID: 1307747934}
   _finger: {fileID: 772533440}
   _advanceBlocker: {fileID: 328510788}
+  _bubbleContainer: {fileID: 1121834732}
 --- !u!1 &1267806788
 GameObject:
   m_ObjectHideFlags: 0
@@ -13361,7 +13380,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -13397,10 +13416,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 72
-  m_fontSizeBase: 48
+  m_fontSize: 50
+  m_fontSizeBase: 50
   m_fontWeight: 400
-  m_enableAutoSizing: 1
+  m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -13777,7 +13796,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 44.9, y: -39}
+  m_AnchoredPosition: {x: 44.9, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1328252487
@@ -13794,7 +13813,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -19504,8 +19523,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _buttonShuffle: {fileID: 1758009732}
+  _lockShuffle: {fileID: 0}
+  _countShuffleText: {fileID: 0}
+  _plusShuffle: {fileID: 0}
   _buttonPickFromBottom: {fileID: 1414090666}
+  _lockPickFromBottom: {fileID: 0}
+  _countPickFromBottomText: {fileID: 0}
+  _plusPickFromBottom: {fileID: 0}
   _buttonExtraTray: {fileID: 1647793349}
+  _lockExtraTray: {fileID: 0}
+  _countExtraTrayText: {fileID: 0}
+  _plusExtraTray: {fileID: 0}
 --- !u!1 &1799812873
 GameObject:
   m_ObjectHideFlags: 0
@@ -19987,8 +20015,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _buttonShuffle: {fileID: 2128149692}
+  _lockShuffle: {fileID: 0}
+  _countShuffleText: {fileID: 0}
+  _plusShuffle: {fileID: 0}
   _buttonPickFromBottom: {fileID: 575524908}
+  _lockPickFromBottom: {fileID: 0}
+  _countPickFromBottomText: {fileID: 0}
+  _plusPickFromBottom: {fileID: 0}
   _buttonExtraTray: {fileID: 1715675982}
+  _lockExtraTray: {fileID: 0}
+  _countExtraTrayText: {fileID: 0}
+  _plusExtraTray: {fileID: 0}
 --- !u!1 &1862655402
 GameObject:
   m_ObjectHideFlags: 0
@@ -23196,7 +23233,6 @@ SceneRoots:
   - {fileID: 517041083}
   - {fileID: 1009259461}
   - {fileID: 474520591}
-  - {fileID: 157953954}
   - {fileID: 1216946614}
   - {fileID: 403383584}
   - {fileID: 760883902}
@@ -23204,3 +23240,4 @@ SceneRoots:
   - {fileID: 136485960}
   - {fileID: 2062287070}
   - {fileID: 998237530}
+  - {fileID: 157953954}

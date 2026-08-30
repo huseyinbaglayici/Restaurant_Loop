@@ -34,6 +34,7 @@ namespace RestaurantLoop.Runtime.UI
         private ILivesService _livesService;
         private CurrentLevelProvider _currentLevelProvider;
         private ConveyorAutoClearService _autoClearService;
+        private RestaurantLoop.Economy.IPowerUpInventoryService _powerUpInventory;
 
         [Inject]
         public void Construct(
@@ -47,7 +48,8 @@ namespace RestaurantLoop.Runtime.UI
             [Inject(Optional = true)] AudioLibrary audioLibrary = null,
             [Inject(Optional = true)] ILivesService livesService = null,
             [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
-            [Inject(Optional = true)] ConveyorAutoClearService autoClearService = null)
+            [Inject(Optional = true)] ConveyorAutoClearService autoClearService = null,
+            [Inject(Optional = true)] RestaurantLoop.Economy.IPowerUpInventoryService powerUpInventory = null)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;
@@ -60,6 +62,7 @@ namespace RestaurantLoop.Runtime.UI
             _livesService = livesService;
             _currentLevelProvider = currentLevelProvider;
             _autoClearService = autoClearService;
+            _powerUpInventory = powerUpInventory;
         }
 
         private void Start()
@@ -79,7 +82,11 @@ namespace RestaurantLoop.Runtime.UI
 
         private void HandleLevelEnded(bool won)
         {
-            if (!won) ShowKeepPlaying();
+            if (!won)
+            {
+                _powerUpInventory?.NotifyLevelFailed();
+                ShowKeepPlaying();
+            }
         }
 
         private void ShowKeepPlaying()
