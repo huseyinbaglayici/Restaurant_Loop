@@ -8,6 +8,8 @@ namespace RestaurantLoop.Runtime.Data
     {
         [SerializeField] private List<ConveyorLevelDataSO> _levels = new();
 
+        public IReadOnlyList<ConveyorLevelDataSO> Levels => _levels;
+
         public bool TryGetLevel(int levelId, out ConveyorLevelDataSO level)
         {
             foreach (var candidate in _levels)

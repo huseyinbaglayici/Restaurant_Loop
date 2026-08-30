@@ -74,6 +74,7 @@ namespace RestaurantLoop.Runtime.UI
         private IAudioService _audioService;
         private AudioLibrary _audioLibrary;
         private IEconomyService _economyService;
+        private IPowerUpInventoryService _powerUpInventory;
 
         private Vector2 _logoTargetPosition;
         private Sequence _celebrationSequence;
@@ -94,7 +95,8 @@ namespace RestaurantLoop.Runtime.UI
             LevelDatabase levelDatabase,
             [Inject(Optional = true)] IAudioService audioService = null,
             [Inject(Optional = true)] AudioLibrary audioLibrary = null,
-            [Inject(Optional = true)] IEconomyService economyService = null)
+            [Inject(Optional = true)] IEconomyService economyService = null,
+            [Inject(Optional = true)] IPowerUpInventoryService powerUpInventory = null)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;
@@ -107,6 +109,7 @@ namespace RestaurantLoop.Runtime.UI
             _audioService = audioService;
             _audioLibrary = audioLibrary;
             _economyService = economyService;
+            _powerUpInventory = powerUpInventory;
         }
 
         private void Awake()
@@ -569,6 +572,7 @@ namespace RestaurantLoop.Runtime.UI
 
             _saveManager.SetCurrentLevel(nextLevelId);
             _currentLevelProvider.ResolveFromSave();
+            _powerUpInventory?.CheckLevelRewards(nextLevelId);
         }
     }
 }

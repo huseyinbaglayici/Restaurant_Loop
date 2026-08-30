@@ -1,3 +1,4 @@
+using System;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 
@@ -15,8 +16,22 @@ namespace RestaurantLoop.SceneFlow
         private const int DefaultLevelId = 1;
 
         private readonly LevelDatabase _levelDatabase;
+        private ConveyorLevelDataSO _current;
 
-        public ConveyorLevelDataSO Current { get; set; }
+        public event Action<ConveyorLevelDataSO> OnCurrentLevelChanged;
+
+        public ConveyorLevelDataSO Current
+        {
+            get => _current;
+            set
+            {
+                if (_current != value)
+                {
+                    _current = value;
+                    OnCurrentLevelChanged?.Invoke(_current);
+                }
+            }
+        }
 
         public CurrentLevelProvider(LevelDatabase levelDatabase)
         {

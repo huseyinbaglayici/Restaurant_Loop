@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98e81803ea4a89b4c9d3d85b49cb3150, type: 3}
   m_Name: FoodMeshSettings
   m_EditorClassIdentifier: 
-  HiddenOrderBubble: {fileID: 21300000, guid: 201a0197a527dec46b1462e06ccfedbb, type: 3}
+  HiddenOrderBubble: {fileID: 21300000, guid: e3a4dc025a19e434893bde0529cfe2cf, type: 3}
   CustomerBubbleScale: 1.3
   CustomerBubbleHeight: 3
   ScaleBubbleWithCamera: 0
@@ -29,6 +29,7 @@ MonoBehaviour:
     CustomerIcon: {fileID: 21300000, guid: 6109e16a00345bd40ad79e7bc552ef1c, type: 3}
     QueueIcon: {fileID: 21300000, guid: 84745ebecfdc3dc4c8dc1a7c931de83b, type: 3}
     Icon: {fileID: 21300000, guid: 84745ebecfdc3dc4c8dc1a7c931de83b, type: 3}
+    GridColor: {r: 0, g: 0, b: 0, a: 0}
     FixedChildSlots: 0
   - Type: 1
     OpenedPrefab: {fileID: 6743053913074042673, guid: cb0f08fac397392489771db9f7851d7d,
@@ -40,6 +41,7 @@ MonoBehaviour:
     CustomerIcon: {fileID: 21300000, guid: e803c6ab4b3f18d438ff6c3fea8e5f0e, type: 3}
     QueueIcon: {fileID: 21300000, guid: fa0cdbad0f644af469cd80ed492a1078, type: 3}
     Icon: {fileID: 21300000, guid: fa0cdbad0f644af469cd80ed492a1078, type: 3}
+    GridColor: {r: 0, g: 0, b: 0, a: 0}
     FixedChildSlots: 0
   - Type: 4
     OpenedPrefab: {fileID: 2537419307790587190, guid: 3dc4e57de2b219344b6fcd2fcd3a3587,
@@ -51,6 +53,7 @@ MonoBehaviour:
     CustomerIcon: {fileID: 21300000, guid: 3bb3574251788154599130938d560907, type: 3}
     QueueIcon: {fileID: 21300000, guid: 674fa23aa9ddbf540844e4a5801dd162, type: 3}
     Icon: {fileID: 21300000, guid: 674fa23aa9ddbf540844e4a5801dd162, type: 3}
+    GridColor: {r: 0, g: 0, b: 0, a: 0}
     FixedChildSlots: 0
   - Type: 3
     OpenedPrefab: {fileID: 6301023921460893688, guid: 1c715b06ffaca4b4cbe54aba365ff11b,
@@ -62,6 +65,7 @@ MonoBehaviour:
     CustomerIcon: {fileID: 21300000, guid: 306ed120a0c0c8b4884dde62ee9c504c, type: 3}
     QueueIcon: {fileID: 21300000, guid: 1d9cfdecce99c904697e429abccf485e, type: 3}
     Icon: {fileID: 21300000, guid: 1d9cfdecce99c904697e429abccf485e, type: 3}
+    GridColor: {r: 0, g: 0, b: 0, a: 0}
     FixedChildSlots: 0
   - Type: 2
     OpenedPrefab: {fileID: 7714696736389709273, guid: 4d4b6691bebdbac4dacf809b05fb4275,
@@ -73,4 +77,5 @@ MonoBehaviour:
     CustomerIcon: {fileID: 21300000, guid: 3ca1e28220e5df242bec86bc7f44d63a, type: 3}
     QueueIcon: {fileID: 21300000, guid: f076d9c7a40594d47875a295f5fa45f1, type: 3}
     Icon: {fileID: 21300000, guid: f076d9c7a40594d47875a295f5fa45f1, type: 3}
+    GridColor: {r: 0, g: 0, b: 0, a: 0}
     FixedChildSlots: 0

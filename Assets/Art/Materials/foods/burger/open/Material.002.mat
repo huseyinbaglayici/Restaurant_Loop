@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Material.002
-  m_Shader: {fileID: 4800000, guid: 181cffe3f832bf646839f6c6ecdbfd34, type: 3}
+  m_Shader: {fileID: 4800000, guid: c6e7332f6f55ef149830f390e3e43b78, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -25,6 +25,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _AOMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BaseMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -87,25 +91,39 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AOFloor: 0.45
+    - _AOStrength: 0.25
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
+    - _AlphaClipToggle: 0
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
+    - _Brightness: 1
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
+    - _CreaseShadow: 0.3
     - _Cull: 2
+    - _CurvatureScale: 0.6
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
+    - _DirectionalStrength: 0.55
     - _DstBlend: 0
     - _DstBlendAlpha: 0
+    - _EdgeLight: 0.18
     - _EnableOutline: 0
     - _EnvironmentReflections: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _GradientEnd: 0.5
+    - _GradientIntensity: 0.1
+    - _GradientSpace: 0
+    - _GradientStart: -0.5
+    - _HemisphereWrap: 0.92
+    - _LightThreshold: 0.95
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
@@ -114,11 +132,16 @@ Material:
     - _RampSmooth: 0.2
     - _RampSmoothAdd: 0.2
     - _RampThreshold: 0.5
+    - _ReceiveShadowStrength: 0.35
     - _ReceiveShadows: 1
     - _ReceiveShadowsOff: 1
     - _RimMax: 0.85
     - _RimMin: 0.85
     - _RimStrength: 0.5
+    - _Roundness: 0.3
+    - _Saturation: 0.95
+    - _ShadowBrightness: 0.62
+    - _ShadowThreshold: 0.12
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecBlend: 1
@@ -133,19 +156,33 @@ Material:
     - _TCP2_RAMPTEXT: 0
     - _TCP2_SPEC_TOON: 0
     - _TCP2_STYLIZED_FRESNEL: 0
+    - _ToonStepSoftness: 0.55
+    - _ToonSteps: 3
     - _UVSec: 0
+    - _UseMainLightDirection: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
     - __dummy__: 0
     m_Colors:
     - _BaseColor: {r: 0.8500104, g: 0.5420428, b: 0.50815725, a: 1}
+    - _BottomGradientColor: {r: 0.92, g: 0.89, b: 0.91, a: 1}
     - _Color: {r: 0.8500104, g: 0.54204273, b: 0.5081572, a: 1}
+    - _CreaseColor: {r: 0.62, g: 0.54999995, b: 0.58, a: 1}
+    - _EdgeLightColor: {r: 1, g: 0.96999997, b: 0.92, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
+    - _FakeLightDirection: {r: -0.35, g: 0.85, b: -0.4, a: 0}
+    - _GroundColor: {r: 0.62, g: 0.56, b: 0.58, a: 1}
     - _HColor: {r: 0.85098046, g: 0.5411765, b: 0.50980395, a: 1}
+    - _LightTint: {r: 1, g: 0.97999996, b: 0.94, a: 1}
     - _RimColor: {r: 0.85098046, g: 0.5411765, b: 0.50980395, a: 0.6}
+    - _RoundPivot: {r: 0, g: 0, b: 0, a: 0}
     - _SColor: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 1}
+    - _ShadowColorTint: {r: 0.7, g: 0.62, b: 0.65999997, a: 1}
+    - _ShadowTint: {r: 0.72, g: 0.65999997, b: 0.7, a: 1}
+    - _SkyColor: {r: 1.06, g: 1.03, b: 0.97999996, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SpecularColor: {r: 0.9339623, g: 0.36990863, b: 0.3127893, a: 1}
+    - _TopGradientColor: {r: 1.03, g: 1.01, b: 0.98999995, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &8119308456209109003

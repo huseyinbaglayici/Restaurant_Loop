@@ -557,27 +557,20 @@ MonoBehaviour:
       LinkId: 0
   Queues:
   - Entries:
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 0
+      Amount: 4
+      LinkId: 0
     - Type: 2
+      Amount: 3
+      LinkId: 0
+    - Type: 0
       Amount: 5
-      LinkId: 0
-    - Type: 0
-      Amount: 4
-      LinkId: 0
-    - Type: 0
-      Amount: 3
-      LinkId: 0
-    - Type: 0
-      Amount: 3
-      LinkId: 0
-    - Type: 2
-      Amount: 3
-      LinkId: 0
-  - Entries:
-    - Type: 2
-      Amount: 4
-      LinkId: 0
-    - Type: 2
-      Amount: 3
       LinkId: 0
     - Type: 2
       Amount: 3
@@ -585,21 +578,49 @@ MonoBehaviour:
     - Type: 2
       Amount: 5
       LinkId: 0
+  - Entries:
     - Type: 2
+      Amount: 5
+      LinkId: 0
+    - Type: 2
+      Amount: 4
+      LinkId: 0
+    - Type: 0
       Amount: 3
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 2
+      Amount: 5
+      LinkId: 0
+    - Type: 2
+      Amount: 5
+      LinkId: 0
+    - Type: 2
+      Amount: 4
       LinkId: 0
   - Entries:
     - Type: 0
-      Amount: 3
+      Amount: 5
       LinkId: 0
     - Type: 0
-      Amount: 3
+      Amount: 4
       LinkId: 0
     - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 2
       Amount: 4
       LinkId: 0
     - Type: 2
       Amount: 4
+      LinkId: 0
+    - Type: 2
+      Amount: 3
+      LinkId: 0
+    - Type: 0
+      Amount: 3
       LinkId: 0
   IsTutorial: 0
   TutorialSteps: []

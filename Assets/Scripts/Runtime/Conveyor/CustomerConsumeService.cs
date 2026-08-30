@@ -128,6 +128,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             for (int c = 0; c < crossings.Count; c++)
             {
                 var (pathIndex, visual) = crossings[c];
+                if (visual == null || visual.Stack.Amount <= 0) continue;
+
                 var type = visual.Stack.Type;
                 var rays = _raysByPathIndex[pathIndex];
 
@@ -137,9 +139,10 @@ namespace RestaurantLoop.Runtime.Conveyor
                     if (!_customerState.TryGetCustomer(coord, out var customer)) break;
 
                     int amountTaken = _conveyorManager.ConsumeFromItem(
-                        visual, 1, out int itemId, out bool itemFullyConsumed);
+                        visual, 1, out int itemId, out bool itemFullyConsumed,
+                        out int? partnerItemId, out FoodItemController partnerVisual);
 
-                    if (amountTaken > 0) OnMatched(coord, amountTaken, itemId, visual, itemFullyConsumed);
+                    if (amountTaken > 0) OnMatched(coord, amountTaken, itemId, visual, itemFullyConsumed, partnerItemId, partnerVisual);
                     break;
                 }
             }
@@ -217,7 +220,13 @@ namespace RestaurantLoop.Runtime.Conveyor
         // Decides and mutates state immediately; the cosmetic half (food flying to the customer, order UI
         // refresh, serve reaction, despawn) is ConveyorVisualService's job, driven off FoodConsumedSignal.
         private void OnMatched(
-            Vector2Int coord, int amountTaken, int itemId, FoodItemController visual, bool itemFullyConsumed)
+            Vector2Int coord,
+            int amountTaken,
+            int itemId,
+            FoodItemController visual,
+            bool itemFullyConsumed,
+            int? partnerItemId = null,
+            FoodItemController partnerVisual = null)
         {
             var result = _customerState.Consume(coord, amountTaken);
             if (result == RuntimeCustomerState.ConsumeResult.NotFound) return;
@@ -230,6 +239,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 Visual = visual,
                 TakenStack = new FoodStackData { Type = visual.Stack.Type, Amount = amountTaken },
                 ItemFullyConsumed = itemFullyConsumed,
+                PartnerItemId = partnerItemId,
+                PartnerVisual = partnerVisual,
                 CustomerCoord = coord,
                 ServeResult = result,
                 LevelWon = levelWon

@@ -7,7 +7,8 @@ namespace RestaurantLoop.Runtime.Data
     {
         OnGameplaySceneLoaded,
         OnFirstFoodOnConveyor,
-        OnExitStackNearFull
+        OnExitStackNearFull,
+        OnFirstLevelFail
     }
 
     public enum TutorialHoverTargetKind

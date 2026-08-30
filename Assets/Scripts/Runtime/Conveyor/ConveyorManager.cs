@@ -247,22 +247,24 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (_pathWorldPositions.Count == 0) return;
             if (visualA == null || visualB == null) return;
 
+            float spacing = _tuning != null && _tuning.LinkedPairBeltSpacing > 0f ? _tuning.LinkedPairBeltSpacing : 1f;
+
             if (_pendingEntries.Count == 0 && CanAcceptEntry())
             {
                 AddItem(stackA, visualA, 0f, sourceA, playEntryFlight: true);
-                AddItem(stackB, visualB, -1f, sourceB, playEntryFlight: true);
+                AddItem(stackB, visualB, -spacing, sourceB, playEntryFlight: true);
                 return;
             }
 
-            // Both hover at the same height, B one cell behind A along the entry direction — same visual
+            // Both hover at the same height, B spacing cells behind A along the entry direction — same visual
             // relationship they'll have once they land, so the pair reads as linked the whole time it waits.
             var hoverA = _pathWorldPositions[0] + Vector3.up * (_tuning.EntryHoverHeight * (_pendingEntries.Count + 1));
             Vector3 entryDir = _pathWorldPositions.Count > 1
                 ? _pathWorldPositions[0] - _pathWorldPositions[1]
                 : Vector3.back;
-            var hoverB = hoverA + entryDir;
+            var hoverB = hoverA + entryDir * spacing;
 
-            var pendingB = new PendingEntry { Stack = stackB, Visual = visualB, HoverWorldPosition = hoverB, EntryProgress = -1f };
+            var pendingB = new PendingEntry { Stack = stackB, Visual = visualB, HoverWorldPosition = hoverB, EntryProgress = -spacing };
             var pendingA = new PendingEntry { Stack = stackA, Visual = visualA, HoverWorldPosition = hoverA, EntryProgress = 0f, Partner = pendingB };
             _pendingEntries.Enqueue(pendingA);
 
@@ -352,7 +354,20 @@ namespace RestaurantLoop.Runtime.Conveyor
                 // the next item in while this one's visual was still arriving, and landing itself meant
                 // jumping the visual forward to catch up, which is the snap this is here to prevent. Held
                 // equal the whole time, there's nothing to catch up to.
-                if (_entryFlightsInProgress.Contains(item.Id)) continue;
+                bool isFlying = _entryFlightsInProgress.Contains(item.Id);
+                if (!isFlying && item.Visual != null && item.Visual.Stack.LinkId != 0)
+                {
+                    int linkId = item.Visual.Stack.LinkId;
+                    for (int j = 0; j < _items.Count; j++)
+                    {
+                        if (_items[j].Visual != null && _items[j].Visual.Stack.LinkId == linkId && _entryFlightsInProgress.Contains(_items[j].Id))
+                        {
+                            isFlying = true;
+                            break;
+                        }
+                    }
+                }
+                if (isFlying) continue;
 
                 item.Progress += delta;
 
@@ -431,6 +446,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             for (int i = 0; i < _items.Count; i++)
             {
+                if (_items[i].Visual != null && _items[i].Visual.Stack.Amount <= 0) continue;
+
                 int itemIndex = Mathf.RoundToInt(_items[i].Progress) % _pathWorldPositions.Count;
                 if (itemIndex != pathIndex) continue;
 
@@ -444,14 +461,79 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         // by-reference, not by position. On a full take the item leaves the belt but its visual is NOT
         // despawned — ConveyorVisualService takes ownership and flies it to the customer.
-        public int ConsumeFromItem(FoodItemController visual, int amountWanted, out int itemId, out bool itemFullyConsumed)
+        public int ConsumeFromItem(
+            FoodItemController visual,
+            int amountWanted,
+            out int itemId,
+            out bool itemFullyConsumed,
+            out int? partnerItemId,
+            out FoodItemController partnerVisual)
         {
+            partnerItemId = null;
+            partnerVisual = null;
+
             for (int i = 0; i < _items.Count; i++)
             {
                 if (_items[i].Visual != visual) continue;
 
                 itemId = _items[i].Id;
                 int amountTaken = Mathf.Min(amountWanted, visual.Stack.Amount);
+                if (amountTaken <= 0)
+                {
+                    itemFullyConsumed = false;
+                    return 0;
+                }
+
+                // Linked meals: one can reach 0 and stay riding on the belt until BOTH reach 0!
+                if (visual.Stack.LinkId != 0)
+                {
+                    visual.ReduceAmount(amountTaken);
+
+                    int linkId = visual.Stack.LinkId;
+                    bool bothEmpty = true;
+                    for (int j = 0; j < _items.Count; j++)
+                    {
+                        if (_items[j].Visual != null && _items[j].Visual.Stack.LinkId == linkId)
+                        {
+                            if (_items[j].Visual.Stack.Amount > 0)
+                            {
+                                bothEmpty = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (bothEmpty)
+                    {
+                        itemFullyConsumed = true;
+
+                        // Find the partner item that was already at 0 portion
+                        for (int j = 0; j < _items.Count; j++)
+                        {
+                            if (_items[j].Visual != visual && _items[j].Visual != null && _items[j].Visual.Stack.LinkId == linkId)
+                            {
+                                partnerItemId = _items[j].Id;
+                                partnerVisual = _items[j].Visual;
+                                break;
+                            }
+                        }
+
+                        for (int j = _items.Count - 1; j >= 0; j--)
+                        {
+                            if (_items[j].Visual != null && _items[j].Visual.Stack.LinkId == linkId)
+                            {
+                                _items.RemoveAt(j);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        itemFullyConsumed = false;
+                    }
+
+                    return amountTaken;
+                }
+
                 itemFullyConsumed = amountTaken >= visual.Stack.Amount;
 
                 if (itemFullyConsumed) _items.RemoveAt(i);
@@ -479,7 +561,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             int index = Mathf.Clamp(Mathf.FloorToInt(progress), 0, count - 1);
-            int nextIndex = (index + 1) % count;
+            int nextIndex = LoopModeActive ? (index + 1) % count : Mathf.Min(index + 1, count - 1);
             float frac = Mathf.Clamp01(progress - Mathf.Floor(progress));
             return Vector3.Lerp(_pathWorldPositions[index], _pathWorldPositions[nextIndex], frac);
         }

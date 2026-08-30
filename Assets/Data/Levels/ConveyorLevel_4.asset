@@ -558,9 +558,9 @@ MonoBehaviour:
   Queues:
   - Entries:
     - Type: 0
-      Amount: 3
+      Amount: 4
       LinkId: 0
-    - Type: 1
+    - Type: 0
       Amount: 3
       LinkId: 0
     - Type: 3
@@ -570,33 +570,30 @@ MonoBehaviour:
       Amount: 3
       LinkId: 0
     - Type: 2
-      Amount: 5
+      Amount: 3
       LinkId: 0
   - Entries:
+    - Type: 1
+      Amount: 3
+      LinkId: 0
+    - Type: 3
+      Amount: 3
+      LinkId: 0
     - Type: 0
       Amount: 5
       LinkId: 0
     - Type: 1
       Amount: 3
       LinkId: 0
-    - Type: 3
-      Amount: 5
-      LinkId: 0
-    - Type: 2
-      Amount: 5
-      LinkId: 0
-    - Type: 2
-      Amount: 3
-      LinkId: 0
-  - Entries:
-    - Type: 0
-      Amount: 4
-      LinkId: 0
     - Type: 1
       Amount: 4
       LinkId: 0
-    - Type: 3
-      Amount: 3
+  - Entries:
+    - Type: 2
+      Amount: 5
+      LinkId: 0
+    - Type: 2
+      Amount: 5
       LinkId: 0
     - Type: 2
       Amount: 4
@@ -604,5 +601,22 @@ MonoBehaviour:
     - Type: 2
       Amount: 3
       LinkId: 0
-  IsTutorial: 0
-  TutorialSteps: []
+    - Type: 3
+      Amount: 5
+      LinkId: 0
+  IsTutorial: 1
+  TutorialSteps:
+  - Text: You can shuffle the queue now!
+    Trigger: 0
+    HoverKind: 0
+    PowerUpButton: 0
+    QueueLaneIndex: 0
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}
+  - Text: Press here and try it.
+    Trigger: 0
+    HoverKind: 1
+    PowerUpButton: 0
+    QueueLaneIndex: 0
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}

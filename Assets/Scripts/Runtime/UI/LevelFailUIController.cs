@@ -34,6 +34,8 @@ namespace RestaurantLoop.Runtime.UI
         private ILivesService _livesService;
         private CurrentLevelProvider _currentLevelProvider;
         private ConveyorAutoClearService _autoClearService;
+        private RestaurantLoop.Economy.IPowerUpInventoryService _powerUpInventory;
+        private RestaurantLoop.Economy.IEconomyService _economyService;
 
         [Inject]
         public void Construct(
@@ -47,7 +49,9 @@ namespace RestaurantLoop.Runtime.UI
             [Inject(Optional = true)] AudioLibrary audioLibrary = null,
             [Inject(Optional = true)] ILivesService livesService = null,
             [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
-            [Inject(Optional = true)] ConveyorAutoClearService autoClearService = null)
+            [Inject(Optional = true)] ConveyorAutoClearService autoClearService = null,
+            [Inject(Optional = true)] RestaurantLoop.Economy.IPowerUpInventoryService powerUpInventory = null,
+            [Inject(Optional = true)] RestaurantLoop.Economy.IEconomyService economyService = null)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;
@@ -60,6 +64,8 @@ namespace RestaurantLoop.Runtime.UI
             _livesService = livesService;
             _currentLevelProvider = currentLevelProvider;
             _autoClearService = autoClearService;
+            _powerUpInventory = powerUpInventory;
+            _economyService = economyService;
         }
 
         private void Start()
@@ -79,7 +85,11 @@ namespace RestaurantLoop.Runtime.UI
 
         private void HandleLevelEnded(bool won)
         {
-            if (!won) ShowKeepPlaying();
+            if (!won)
+            {
+                _powerUpInventory?.NotifyLevelFailed();
+                ShowKeepPlaying();
+            }
         }
 
         private void ShowKeepPlaying()
@@ -142,6 +152,21 @@ namespace RestaurantLoop.Runtime.UI
 
         private void OnPlayOnClicked()
         {
+            const int KeepPlayingCost = 300;
+            bool infinite = RestaurantLoop.Economy.PowerUpInventoryService.IsInfinitePowerUpsEnabled();
+            if (!infinite && _economyService != null)
+            {
+                if (!_economyService.TrySpendCoins(KeepPlayingCost))
+                {
+                    Debug.LogWarning("[LevelFailUIController] Not enough coins (needs 300) to keep playing.");
+                    if (_audioService != null && _audioLibrary != null && _audioLibrary.FailSfx != null)
+                    {
+                        _audioService.PlaySfx(_audioLibrary.FailSfx);
+                    }
+                    return;
+                }
+            }
+
             _conveyorManager.ClearBelt();
             _powerUpService.ActivateExtraTray(); // Extra Tray power-up: adds another slot each time Keep Playing is used.
 
@@ -153,6 +178,8 @@ namespace RestaurantLoop.Runtime.UI
 
             _panelKeepPlaying.SetActive(false);
             Time.timeScale = 1f;
+
+            _signalBus.Fire<LevelResumedSignal>();
 
             if (_audioService != null)
             {

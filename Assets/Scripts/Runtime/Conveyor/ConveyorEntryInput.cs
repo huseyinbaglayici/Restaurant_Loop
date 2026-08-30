@@ -117,9 +117,20 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             if (stack.LinkId != 0)
             {
-                // both halves must be at the front of their lane, or neither goes
-                if (bestRow != 0 || !TryFindLinkedFrontPartner(stack.LinkId, bestLane, out int partnerLane, out var partnerVisual))
+                if (!TryFindLinkedPartnerInQueue(stack.LinkId, bestLane, bestRow, out int partnerLane, out int partnerRow, out var partnerVisual))
+                {
                     return true;
+                }
+
+                // If not in pick-from-bottom mode, both must be accessible at the front:
+                bool pickFromBottom = _queueSpawner.PickFromBottomEnabled;
+                bool isBestFront = bestRow == 0 || pickFromBottom;
+                bool isPartnerFront = (partnerLane == bestLane && (partnerRow == 0 || partnerRow == 1)) || partnerRow == 0 || pickFromBottom;
+
+                if (!isBestFront || !isPartnerFront)
+                {
+                    return true;
+                }
 
                 if (netAvailableTrays < 2)
                 {
@@ -127,8 +138,24 @@ namespace RestaurantLoop.Runtime.Conveyor
                     return true;
                 }
 
-                _queueSpawner.TryDetachAt(bestLane, 0, out var linkedVisual);
-                _queueSpawner.TryDetachAt(partnerLane, 0, out var linkedPartnerVisual);
+                FoodItemController linkedVisual;
+                FoodItemController linkedPartnerVisual;
+
+                if (bestLane == partnerLane)
+                {
+                    int firstRow = Mathf.Max(bestRow, partnerRow);
+                    int secondRow = Mathf.Min(bestRow, partnerRow);
+                    _queueSpawner.TryDetachAt(bestLane, firstRow, out var v1);
+                    _queueSpawner.TryDetachAt(bestLane, secondRow, out var v2);
+                    linkedVisual = (bestRow == secondRow) ? v2 : v1;
+                    linkedPartnerVisual = (bestRow == secondRow) ? v1 : v2;
+                }
+                else
+                {
+                    _queueSpawner.TryDetachAt(bestLane, bestRow, out linkedVisual);
+                    _queueSpawner.TryDetachAt(partnerLane, partnerRow, out linkedPartnerVisual);
+                }
+
                 _queueSpawner.PickFromBottomEnabled = false;
 
                 // The queue visuals themselves fly onto the belt — no despawn + respawn snap. Goes through
@@ -167,20 +194,41 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        private bool TryFindLinkedFrontPartner(int linkId, int excludeLane, out int partnerLane, out FoodItemController partnerVisual)
+        private bool TryFindLinkedPartnerInQueue(int linkId, int excludeLane, int excludeRow, out int partnerLane, out int partnerRow, out FoodItemController partnerVisual)
         {
+            // First check same lane
+            int sameLaneCount = _queueSpawner.GetLaneCount(excludeLane);
+            for (int r = 0; r < sameLaneCount; r++)
+            {
+                if (r == excludeRow) continue;
+                if (_queueSpawner.TryGetVisual(excludeLane, r, out var visual) && visual.Stack.LinkId == linkId)
+                {
+                    partnerLane = excludeLane;
+                    partnerRow = r;
+                    partnerVisual = visual;
+                    return true;
+                }
+            }
+
+            // Then check other lanes
             for (int lane = 0; lane < _queueAnchor.LanePositions.Length; lane++)
             {
                 if (lane == excludeLane) continue;
-                if (!_queueSpawner.TryGetVisual(lane, 0, out var visual)) continue;
-                if (visual.Stack.LinkId != linkId) continue;
-
-                partnerLane = lane;
-                partnerVisual = visual;
-                return true;
+                int count = _queueSpawner.GetLaneCount(lane);
+                for (int r = 0; r < count; r++)
+                {
+                    if (_queueSpawner.TryGetVisual(lane, r, out var visual) && visual.Stack.LinkId == linkId)
+                    {
+                        partnerLane = lane;
+                        partnerRow = r;
+                        partnerVisual = visual;
+                        return true;
+                    }
+                }
             }
 
             partnerLane = -1;
+            partnerRow = -1;
             partnerVisual = null;
             return false;
         }
@@ -206,13 +254,49 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             // Rack'ten gönderirken de toplam tepsi kapasitesini aşmamak için kontrol
             int maxTrays = _trayAnchor != null ? _trayAnchor.TotalCount : _exitStackAnchor.SlotCount;
-            if (_conveyorManager.ReservedItemCount >= maxTrays)
+            int currentReservedOrOnBelt = _conveyorManager.ReservedItemCount;
+            if (currentReservedOrOnBelt >= maxTrays)
             {
                 TriggerRejectFeedback();
                 return false;
             }
 
             _audioService.PlaySfx(_audioLibrary.FoodClickSfx != null ? _audioLibrary.FoodClickSfx : _audioLibrary.DefaultClickSfx);
+
+            if (_exitStackAnchor.TryGetOccupant(bestSlot, out var clickedOccupant) && clickedOccupant.Stack.LinkId != 0)
+            {
+                int linkId = clickedOccupant.Stack.LinkId;
+                int partnerSlot = -1;
+                FoodItemController partnerVisual = null;
+
+                for (int i = 0; i < _exitStackAnchor.SlotPositions.Length; i++)
+                {
+                    if (i == bestSlot) continue;
+                    if (_exitStackAnchor.TryGetOccupant(i, out var occ) && occ.Stack.LinkId == linkId)
+                    {
+                        partnerSlot = i;
+                        partnerVisual = occ;
+                        break;
+                    }
+                }
+
+                if (partnerSlot >= 0 && partnerVisual != null)
+                {
+                    if (currentReservedOrOnBelt + 2 > maxTrays)
+                    {
+                        TriggerRejectFeedback();
+                        return false;
+                    }
+
+                    _exitStackAnchor.TryRemoveFromSlot(bestSlot, out var v1);
+                    _exitStackAnchor.TryRemoveFromSlot(partnerSlot, out var v2);
+                    _conveyorManager.AddLinkedPairAtEntry(
+                        v1.Stack, v1, v1.transform.position,
+                        v2.Stack, v2, v2.transform.position);
+                    _audioService.PlaySfx(_audioLibrary.FoodSendSfx);
+                    return true;
+                }
+            }
 
             _exitStackAnchor.TryRemoveFromSlot(bestSlot, out var visual);
             _conveyorManager.AddItemAtEntry(visual.Stack, visual, visual.transform.position);

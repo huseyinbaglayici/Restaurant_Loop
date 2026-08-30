@@ -12,6 +12,7 @@ namespace RestaurantLoop.Installers
             Container.DeclareSignal<LevelEndedSignal>();
             Container.DeclareSignal<PlayRequestedSignal>();
             Container.DeclareSignal<RestartLevelSignal>();
+            Container.DeclareSignal<LevelResumedSignal>().OptionalSubscriber();
             Container.DeclareSignal<LoadingStartedSignal>();
             Container.DeclareSignal<GameplaySceneReadySignal>();
             Container.DeclareSignal<MainMenuReadySignal>();

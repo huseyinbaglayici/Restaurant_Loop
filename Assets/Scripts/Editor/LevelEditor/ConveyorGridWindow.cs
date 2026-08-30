@@ -382,7 +382,7 @@ namespace Editor.LevelEditor
                 var captured = food;
                 var swatch = new Button(() => SelectFoodType(captured)) { text = FoodTypeUtil.ToIcon(food) };
                 swatch.AddToClassList(Css.PaletteSwatch);
-                swatch.style.backgroundColor = FoodGridColors.For(food);
+                swatch.style.backgroundColor = FoodTypeUtil.ToColor(food);
                 swatch.tooltip = food.ToString();
                 _paletteButtons.Add(swatch);
                 _paletteRow.Add(swatch);
