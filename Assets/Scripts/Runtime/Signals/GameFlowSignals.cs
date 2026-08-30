@@ -17,6 +17,11 @@ namespace RestaurantLoop.Signals
     {
     }
 
+    // Fired when player chooses to keep playing / resumes from fail popup
+    public class LevelResumedSignal
+    {
+    }
+
     public class LoadingStartedSignal
     {
     }

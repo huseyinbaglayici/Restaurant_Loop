@@ -154,6 +154,8 @@ namespace RestaurantLoop.Runtime.UI
             _panelKeepPlaying.SetActive(false);
             Time.timeScale = 1f;
 
+            _signalBus.Fire<LevelResumedSignal>();
+
             if (_audioService != null)
             {
                 _audioService.ResumeMusic();

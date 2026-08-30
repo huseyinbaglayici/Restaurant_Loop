@@ -10538,7 +10538,7 @@ MonoBehaviour:
   - {fileID: 5700784828077083704, guid: ed962e35f7fa6f34f8d27aa6d19ea293, type: 3}
   _confettiSpawnPoints:
   - {fileID: 2062287070}
-  _confettiScaleMultiplier: 0.7
+  _confettiScaleMultiplier: 1
   _burstCount: 4
   _burstInterval: 1
   _randomSpreadRadius: 0
@@ -12452,7 +12452,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1264202113
 RectTransform:
   m_ObjectHideFlags: 0

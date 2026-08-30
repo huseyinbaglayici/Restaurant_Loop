@@ -1,5 +1,6 @@
 using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.SceneFlow;
+using RestaurantLoop.Signals;
 using TMPro;
 using UnityEngine;
 using Zenject;
@@ -12,20 +13,66 @@ namespace RestaurantLoop.Runtime.UI
         [SerializeField] private TextMeshProUGUI _difficultyText;
 
         private CurrentLevelProvider _currentLevelProvider;
+        private SignalBus _signalBus;
 
         [Inject]
-        public void Construct(CurrentLevelProvider currentLevelProvider)
+        public void Construct(
+            CurrentLevelProvider currentLevelProvider,
+            [Inject(Optional = true)] SignalBus signalBus = null)
         {
             _currentLevelProvider = currentLevelProvider;
+            _signalBus = signalBus;
+        }
+
+        private void OnEnable()
+        {
+            UpdateView();
         }
 
         private void Start()
         {
+            if (_currentLevelProvider != null)
+            {
+                _currentLevelProvider.OnCurrentLevelChanged += OnCurrentLevelChanged;
+            }
+
+            _signalBus?.Subscribe<MenuReadySignal>(UpdateView);
+
+            UpdateView();
+        }
+
+        private void OnDestroy()
+        {
+            if (_currentLevelProvider != null)
+            {
+                _currentLevelProvider.OnCurrentLevelChanged -= OnCurrentLevelChanged;
+            }
+
+            _signalBus?.Unsubscribe<MenuReadySignal>(UpdateView);
+        }
+
+        private void OnCurrentLevelChanged(ConveyorLevelDataSO level)
+        {
+            UpdateView();
+        }
+
+        public void UpdateView()
+        {
+            if (_currentLevelProvider == null) return;
+
             var level = _currentLevelProvider.Current;
             if (level == null)
-                return;
+            {
+                _currentLevelProvider.ResolveFromSave();
+                level = _currentLevelProvider.Current;
+            }
 
-            _levelInfoText.text = $"Level {level.LevelId}";
+            if (level == null) return;
+
+            if (_levelInfoText != null)
+            {
+                _levelInfoText.text = $"Level {level.LevelId}";
+            }
 
             if (_difficultyText == null) return;
 
