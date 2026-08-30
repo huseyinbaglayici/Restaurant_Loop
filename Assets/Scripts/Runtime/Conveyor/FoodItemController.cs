@@ -224,7 +224,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void PopAmountBadge()
         {
-            if (Stack.Amount <= 0) return;
+            if (Stack.Amount <= 0 && Stack.LinkId == 0) return;
 
             EnsureConveyorAmountBadge();
             _conveyorAmountBadge.SetActive(true);
@@ -238,7 +238,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void ApplyConveyorAmountBadge(FoodStackData stack)
         {
-            if (stack.Amount <= 0)
+            if (stack.Amount <= 0 && stack.LinkId == 0)
             {
                 if (_conveyorAmountBadge != null) _conveyorAmountBadge.SetActive(false);
                 return;

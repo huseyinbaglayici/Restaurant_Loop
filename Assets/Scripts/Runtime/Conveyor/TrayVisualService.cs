@@ -177,7 +177,13 @@ namespace RestaurantLoop.Runtime.Conveyor
         private void OnFoodConsumed(FoodConsumedSignal signal)
         {
             if (!signal.ItemFullyConsumed) return; // partial take: item (and its tray) stay on the belt
+
             HandleItemLeavingBelt(signal.ItemId, withPunch: true);
+
+            if (signal.PartnerItemId.HasValue)
+            {
+                HandleItemLeavingBelt(signal.PartnerItemId.Value, withPunch: false);
+            }
         }
 
         // Every item that leaves the belt (docked or fully eaten) comes through here, tray or not — a

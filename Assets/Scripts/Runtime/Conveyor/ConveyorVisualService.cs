@@ -241,6 +241,14 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return;
             }
 
+            if (fullyConsumed && signal.PartnerVisual != null && signal.PartnerItemId.HasValue)
+            {
+                int pId = signal.PartnerItemId.Value;
+                _beltVisuals.Remove(pId);
+                _flightService.Cancel(signal.PartnerVisual.transform);
+                _foodPool.Despawn(signal.PartnerVisual);
+            }
+
             var flyer = ResolveConsumeFlyer(id, sourceVisual, takenStack, fullyConsumed);
             if (flyer == null) return;
 

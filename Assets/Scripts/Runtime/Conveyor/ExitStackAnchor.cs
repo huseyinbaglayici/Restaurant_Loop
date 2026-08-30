@@ -181,6 +181,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         }
 
         public const int MaxExtraSlots = 1;
+        public bool CanAddExtraSlot => SlotPositions != null && SlotPositions.Length > 0 && ExtraSlotsAdded < MaxExtraSlots;
 
         // Extra Tray power-up: appends one slot, following the same spacing as the last two.
         // Limited to MaxExtraSlots (1 extra slot max).

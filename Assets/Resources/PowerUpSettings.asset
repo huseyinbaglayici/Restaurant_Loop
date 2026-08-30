@@ -12,10 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c2b9a7810df4859a2243d9b4f9c5e61, type: 3}
   m_Name: PowerUpSettings
   m_EditorClassIdentifier: 
-  _badgeTextOffset: {x: 40, y: -40}
+  _badgeTextOffset: {x: 50, y: -50}
+  _badgeTextSize: {x: 160, y: 60}
   _badgeFontSize: 60
   _badgeTextColor: {r: 1, g: 1, b: 1, a: 1}
   _badgeFontAsset: {fileID: 11400000, guid: 48caf0496452fbe4593cb66fb79f3861, type: 2}
+  _goldIcon: {fileID: 21300000, guid: 4e6814fca5437ee4394482a8107c5b24, type: 3}
+  _goldIconOffset: {x: -80, y: -6}
+  _goldIconScale: 2
+  _goldIconSize: {x: 34, y: 34}
   _powerUpTutorialPanelPos: {x: 0, y: -430}
   _definitions:
   - Id: 0
@@ -23,6 +28,7 @@ MonoBehaviour:
     UnlockOnFirstFail: 0
     UnlockLevel: 4
     StartingAmount: 3
+    GoldPrice: 100
     UnlockedSprite: {fileID: 21300000, guid: 911689071b57b90478bb243effbb7266, type: 3}
     LockedSprite: {fileID: 21300000, guid: a2b55034bc578fa4e984f59f274300d9, type: 3}
     CustomTextOffset: {x: 0, y: 0}
@@ -32,6 +38,7 @@ MonoBehaviour:
     UnlockOnFirstFail: 0
     UnlockLevel: 8
     StartingAmount: 3
+    GoldPrice: 200
     UnlockedSprite: {fileID: 21300000, guid: 0f2c6d153f5956643bdb372162595f2b, type: 3}
     LockedSprite: {fileID: 21300000, guid: a0cfe28ef1ec01c4d87cc4740d1ab8ed, type: 3}
     CustomTextOffset: {x: 0, y: 0}
@@ -41,6 +48,7 @@ MonoBehaviour:
     UnlockOnFirstFail: 1
     UnlockLevel: 1
     StartingAmount: 3
+    GoldPrice: 300
     UnlockedSprite: {fileID: 21300000, guid: c36f629fbb9ac4f49a03a789544fcd17, type: 3}
     LockedSprite: {fileID: 21300000, guid: a898543fbd40eeb4f9dc4e59c91bea81, type: 3}
     CustomTextOffset: {x: 0, y: 0}

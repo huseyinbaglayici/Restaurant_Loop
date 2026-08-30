@@ -552,42 +552,20 @@ MonoBehaviour:
       LinkId: 0
   Queues:
   - Entries:
-    - Type: 1
-      Amount: 3
-      LinkId: 0
-    - Type: 0
-      Amount: 4
-      LinkId: 0
-    - Type: 1
-      Amount: 5
-      LinkId: 0
-    - Type: 2
-      Amount: 3
-      LinkId: 0
-    - Type: 2
-      Amount: 4
-      LinkId: 0
-    - Type: 0
-      Amount: 4
-      LinkId: 0
-    - Type: 1
-      Amount: 5
-      LinkId: 0
-  - Entries:
-    - Type: 2
-      Amount: 5
-      LinkId: 0
     - Type: 0
       Amount: 3
       LinkId: 0
     - Type: 1
       Amount: 3
       LinkId: 0
-    - Type: 1
+    - Type: 2
       Amount: 4
       LinkId: 0
-    - Type: 1
+    - Type: 2
       Amount: 3
+      LinkId: 0
+    - Type: 1
+      Amount: 5
       LinkId: 0
     - Type: 1
       Amount: 4
@@ -596,23 +574,66 @@ MonoBehaviour:
       Amount: 3
       LinkId: 0
   - Entries:
-    - Type: 0
-      Amount: 4
-      LinkId: 0
-    - Type: 1
-      Amount: 5
-      LinkId: 0
-    - Type: 0
-      Amount: 5
-      LinkId: 0
-    - Type: 1
-      Amount: 4
-      LinkId: 0
     - Type: 2
+      Amount: 4
+      LinkId: 0
+    - Type: 1
+      Amount: 4
+      LinkId: 0
+    - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 1
       Amount: 3
       LinkId: 0
     - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 1
+      Amount: 3
+      LinkId: 0
+    - Type: 1
+      Amount: 5
+      LinkId: 0
+  - Entries:
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 1
       Amount: 4
       LinkId: 0
-  IsTutorial: 0
-  TutorialSteps: []
+    - Type: 1
+      Amount: 5
+      LinkId: 0
+    - Type: 2
+      Amount: 4
+      LinkId: 0
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+  IsTutorial: 1
+  TutorialSteps:
+  - Text: If you want to send a stack from bottom,
+    Trigger: 0
+    HoverKind: 0
+    PowerUpButton: 1
+    QueueLaneIndex: 0
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}
+  - Text: you can press this button!
+    Trigger: 0
+    HoverKind: 1
+    PowerUpButton: 1
+    QueueLaneIndex: 0
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}
+  - Text: And pick a stack from the bottom rows.
+    Trigger: 0
+    HoverKind: 0
+    PowerUpButton: 1
+    QueueLaneIndex: 0
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}

@@ -26,6 +26,8 @@ namespace RestaurantLoop.Runtime.Tutorial
             {
                 _text.enableAutoSizing = false;
                 _text.fontSize = _fontSize;
+                _text.enableWordWrapping = true;
+                _text.textWrappingMode = TextWrappingModes.Normal;
             }
             if (_advanceBlocker != null)
             {
@@ -54,6 +56,8 @@ namespace RestaurantLoop.Runtime.Tutorial
             {
                 _text.enableAutoSizing = false;
                 _text.fontSize = _fontSize;
+                _text.enableWordWrapping = true;
+                _text.textWrappingMode = TextWrappingModes.Normal;
                 _text.text = text;
             }
 

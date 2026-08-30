@@ -17,6 +17,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly QueueAnchor _queueAnchor;
         private readonly ConveyorManager _conveyorManager;
         private readonly ConveyorTuning _tuning;
+        private readonly ExitStackAnchor _exitStackAnchor;
 
         private readonly Dictionary<int, LineRenderer> _lines = new();
         private readonly HashSet<int> _usedThisTick = new();
@@ -30,12 +31,14 @@ namespace RestaurantLoop.Runtime.Conveyor
             QueueSpawner queueSpawner,
             QueueAnchor queueAnchor,
             ConveyorManager conveyorManager,
-            ConveyorTuning tuning)
+            ConveyorTuning tuning,
+            [Inject(Optional = true)] ExitStackAnchor exitStackAnchor = null)
         {
             _queueSpawner = queueSpawner;
             _queueAnchor = queueAnchor;
             _conveyorManager = conveyorManager;
             _tuning = tuning;
+            _exitStackAnchor = exitStackAnchor;
         }
 
         public void Initialize()
@@ -68,6 +71,15 @@ namespace RestaurantLoop.Runtime.Conveyor
             {
                 var visual = _conveyorManager.GetVisualAt(i);
                 if (visual != null) ProcessVisual(visual);
+            }
+
+            if (_exitStackAnchor != null)
+            {
+                for (int i = 0; i < _exitStackAnchor.SlotCount; i++)
+                {
+                    if (_exitStackAnchor.TryGetOccupant(i, out var visual) && visual != null)
+                        ProcessVisual(visual);
+                }
             }
 
             foreach (var kvp in _lines)

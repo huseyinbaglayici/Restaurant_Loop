@@ -40,7 +40,8 @@ MonoBehaviour:
   ExtraRackVisualRotation: {x: -90, y: -180, z: 0}
   CustomerHeight: -4.45
   ClickRadiusPixels: 80
-  LinkLineWidth: 0.06
+  LinkedPairBeltSpacing: 2
+  LinkLineWidth: 0.3
   LinkLineSag: 0.35
   LinkLineSegments: 16
   EnvironmentPrefab: {fileID: 723497061726727076, guid: f49e09aeb79d57542bee99742c7c0883,

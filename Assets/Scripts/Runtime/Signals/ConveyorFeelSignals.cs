@@ -80,6 +80,9 @@ namespace RestaurantLoop.Signals
         // false: the belt item stays on the belt with a reduced amount.
         public bool ItemFullyConsumed;
 
+        public int? PartnerItemId;
+        public FoodItemController PartnerVisual;
+
         public Vector2Int CustomerCoord;
         public RuntimeCustomerState.ConsumeResult ServeResult;
         public bool LevelWon;

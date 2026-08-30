@@ -21,7 +21,9 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void ActivatePickFromBottom() => _queueSpawner.PickFromBottomEnabled = true;
 
-        // Repeatable — adds an extra exit stack slot and adds an extra tray to the tray dispenser pool.
+        public bool CanActivateExtraTray() => _exitStackAnchor != null && _exitStackAnchor.CanAddExtraSlot;
+
+        // Adds an extra exit stack slot and adds an extra tray to the tray dispenser pool (up to max 1).
         public bool ActivateExtraTray()
         {
             bool addedSlot = _exitStackAnchor.TryAddExtraSlot();

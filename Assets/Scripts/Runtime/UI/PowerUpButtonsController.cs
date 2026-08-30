@@ -1,3 +1,4 @@
+using RestaurantLoop.Audio;
 using RestaurantLoop.Economy;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
@@ -39,6 +40,9 @@ namespace RestaurantLoop.Runtime.UI
         private IPowerUpInventoryService _inventory;
         private CurrentLevelProvider _currentLevelProvider;
         private PowerUpSettings _settings;
+        private RestaurantLoop.Economy.IEconomyService _economyService;
+        private IAudioService _audioService;
+        private AudioLibrary _audioLibrary;
 
         [Inject]
         public void Construct(
@@ -49,7 +53,10 @@ namespace RestaurantLoop.Runtime.UI
             [Inject(Optional = true)] IPowerUpInventoryService inventory = null,
             [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
             [Inject(Optional = true)] CustomerConsumeService consumeService = null,
-            [Inject(Optional = true)] PowerUpSettings settings = null)
+            [Inject(Optional = true)] PowerUpSettings settings = null,
+            [Inject(Optional = true)] RestaurantLoop.Economy.IEconomyService economyService = null,
+            [Inject(Optional = true)] IAudioService audioService = null,
+            [Inject(Optional = true)] AudioLibrary audioLibrary = null)
         {
             _powerUpService = powerUpService;
             _gate = gate;
@@ -58,7 +65,10 @@ namespace RestaurantLoop.Runtime.UI
             _inventory = inventory;
             _currentLevelProvider = currentLevelProvider;
             _consumeService = consumeService;
-            _settings = settings;
+            _settings = settings ?? Resources.Load<PowerUpSettings>("PowerUpSettings");
+            _economyService = economyService;
+            _audioService = audioService;
+            _audioLibrary = audioLibrary;
         }
 
         private void Start()
@@ -82,6 +92,11 @@ namespace RestaurantLoop.Runtime.UI
             if (_inventory != null)
             {
                 _inventory.OnInventoryChanged += RefreshAllSlots;
+            }
+
+            if (_economyService != null)
+            {
+                _economyService.OnCoinsChanged += HandleCoinsChanged;
             }
 
             _signalBus?.Subscribe<LevelResumedSignal>(HandleLevelResumed);
@@ -117,12 +132,34 @@ namespace RestaurantLoop.Runtime.UI
                 _inventory.OnInventoryChanged -= RefreshAllSlots;
             }
 
+            if (_economyService != null)
+            {
+                _economyService.OnCoinsChanged -= HandleCoinsChanged;
+            }
+
             _signalBus?.Unsubscribe<LevelResumedSignal>(HandleLevelResumed);
         }
+
+        private void HandleCoinsChanged(int coins) => RefreshAllSlots();
 
         private void OnShuffleClicked()
         {
             if (!IsPowerUpUsable(PowerUpButtonId.Shuffle)) return;
+
+            int count = _inventory != null ? _inventory.GetCount(PowerUpButtonId.Shuffle) : 0;
+            bool infinite = PowerUpInventoryService.IsInfinitePowerUpsEnabled();
+
+            if (count <= 0 && !infinite)
+            {
+                int price = _settings != null ? _settings.GetGoldPrice(PowerUpButtonId.Shuffle) : 100;
+                if (_economyService != null && !_economyService.TrySpendCoins(price))
+                {
+                    PlayFailSound();
+                    return;
+                }
+                _inventory?.AddCount(PowerUpButtonId.Shuffle, 1);
+                PlayBuySound();
+            }
 
             if (_inventory == null || _inventory.TryUse(PowerUpButtonId.Shuffle))
             {
@@ -136,6 +173,21 @@ namespace RestaurantLoop.Runtime.UI
         {
             if (!IsPowerUpUsable(PowerUpButtonId.PickFromBottom)) return;
 
+            int count = _inventory != null ? _inventory.GetCount(PowerUpButtonId.PickFromBottom) : 0;
+            bool infinite = PowerUpInventoryService.IsInfinitePowerUpsEnabled();
+
+            if (count <= 0 && !infinite)
+            {
+                int price = _settings != null ? _settings.GetGoldPrice(PowerUpButtonId.PickFromBottom) : 200;
+                if (_economyService != null && !_economyService.TrySpendCoins(price))
+                {
+                    PlayFailSound();
+                    return;
+                }
+                _inventory?.AddCount(PowerUpButtonId.PickFromBottom, 1);
+                PlayBuySound();
+            }
+
             if (_inventory == null || _inventory.TryUse(PowerUpButtonId.PickFromBottom))
             {
                 _powerUpService.ActivatePickFromBottom();
@@ -147,14 +199,44 @@ namespace RestaurantLoop.Runtime.UI
         private void OnExtraTrayClicked()
         {
             if (!IsPowerUpUsable(PowerUpButtonId.ExtraTray)) return;
+            if (_powerUpService != null && !_powerUpService.CanActivateExtraTray()) return;
 
-            if (_inventory == null || _inventory.TryUse(PowerUpButtonId.ExtraTray))
+            int count = _inventory != null ? _inventory.GetCount(PowerUpButtonId.ExtraTray) : 0;
+            bool infinite = PowerUpInventoryService.IsInfinitePowerUpsEnabled();
+
+            if (count <= 0 && !infinite)
             {
-                if (_powerUpService.ActivateExtraTray())
+                int price = _settings != null ? _settings.GetGoldPrice(PowerUpButtonId.ExtraTray) : 300;
+                if (_economyService != null && !_economyService.TrySpendCoins(price))
                 {
-                    FireActionPerformed(PowerUpButtonId.ExtraTray);
+                    PlayFailSound();
+                    return;
                 }
+                _inventory?.AddCount(PowerUpButtonId.ExtraTray, 1);
+                PlayBuySound();
+            }
+
+            if (_powerUpService != null && _powerUpService.ActivateExtraTray())
+            {
+                _inventory?.TryUse(PowerUpButtonId.ExtraTray);
+                FireActionPerformed(PowerUpButtonId.ExtraTray);
                 RefreshSlot(PowerUpButtonId.ExtraTray, _buttonExtraTray, _lockExtraTray, _countExtraTrayText, _plusExtraTray);
+            }
+        }
+
+        private void PlayBuySound()
+        {
+            if (_audioService != null && _audioLibrary != null)
+            {
+                _audioService.PlaySfx(_audioLibrary.FoodSendSfx);
+            }
+        }
+
+        private void PlayFailSound()
+        {
+            if (_audioService != null && _audioLibrary != null && _audioLibrary.FailSfx != null)
+            {
+                _audioService.PlaySfx(_audioLibrary.FailSfx);
             }
         }
 
@@ -165,9 +247,8 @@ namespace RestaurantLoop.Runtime.UI
             if (!infinite && _inventory != null && !_inventory.IsUnlocked(id, currentLevel)) return false;
             if (_gate != null && !_gate.CanClickPowerUpButton(id)) return false;
 
-            if (!infinite && _inventory != null && _inventory.GetCount(id) <= 0)
+            if (id == PowerUpButtonId.ExtraTray && _powerUpService != null && !_powerUpService.CanActivateExtraTray())
             {
-                // Count is 0 (+ badge is shown). Click does not activate the power-up.
                 return false;
             }
 
@@ -195,6 +276,8 @@ namespace RestaurantLoop.Runtime.UI
             bool isUnlocked = infinite || (_inventory == null || _inventory.IsUnlocked(id, currentLevel));
             var def = _settings?.GetDefinition(id);
 
+            var coinIcon = GetOrCreateCoinIcon(button);
+
             if (!isUnlocked)
             {
                 // 1) LOCKED: Set locked sprite if available, show lock icon, hide count/plus, disable interaction.
@@ -205,6 +288,7 @@ namespace RestaurantLoop.Runtime.UI
                 if (lockObj != null) lockObj.SetActive(true);
                 if (countText != null) countText.gameObject.SetActive(false);
                 if (plusObj != null) plusObj.SetActive(false);
+                if (coinIcon != null) coinIcon.gameObject.SetActive(false);
                 button.interactable = false;
             }
             else
@@ -215,38 +299,105 @@ namespace RestaurantLoop.Runtime.UI
                     button.image.sprite = def.UnlockedSprite;
                 }
                 if (lockObj != null) lockObj.SetActive(false);
-                button.interactable = true;
+
+                bool canUseEffect = id != PowerUpButtonId.ExtraTray || (_powerUpService == null || _powerUpService.CanActivateExtraTray());
+                button.interactable = canUseEffect;
 
                 int count = _inventory != null ? _inventory.GetCount(id) : 0;
+                if (plusObj != null) plusObj.SetActive(false);
 
-                // Count / Plus shared text component
-                if (countText != null)
+                Vector2 baseOffset = _settings != null ? _settings.BadgeTextOffset : new Vector2(40f, -40f);
+                if (def != null && def.CustomTextOffset != Vector2.zero)
                 {
-                    countText.gameObject.SetActive(true);
-                    countText.text = count > 0 ? count.ToString() : "+";
-
-                    // Apply offset and styling from PowerUpSettings
-                    Vector2 offset = _settings != null ? _settings.BadgeTextOffset : new Vector2(40f, -40f);
-                    if (def != null && def.CustomTextOffset != Vector2.zero)
-                    {
-                        offset = def.CustomTextOffset;
-                    }
-                    countText.rectTransform.anchoredPosition = offset;
-
-                    if (_settings != null)
-                    {
-                        if (_settings.BadgeFontSize > 0) countText.fontSize = _settings.BadgeFontSize;
-                        countText.color = _settings.BadgeTextColor;
-                        if (_settings.BadgeFontAsset != null) countText.font = _settings.BadgeFontAsset;
-                    }
+                    baseOffset = def.CustomTextOffset;
                 }
 
-                // If separate plus GameObject was assigned, sync it too
-                if (plusObj != null)
+                Vector2 textSize = _settings != null ? _settings.BadgeTextSize : new Vector2(160f, 60f);
+
+                if (count > 0)
                 {
-                    plusObj.SetActive(count == 0);
+                    if (coinIcon != null) coinIcon.gameObject.SetActive(false);
+
+                    if (countText != null)
+                    {
+                        countText.gameObject.SetActive(true);
+                        countText.enableWordWrapping = false;
+                        countText.overflowMode = TextOverflowModes.Overflow;
+                        countText.rectTransform.sizeDelta = textSize;
+                        countText.text = count.ToString();
+                        countText.rectTransform.anchoredPosition = baseOffset;
+
+                        if (_settings != null)
+                        {
+                            if (_settings.BadgeFontSize > 0) countText.fontSize = _settings.BadgeFontSize;
+                            countText.color = _settings.BadgeTextColor;
+                            if (_settings.BadgeFontAsset != null) countText.font = _settings.BadgeFontAsset;
+                        }
+                    }
+                }
+                else
+                {
+                    // Count is 0: Show gold price and coin icon instead of "+"
+                    int price = _settings != null ? _settings.GetGoldPrice(id) : 100;
+
+                    if (coinIcon != null)
+                    {
+                        coinIcon.gameObject.SetActive(true);
+                        if (_settings != null && _settings.GoldIcon != null)
+                        {
+                            coinIcon.sprite = _settings.GoldIcon;
+                        }
+
+                        Vector2 coinOffset = _settings != null ? _settings.GoldIconOffset : new Vector2(-28f, 0f);
+                        Vector2 coinSize = _settings != null ? _settings.GoldIconSize : new Vector2(34f, 34f);
+
+                        coinIcon.rectTransform.anchoredPosition = baseOffset + coinOffset;
+                        coinIcon.rectTransform.sizeDelta = coinSize;
+                    }
+
+                    if (countText != null)
+                    {
+                        countText.gameObject.SetActive(true);
+                        countText.enableWordWrapping = false;
+                        countText.overflowMode = TextOverflowModes.Overflow;
+                        countText.rectTransform.sizeDelta = textSize;
+                        countText.text = price.ToString();
+                        countText.rectTransform.anchoredPosition = baseOffset + new Vector2(16f, 0f);
+
+                        if (_settings != null)
+                        {
+                            if (_settings.BadgeFontSize > 0) countText.fontSize = _settings.BadgeFontSize;
+                            countText.color = _settings.BadgeTextColor;
+                            if (_settings.BadgeFontAsset != null) countText.font = _settings.BadgeFontAsset;
+                        }
+                    }
                 }
             }
+        }
+
+        private UnityEngine.UI.Image GetOrCreateCoinIcon(Button button)
+        {
+            if (button == null) return null;
+            var found = button.transform.Find("BadgeCoinIcon");
+            if (found != null) return found.GetComponent<UnityEngine.UI.Image>();
+
+            var iconObj = new GameObject("BadgeCoinIcon", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            iconObj.transform.SetParent(button.transform, false);
+
+            var rt = iconObj.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(34f, 34f);
+
+            var img = iconObj.GetComponent<UnityEngine.UI.Image>();
+            img.raycastTarget = false;
+            if (_settings != null && _settings.GoldIcon != null)
+            {
+                img.sprite = _settings.GoldIcon;
+            }
+
+            return img;
         }
 
         private void AutoResolveReferences()
@@ -286,13 +437,15 @@ namespace RestaurantLoop.Runtime.UI
                 rt.anchorMin = new Vector2(0.5f, 0.5f);
                 rt.anchorMax = new Vector2(0.5f, 0.5f);
                 rt.pivot = new Vector2(0.5f, 0.5f);
-                rt.sizeDelta = new Vector2(80f, 60f);
+                rt.sizeDelta = _settings != null ? _settings.BadgeTextSize : new Vector2(160f, 60f);
 
                 Vector2 offset = _settings != null ? _settings.BadgeTextOffset : new Vector2(40f, -40f);
                 rt.anchoredPosition = offset;
 
                 var tmp = textObj.GetComponent<TextMeshProUGUI>();
                 tmp.alignment = TextAlignmentOptions.Center;
+                tmp.enableWordWrapping = false;
+                tmp.overflowMode = TextOverflowModes.Overflow;
                 tmp.raycastTarget = false;
                 if (_settings != null)
                 {
@@ -302,6 +455,12 @@ namespace RestaurantLoop.Runtime.UI
                 }
 
                 countText = tmp;
+            }
+            else
+            {
+                countText.enableWordWrapping = false;
+                countText.overflowMode = TextOverflowModes.Overflow;
+                countText.rectTransform.sizeDelta = _settings != null ? _settings.BadgeTextSize : new Vector2(160f, 60f);
             }
 
             if (plusObj == null)

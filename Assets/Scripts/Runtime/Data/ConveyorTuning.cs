@@ -107,6 +107,9 @@ namespace RestaurantLoop.Runtime.Data
         public float ClickRadiusPixels = 80f;
 
         [Header("Queue Link Line (QueueLinkVisualizer)")]
+        [Tooltip("Distance between the two items of a linked pair while riding on the conveyor belt (in belt progress/cell units). Defaults to 1 (adjacent cells), higher values increase the line length on conveyor).")]
+        public float LinkedPairBeltSpacing = 1.4f;
+
         [Tooltip("World units wide, the rope drawn between two linked queue items.")]
         public float LinkLineWidth = 0.06f;
 
