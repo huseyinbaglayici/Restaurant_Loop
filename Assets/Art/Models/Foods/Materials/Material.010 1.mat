@@ -184,7 +184,7 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.9063396, g: 0.79632115, b: 0.15967834, a: 1}
+    - _BaseColor: {r: 0.9063396, g: 0.3019608, b: 0.15967831, a: 1}
     - _BottomGradientColor: {r: 0.92, g: 0.89, b: 0.91, a: 1}
     - _BounceColor: {r: 0.41999996, g: 0.62, b: 1, a: 1}
     - _Color: {r: 0.9063396, g: 0.79632115, b: 0.15967831, a: 1}

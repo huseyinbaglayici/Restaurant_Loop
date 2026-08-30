@@ -15,6 +15,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly QueueSpawner _queueSpawner;
         private readonly ExitStackAnchor _exitStackAnchor;
         private readonly ConveyorManager _conveyorManager;
+        private readonly TrayDispenserAnchor _trayAnchor;
         private readonly ConveyorTuning _tuning;
         private readonly TableSettings _tableSettings;
         private readonly CameraController _cameraController;
@@ -31,6 +32,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             QueueSpawner queueSpawner,
             ExitStackAnchor exitStackAnchor,
             ConveyorManager conveyorManager,
+            [Inject(Optional = true)] TrayDispenserAnchor trayAnchor,
             ConveyorTuning tuning,
             [Inject(Optional = true)] TableSettings tableSettings,
             [Inject(Optional = true)] CameraController cameraController,
@@ -44,6 +46,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _queueSpawner = queueSpawner;
             _exitStackAnchor = exitStackAnchor;
             _conveyorManager = conveyorManager;
+            _trayAnchor = trayAnchor;
             _tuning = tuning;
             _tableSettings = tableSettings;
             _cameraController = cameraController;
@@ -107,13 +110,18 @@ namespace RestaurantLoop.Runtime.Conveyor
             var stack = bestVisual.Stack;
             _audioService.PlaySfx(_audioLibrary.FoodClickSfx != null ? _audioLibrary.FoodClickSfx : _audioLibrary.DefaultClickSfx);
 
+            // Boştaki tepsi sayısı: Toplam tepsi sayısından (aktif banttakiler + havadakiler) düşülerek net hesaplanır
+            int maxTrays = _trayAnchor != null ? _trayAnchor.TotalCount : _exitStackAnchor.SlotCount;
+            int currentReservedOrOnBelt = _conveyorManager.ReservedItemCount;
+            int netAvailableTrays = maxTrays - currentReservedOrOnBelt;
+
             if (stack.LinkId != 0)
             {
                 // both halves must be at the front of their lane, or neither goes
                 if (bestRow != 0 || !TryFindLinkedFrontPartner(stack.LinkId, bestLane, out int partnerLane, out var partnerVisual))
                     return true;
 
-                if (_conveyorManager.ReservedItemCount + _exitStackAnchor.OccupiedCount + 2 > _exitStackAnchor.SlotCount)
+                if (netAvailableTrays < 2)
                 {
                     TriggerRejectFeedback();
                     return true;
@@ -135,7 +143,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return true;
             }
 
-            if (_conveyorManager.ReservedItemCount + _exitStackAnchor.OccupiedCount >= _exitStackAnchor.SlotCount)
+            if (netAvailableTrays < 1)
             {
                 TriggerRejectFeedback();
                 return false;
@@ -195,6 +203,14 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             if (bestSlot < 0) return false;
             if (!_gate.CanClickExitStack()) return true;
+
+            // Rack'ten gönderirken de toplam tepsi kapasitesini aşmamak için kontrol
+            int maxTrays = _trayAnchor != null ? _trayAnchor.TotalCount : _exitStackAnchor.SlotCount;
+            if (_conveyorManager.ReservedItemCount >= maxTrays)
+            {
+                TriggerRejectFeedback();
+                return false;
+            }
 
             _audioService.PlaySfx(_audioLibrary.FoodClickSfx != null ? _audioLibrary.FoodClickSfx : _audioLibrary.DefaultClickSfx);
 

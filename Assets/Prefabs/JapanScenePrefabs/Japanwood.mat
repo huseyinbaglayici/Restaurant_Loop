@@ -143,8 +143,8 @@ Material:
     - _GrainSteps: 4.4
     - _GrainStrength: 0.55
     - _GrainStretch: 11.1
-    - _GrainWave: 0.14
-    - _GrainWaveScale: 4.3
+    - _GrainWave: 0
+    - _GrainWaveScale: 1.9
     - _GrainWidth: 0.242
     - _GrainWidthVariation: 0.8
     - _GrooveDarken: 0.45

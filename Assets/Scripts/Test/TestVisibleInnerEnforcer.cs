@@ -12,7 +12,7 @@ public class TestVisibleInnerEnforcer : MonoBehaviour
     void LateUpdate()
     {
         // Sahnedeki tüm TestCustomer objelerini bul
-        TestCustomer[] allCustomers = FindObjectsOfType<TestCustomer>();
+        TestCustomer[] allCustomers = Object.FindObjectsByType<TestCustomer>(FindObjectsSortMode.None);
         
         foreach (var customer in allCustomers)
         {

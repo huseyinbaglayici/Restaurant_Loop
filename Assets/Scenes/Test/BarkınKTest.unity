@@ -310,7 +310,7 @@ PrefabInstance:
         type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
-      objectReference: {fileID: 2100000, guid: 81d3612bd26e53b4eb3722825ea1deaa, type: 2}
+      objectReference: {fileID: 2100000, guid: 10bf2b0ec5d182f4cbc32081f40409f1, type: 2}
     - target: {fileID: 919132149155446097, guid: 2fc21ad32f421f745b7edc44376d66c6,
         type: 3}
       propertyPath: m_Name
@@ -3042,7 +3042,7 @@ PrefabInstance:
         type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
-      objectReference: {fileID: 2100000, guid: 81d3612bd26e53b4eb3722825ea1deaa, type: 2}
+      objectReference: {fileID: 2100000, guid: 10bf2b0ec5d182f4cbc32081f40409f1, type: 2}
     - target: {fileID: -7511558181221131132, guid: 220a9d8e96ecaef47a78d38cb2e135e1,
         type: 3}
       propertyPath: 'm_Materials.Array.data[2]'
@@ -3265,7 +3265,7 @@ PrefabInstance:
         type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
-      objectReference: {fileID: 2100000, guid: 81d3612bd26e53b4eb3722825ea1deaa, type: 2}
+      objectReference: {fileID: 2100000, guid: 10bf2b0ec5d182f4cbc32081f40409f1, type: 2}
     - target: {fileID: 919132149155446097, guid: 2fc21ad32f421f745b7edc44376d66c6,
         type: 3}
       propertyPath: m_Name
@@ -3322,11 +3322,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _mainCamera: {fileID: 0}
   _levelText: {fileID: 2088046482}
+  _moneyText: {fileID: 0}
   _trayDispenserRoot: {fileID: 8111390360900650364}
   _customerOrderCanvasRoot: {fileID: 517041083}
   _orderIconsGroup: {fileID: 1542402105}
   _orderTextsGroup: {fileID: 1532874812}
-  _customerInitialSize: 10
+  _tutorialView: {fileID: 0}
 --- !u!1 &1125435350
 GameObject:
   m_ObjectHideFlags: 0
@@ -4005,6 +4006,10 @@ MonoBehaviour:
   _buttonKeepPlayingClose: {fileID: 595165173}
   _buttonTryAgain: {fileID: 1979904676}
   _buttonExit: {fileID: 1811830762}
+  _keepPlayingLevelText: {fileID: 0}
+  _failedLevelText: {fileID: 0}
+  _failedRibbonLevelText: {fileID: 0}
+  _coinRewardText: {fileID: 0}
 --- !u!1 &1289239603
 GameObject:
   m_ObjectHideFlags: 0
@@ -4215,6 +4220,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _panelCompleted: {fileID: 1289239603}
   _buttonNext: {fileID: 1840710512}
+  _levelText: {fileID: 0}
+  _coinRewardText: {fileID: 0}
 --- !u!1 &1314989224
 GameObject:
   m_ObjectHideFlags: 0
