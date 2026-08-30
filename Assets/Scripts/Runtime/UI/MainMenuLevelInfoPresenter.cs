@@ -34,7 +34,8 @@ namespace RestaurantLoop.Runtime.UI
             _difficultyText.text = level.Difficulty switch
             {
                 LevelDifficulty.Bonus => "Bonus",
-                LevelDifficulty.Hard or LevelDifficulty.SuperHard => "Zor",
+                LevelDifficulty.Hard => "Hard",
+                LevelDifficulty.SuperHard => "Super Hard",
                 _ => string.Empty
             };
         }

@@ -99,8 +99,7 @@ namespace Editor.LevelEditor
             foreach (var kv in Entities)
             {
                 Vector2 center = CellCenterLocal(kv.Key);
-                _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(kv.Value.Type, center, CellSize,
-                    FoodGridColors.CustomerSpriteFor(kv.Value.Type)));
+                _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(kv.Value.Type, center, CellSize));
                 if (kv.Value.Amount > 0)
                     _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(kv.Value.Amount, center, CellSize));
             }
@@ -117,21 +116,18 @@ namespace Editor.LevelEditor
                     Vector2 rightCenter = center + new Vector2(CellSize * 0.24f, 0f);
                     float halfSize = CellSize * 0.6f;
 
-                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(order.Type, leftCenter, halfSize,
-                        FoodGridColors.CustomerSpriteFor(order.Type)));
+                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(order.Type, leftCenter, halfSize));
                     if (order.Amount > 0)
                         _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(order.Amount, leftCenter, halfSize));
 
                     var second = kv.Value.SecondOrder;
-                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(second.Type, rightCenter, halfSize,
-                        FoodGridColors.CustomerSpriteFor(second.Type)));
+                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(second.Type, rightCenter, halfSize));
                     if (second.Amount > 0)
                         _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(second.Amount, rightCenter, halfSize));
                 }
                 else
                 {
-                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(order.Type, center, CellSize,
-                        FoodGridColors.CustomerSpriteFor(order.Type)));
+                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(order.Type, center, CellSize));
                     if (order.Amount > 0)
                         _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(order.Amount, center, CellSize));
                 }
@@ -508,7 +504,7 @@ namespace Editor.LevelEditor
 
             // customers
             foreach (var kv in Customers)
-                DrawCustomer(painter, CellCenterLocal(kv.Key), kv.Value);
+                DrawCustomer(painter, CellCenterLocal(kv.Key), kv.Value.IsHidden, kv.Value.HasSecondOrder);
 
             if (_hoverCell.HasValue)
             {
@@ -654,12 +650,9 @@ namespace Editor.LevelEditor
 
         private void DrawEntity(Painter2D painter, Vector2 center, FoodStackData stack)
         {
-            // sprite already draws its own bubble background — skip the flat fallback disc.
-            if (FoodGridColors.CustomerSpriteFor(stack.Type) != null) return;
-
             float radius = CellSize * 0.22f;
 
-            painter.fillColor = FoodGridColors.For(stack.Type);
+            painter.fillColor = FoodTypeUtil.ToColor(stack.Type);
             painter.strokeColor = EntityOutline;
             painter.lineWidth = 1.5f;
             painter.BeginPath();
@@ -668,68 +661,33 @@ namespace Editor.LevelEditor
             painter.Stroke();
         }
 
-        private void DrawCustomer(Painter2D painter, Vector2 center, CustomerEntity data)
+        private void DrawCustomer(Painter2D painter, Vector2 center, bool isHidden, bool hasSecondOrder)
         {
             float half = CellSize * 0.38f;
             var r = new Rect(center.x - half, center.y - half, half * 2, half * 2);
-            Color dimmedFallback = new(CustomerColor.r, CustomerColor.g, CustomerColor.b, 0.4f);
 
-            if (!data.HasSecondOrder)
-            {
-                // sprite already draws its own bubble background — only fall back when this food has no art yet.
-                if (FoodGridColors.CustomerSpriteFor(data.Order.Type) == null)
-                {
-                    painter.fillColor = data.IsHidden ? dimmedFallback : CustomerColor;
-                    painter.BeginPath();
-                    TraceRect(painter, r);
-                    painter.Fill();
-                }
-
-                painter.strokeColor = CustomerOutline;
-                painter.lineWidth = 2f;
-                painter.BeginPath();
-                TraceRect(painter, r);
-                painter.Stroke();
-                return;
-            }
-
-            var left = new Rect(r.xMin, r.yMin, half, half * 2);
-            var right = new Rect(center.x, r.yMin, half, half * 2);
-
-            if (FoodGridColors.CustomerSpriteFor(data.Order.Type) == null)
-            {
-                painter.fillColor = data.IsHidden ? dimmedFallback : CustomerColor;
-                painter.BeginPath();
-                TraceRect(painter, left);
-                painter.Fill();
-            }
-            if (FoodGridColors.CustomerSpriteFor(data.SecondOrder.Type) == null)
-            {
-                painter.fillColor = data.IsHidden ? dimmedFallback : CustomerColor;
-                painter.BeginPath();
-                TraceRect(painter, right);
-                painter.Fill();
-            }
-
+            // hidden: dimmed
+            painter.fillColor = isHidden ? new Color(CustomerColor.r, CustomerColor.g, CustomerColor.b, 0.4f) : CustomerColor;
             painter.strokeColor = CustomerOutline;
             painter.lineWidth = 2f;
             painter.BeginPath();
-            TraceRect(painter, r);
-            painter.Stroke();
-
-            painter.BeginPath();
-            painter.MoveTo(new Vector2(center.x, r.yMin));
-            painter.LineTo(new Vector2(center.x, r.yMax));
-            painter.Stroke();
-        }
-
-        private static void TraceRect(Painter2D painter, Rect r)
-        {
             painter.MoveTo(r.position);
             painter.LineTo(new Vector2(r.xMax, r.yMin));
             painter.LineTo(new Vector2(r.xMax, r.yMax));
             painter.LineTo(new Vector2(r.xMin, r.yMax));
             painter.ClosePath();
+            painter.Fill();
+            painter.Stroke();
+
+            if (hasSecondOrder)
+            {
+                painter.strokeColor = CustomerOutline;
+                painter.lineWidth = 2f;
+                painter.BeginPath();
+                painter.MoveTo(new Vector2(center.x, r.yMin));
+                painter.LineTo(new Vector2(center.x, r.yMax));
+                painter.Stroke();
+            }
         }
 
         private void DrawGateMarker(Painter2D painter, Vector2 center)

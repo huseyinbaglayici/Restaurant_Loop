@@ -63,8 +63,7 @@ namespace Editor.LevelEditor
                 for (int r = 0; r < entries.Count && r < Depth; r++)
                 {
                     Vector2 center = new(c * CellSize + CellSize * 0.5f, r * CellSize + CellSize * 0.5f);
-                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(entries[r].Type, center, CellSize,
-                        FoodGridColors.QueueSpriteFor(entries[r].Type)));
+                    _entityLabelLayer.Add(EntityLabelFactory.CreateIcon(entries[r].Type, center, CellSize));
                     if (entries[r].Amount > 0)
                         _entityLabelLayer.Add(EntityLabelFactory.CreateAmountBadge(entries[r].Amount, center, CellSize));
                 }
@@ -327,11 +326,8 @@ namespace Editor.LevelEditor
 
         private void DrawEntity(Painter2D painter, Vector2 center, FoodStackData stack)
         {
-            // sprite already draws its own bubble background — skip the flat fallback disc.
-            if (FoodGridColors.QueueSpriteFor(stack.Type) != null) return;
-
             float radius = CellSize * 0.32f;
-            painter.fillColor = FoodGridColors.For(stack.Type);
+            painter.fillColor = FoodTypeUtil.ToColor(stack.Type);
             painter.strokeColor = EntityOutline;
             painter.lineWidth = 1.5f;
             painter.BeginPath();

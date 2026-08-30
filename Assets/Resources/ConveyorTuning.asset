@@ -25,7 +25,7 @@ MonoBehaviour:
   BeltTrackHeight: -4.45
   MinEntrySpacing: 1.5
   EntryHoverHeight: 1
-  QueueLaneSpacing: 1.47
+  QueueLaneSpacing: 1.75
   QueueZOffsetFromExitStack: 1.8
   QueueRowSpacing: 1.5
   QueueShiftSpeed: 4
