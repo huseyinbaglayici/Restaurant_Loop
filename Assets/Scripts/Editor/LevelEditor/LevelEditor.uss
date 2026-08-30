@@ -100,6 +100,19 @@
     border-width: 1px;
 }
 
+.rl-toggle {
+    flex-grow: 0;
+    margin-right: 10px;
+}
+
+.rl-toggle .unity-base-field__label {
+    min-width: 0;
+    width: auto;
+    margin-right: 4px;
+    color: #AAAAAA;
+    -unity-font-style: normal;
+}
+
 /* ── Canvas ──────────────────────────────────────────────────────────────── */
 
 .rl-canvas-host {

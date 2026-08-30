@@ -1,12 +1,15 @@
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace Editor.LevelEditor
 {
     internal static class ConveyorSceneBuilder
     {
+        private const string EnvironmentHolderName = "LevelHolder";
+
         public static void Build(ConveyorLevelDataSO data)
         {
             var settings = ConveyorSettingsProvider.GetOrCreate();
@@ -46,7 +49,30 @@ namespace Editor.LevelEditor
                 Undo.RegisterCreatedObjectUndo(instance, "Build Conveyor");
             }
 
+            if (data.Environment != null) ApplyEnvironmentPreset(data.Environment);
+
             Selection.activeGameObject = container;
+        }
+
+        private static void ApplyEnvironmentPreset(GameObject presetPrefab)
+        {
+            var holder = GameObject.Find(EnvironmentHolderName);
+            if (holder == null)
+            {
+                Debug.LogWarning($"[ConveyorSceneBuilder] No '{EnvironmentHolderName}' found in scene — environment preset not applied.");
+                return;
+            }
+
+            foreach (Transform child in holder.transform)
+            {
+                bool shouldBeActive = PrefabUtility.GetCorrespondingObjectFromOriginalSource(child.gameObject) == presetPrefab;
+                if (child.gameObject.activeSelf == shouldBeActive) continue;
+
+                Undo.RecordObject(child.gameObject, "Switch Environment Preset");
+                child.gameObject.SetActive(shouldBeActive);
+            }
+
+            EditorSceneManager.MarkSceneDirty(holder.scene);
         }
     }
 }

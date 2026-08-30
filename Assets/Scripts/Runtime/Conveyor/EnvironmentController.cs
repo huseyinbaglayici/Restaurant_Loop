@@ -26,21 +26,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             if (_tuning == null) return;
 
-            // Find existing environment object in scene or spawn from prefab
-            var existingEnv = GameObject.Find("Environment") ?? GameObject.Find("Environment_Latest");
-            if (existingEnv != null)
-            {
-                _environmentInstance = existingEnv;
-            }
-            else if (_tuning.EnvironmentPrefab != null)
-            {
-                _environmentInstance = Object.Instantiate(
-                    _tuning.EnvironmentPrefab,
-                    _tuning.EnvironmentBasePosition,
-                    Quaternion.Euler(_tuning.EnvironmentBaseRotation));
-                _environmentInstance.name = "Environment";
-            }
-
+            // Find existing environment object in scene (set active by the level editor's Environment preset)
+            _environmentInstance = GameObject.Find("Environment") ?? GameObject.Find("Environment_Latest");
             if (_environmentInstance == null) return;
 
             _environmentInstance.transform.localScale = _tuning.EnvironmentBaseScale;

@@ -97,6 +97,7 @@ namespace RestaurantLoop.Runtime.Data
     {
         public int LevelId;
         public LevelDifficulty Difficulty;
+        public GameObject Environment;
 
         [Header("Conveyor Grid")]
         public int GridWidth = 8;

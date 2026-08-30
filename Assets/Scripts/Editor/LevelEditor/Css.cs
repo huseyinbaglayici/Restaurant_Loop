@@ -13,6 +13,7 @@ namespace Editor.LevelEditor
         public const string BtnPrimary = "rl-btn--primary";
         public const string BtnDanger  = "rl-btn--danger";
         public const string Num        = "rl-num";
+        public const string Toggle     = "rl-toggle";
 
         public const string Tool       = "rl-tool";
         public const string ToolActive = "rl-tool--active";

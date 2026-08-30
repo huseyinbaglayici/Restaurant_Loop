@@ -17,3 +17,6 @@ MonoBehaviour:
   ConveyorCornerPrefab: {fileID: 2366778200195190340, guid: bb2e797a975e9404a993463692f6bcb4,
     type: 3}
   CellWorldSize: 0.9
+  EnvironmentPresets:
+  - {fileID: 723497061726727076, guid: f49e09aeb79d57542bee99742c7c0883, type: 3}
+  - {fileID: 5017051981744081265, guid: 7488bc7c627dd7d49a53c86b8ca0a3cd, type: 3}

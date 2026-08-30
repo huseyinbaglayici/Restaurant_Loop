@@ -120,14 +120,8 @@ namespace RestaurantLoop.Runtime.Data
         public int LinkLineSegments = 16;
 
         [Header("Environment / Background Decor")]
-        [Tooltip("The environment / background decor prefab spawned in the scene.")]
-        public GameObject EnvironmentPrefab;
-
         [Tooltip("Default world position authored for Level 1 / reference grid.")]
         public Vector3 EnvironmentBasePosition = Vector3.zero;
-
-        [Tooltip("Default rotation of the environment prefab.")]
-        public Vector3 EnvironmentBaseRotation = Vector3.zero;
 
         [Tooltip("Default scale of the environment prefab.")]
         public Vector3 EnvironmentBaseScale = Vector3.one;

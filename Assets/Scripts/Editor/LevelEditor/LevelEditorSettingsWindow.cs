@@ -12,7 +12,7 @@ namespace Editor.LevelEditor
         {
             var w = GetWindow<LevelEditorSettingsWindow>();
             w.titleContent = new GUIContent("Level Editor Settings");
-            w.minSize = new Vector2(360, 200);
+            w.minSize = new Vector2(360, 260);
         }
 
         public void CreateGUI()
@@ -33,6 +33,14 @@ namespace Editor.LevelEditor
             root.Add(new PropertyField(so.FindProperty("ConveyorStraightPrefab"), "Straight Prefab"));
             root.Add(new PropertyField(so.FindProperty("ConveyorCornerPrefab"), "Corner Prefab"));
             root.Add(new PropertyField(so.FindProperty("CellWorldSize"), "Cell World Size"));
+
+            var envHeader = new Label("Environment Presets");
+            envHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
+            envHeader.style.marginTop = 12;
+            envHeader.style.marginBottom = 4;
+            root.Add(envHeader);
+
+            root.Add(new PropertyField(so.FindProperty("EnvironmentPresets"), "Presets"));
 
             root.Bind(so);
         }
