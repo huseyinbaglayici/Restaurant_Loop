@@ -93,10 +93,6 @@ MonoBehaviour:
     Shape: 1
     Rotation: 180
     IsGate: 0
-  - Coord: {x: 0, y: 1}
-    Shape: 1
-    Rotation: 270
-    IsGate: 0
   - Coord: {x: 6, y: 1}
     Shape: 1
     Rotation: 0
@@ -121,9 +117,38 @@ MonoBehaviour:
     Shape: 0
     Rotation: 0
     IsGate: 0
+  - Coord: {x: 0, y: 1}
+    Shape: 1
+    Rotation: 270
+    IsGate: 1
   ConveyorEntities: []
   BakedPath:
-    OrderedPath: []
+    OrderedPath:
+    - {x: 1, y: 1}
+    - {x: 2, y: 1}
+    - {x: 3, y: 1}
+    - {x: 4, y: 1}
+    - {x: 5, y: 1}
+    - {x: 6, y: 1}
+    - {x: 6, y: 2}
+    - {x: 6, y: 3}
+    - {x: 6, y: 4}
+    - {x: 6, y: 5}
+    - {x: 6, y: 6}
+    - {x: 6, y: 7}
+    - {x: 6, y: 8}
+    - {x: 5, y: 8}
+    - {x: 4, y: 8}
+    - {x: 3, y: 8}
+    - {x: 2, y: 8}
+    - {x: 1, y: 8}
+    - {x: 0, y: 8}
+    - {x: 0, y: 7}
+    - {x: 0, y: 6}
+    - {x: 0, y: 5}
+    - {x: 0, y: 4}
+    - {x: 0, y: 3}
+    - {x: 0, y: 2}
   Customers:
   - Coord: {x: 1, y: 3}
     Order:
