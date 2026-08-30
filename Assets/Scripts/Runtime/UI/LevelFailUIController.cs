@@ -33,6 +33,7 @@ namespace RestaurantLoop.Runtime.UI
         private AudioLibrary _audioLibrary;
         private ILivesService _livesService;
         private CurrentLevelProvider _currentLevelProvider;
+        private ConveyorAutoClearService _autoClearService;
 
         [Inject]
         public void Construct(
@@ -45,7 +46,8 @@ namespace RestaurantLoop.Runtime.UI
             [Inject(Optional = true)] IAudioService audioService = null,
             [Inject(Optional = true)] AudioLibrary audioLibrary = null,
             [Inject(Optional = true)] ILivesService livesService = null,
-            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null)
+            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
+            [Inject(Optional = true)] ConveyorAutoClearService autoClearService = null)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;
@@ -57,6 +59,7 @@ namespace RestaurantLoop.Runtime.UI
             _audioLibrary = audioLibrary;
             _livesService = livesService;
             _currentLevelProvider = currentLevelProvider;
+            _autoClearService = autoClearService;
         }
 
         private void Start()
@@ -141,6 +144,12 @@ namespace RestaurantLoop.Runtime.UI
         {
             _conveyorManager.ClearBelt();
             _powerUpService.ActivateExtraTray(); // Extra Tray power-up: adds another slot each time Keep Playing is used.
+
+            // ClearBelt() zeroes ReservedItemCount, which can make ConveyorAutoClearService think the
+            // (still deadlocked) exit stack now "fits" and guarantees a win — yanking every occupant back
+            // onto the belt right as the player resumes. The level already failed once; don't let it be
+            // silently auto-solved out from under a manual Keep Playing continuation.
+            _autoClearService?.Disable();
 
             _panelKeepPlaying.SetActive(false);
             Time.timeScale = 1f;

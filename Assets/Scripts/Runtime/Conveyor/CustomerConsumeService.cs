@@ -8,7 +8,7 @@ using Zenject;
 namespace RestaurantLoop.Runtime.Conveyor
 {
     // item-centric, event-driven
-    public class CustomerConsumeService : IInitializable, ITickable
+    public class CustomerConsumeService : IInitializable, ITickable, IDisposable
     {
         private struct RayEntry
         {
@@ -30,6 +30,12 @@ namespace RestaurantLoop.Runtime.Conveyor
         private List<RayEntry>[][] _raysByPathIndex;
 
         private bool _wasStackFull;
+
+        // Tracks which belt item most recently docked (set from FoodDockedSignal, same frame the dock is
+        // decided) so a deadlock fail can wait for that specific item's fly-to-slot flight to land instead
+        // of firing the instant the stack goes full, before the player has actually seen it arrive.
+        private int? _lastDockedItemId;
+        private int? _pendingDeadlockItemId;
 
         public event Action<bool> OnLevelEnded;
 
@@ -74,6 +80,26 @@ namespace RestaurantLoop.Runtime.Conveyor
                 for (int d = 0; d < Directions.Length; d++)
                     _raysByPathIndex[i][d] = BuildRay(orderedPath[i], Directions[d], pathIndexByCoord, customerCoords);
             }
+
+            _signalBus.Subscribe<FoodDockedSignal>(OnFoodDocked);
+            _signalBus.Subscribe<FoodDockLandedSignal>(OnFoodDockLanded);
+        }
+
+        public void Dispose()
+        {
+            _signalBus.TryUnsubscribe<FoodDockedSignal>(OnFoodDocked);
+            _signalBus.TryUnsubscribe<FoodDockLandedSignal>(OnFoodDockLanded);
+        }
+
+        private void OnFoodDocked(FoodDockedSignal signal) => _lastDockedItemId = signal.ItemId;
+
+        private void OnFoodDockLanded(FoodDockLandedSignal signal)
+        {
+            if (_pendingDeadlockItemId != signal.ItemId) return;
+
+            _pendingDeadlockItemId = null;
+            Debug.Log("[CustomerConsumeService] Deadlocked item landed in the exit stack — level failed.");
+            OnLevelEnded?.Invoke(false);
         }
 
         private List<RayEntry> BuildRay(
@@ -133,8 +159,14 @@ namespace RestaurantLoop.Runtime.Conveyor
                 if (WouldReach(occupant.Stack.Type)) return;
             }
 
-            Debug.Log("[CustomerConsumeService] Exit stack full and no occupant is reachable — level failed.");
-            OnLevelEnded?.Invoke(false);
+            Debug.Log("[CustomerConsumeService] Exit stack full and no occupant is reachable.");
+
+            // Wait for the item that just filled the stack to actually finish flying into its slot before
+            // telling the player the level failed — firing this the instant the dock is decided (same
+            // frame, before FoodFlightService has moved it) shows the fail panel while the item is still
+            // sitting back at the belt end.
+            if (_lastDockedItemId.HasValue) _pendingDeadlockItemId = _lastDockedItemId;
+            else OnLevelEnded?.Invoke(false);
         }
 
         // could this type, injected at the belt entry right now, reach an unblocked matching customer?

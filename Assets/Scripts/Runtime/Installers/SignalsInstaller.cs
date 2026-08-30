@@ -24,6 +24,7 @@ namespace RestaurantLoop.Installers
             Container.DeclareSignal<FoodEnteredBeltSignal>().OptionalSubscriber();
             Container.DeclareSignal<FoodBeltEntryLandedSignal>().OptionalSubscriber();
             Container.DeclareSignal<FoodDockedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<FoodDockLandedSignal>().OptionalSubscriber();
             Container.DeclareSignal<FoodLoopedSignal>().OptionalSubscriber();
             Container.DeclareSignal<FoodConsumedSignal>().OptionalSubscriber();
             Container.DeclareSignal<FoodDeliveredToCustomerSignal>().OptionalSubscriber();

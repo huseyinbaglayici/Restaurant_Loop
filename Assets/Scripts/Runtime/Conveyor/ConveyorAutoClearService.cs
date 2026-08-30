@@ -19,6 +19,11 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private bool _activated;
 
+        // Called once the level has failed and Keep Playing is used — a deadlocked stack shouldn't be
+        // silently "rescued" into the guaranteed-win loop just because clearing the belt reset
+        // ReservedItemCount to 0 and made the remaining count look like it fits.
+        public void Disable() => _activated = true;
+
         public ConveyorAutoClearService(
             QueueAnchor queueAnchor,
             QueueSpawner queueSpawner,
