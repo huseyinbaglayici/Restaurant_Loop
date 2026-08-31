@@ -41,7 +41,15 @@ namespace RestaurantLoop.SceneFlow
 
         public void ResolveFromSave()
         {
-            int levelId = ES3.KeyExists(LevelIdKey) ? ES3.Load<int>(LevelIdKey) : DefaultLevelId;
+            int levelId;
+            if (ShowcaseModeConfig.IsEnabled && ShowcaseModeConfig.Playlist.Count > 0)
+            {
+                levelId = ShowcaseModeConfig.GetCurrentLevelId();
+            }
+            else
+            {
+                levelId = ES3.KeyExists(LevelIdKey) ? ES3.Load<int>(LevelIdKey) : DefaultLevelId;
+            }
 
             if (_levelDatabase.TryGetLevel(levelId, out var level))
                 Current = level;

@@ -112,6 +112,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void OnDespawned()
         {
+            if (this == null || gameObject == null) return;
             if (_queue2DHolder != null) _queue2DHolder.SetActive(false);
             if (_conveyorAmountBadge != null) _conveyorAmountBadge.SetActive(false);
             gameObject.SetActive(false);

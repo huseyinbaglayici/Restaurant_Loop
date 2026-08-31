@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Zenject;
 using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.Data;
 
 namespace RestaurantLoop.SceneFlow
 {
@@ -12,9 +13,9 @@ namespace RestaurantLoop.SceneFlow
         private readonly SignalBus _signalBus;
         private readonly CurrentLevelProvider _currentLevelProvider;
 
-        // Tracks an in-flight unload so a load requested while it's still running (e.g. Claim ->
-        // menu shown immediately -> player taps Play before the old scene is actually gone) waits
-        // for it instead of loading a second GameplayScene instance on top of the first.
+        public static string ActiveGameplaySceneName =>
+            ShowcaseModeConfig.IsEnabled ? ShowcaseModeConfig.TargetSceneName : GameplaySceneName;
+
         private AsyncOperation _pendingUnload;
 
         public SceneLoader(SignalBus signalBus, CurrentLevelProvider currentLevelProvider)
@@ -49,13 +50,15 @@ namespace RestaurantLoop.SceneFlow
 
         private void BeginLoad()
         {
-            var operation = SceneManager.LoadSceneAsync(GameplaySceneName, LoadSceneMode.Additive);
+            var targetScene = ActiveGameplaySceneName;
+            var operation = SceneManager.LoadSceneAsync(targetScene, LoadSceneMode.Additive);
             operation.completed += OnGameplaySceneLoaded;
         }
 
         public void UnloadGameplayScene()
         {
-            _pendingUnload = SceneManager.UnloadSceneAsync(GameplaySceneName);
+            var targetScene = ActiveGameplaySceneName;
+            _pendingUnload = SceneManager.UnloadSceneAsync(targetScene);
         }
 
         private void OnRestartRequested(RestartLevelSignal signal)
@@ -66,7 +69,8 @@ namespace RestaurantLoop.SceneFlow
 
         private void OnGameplaySceneLoaded(AsyncOperation operation)
         {
-            var scene = SceneManager.GetSceneByName(GameplaySceneName);
+            var targetScene = ActiveGameplaySceneName;
+            var scene = SceneManager.GetSceneByName(targetScene);
             SceneManager.SetActiveScene(scene);
 
             _signalBus.Fire<GameplaySceneReadySignal>();

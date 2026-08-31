@@ -567,6 +567,16 @@ namespace RestaurantLoop.Runtime.UI
         {
             if (_currentLevelProvider.Current == null) return;
 
+            if (ShowcaseModeConfig.IsEnabled && ShowcaseModeConfig.Playlist.Count > 0)
+            {
+                if (ShowcaseModeConfig.TryAdvancePlaylist(out int nextShowcaseLevelId))
+                {
+                    _currentLevelProvider.ResolveFromSave();
+                    _powerUpInventory?.CheckLevelRewards(nextShowcaseLevelId);
+                }
+                return;
+            }
+
             int nextLevelId = _currentLevelProvider.Current.LevelId + 1;
             if (!_levelDatabase.TryGetLevel(nextLevelId, out _)) return;
 

@@ -20,9 +20,13 @@ namespace RestaurantLoop.UI
         private const float MinLoadingDuration = 1f;
 
         [SerializeField] private GameObject loadingRoot;
+        [SerializeField] private UnityEngine.UI.Image _backgroundImage;
+        [SerializeField] private Sprite _initialBackground;
+        [SerializeField] private Sprite _inBetweenLevelsBackground;
 
         private SignalBus _signalBus;
         private float _loadingStartedAt;
+        private bool _isFirstLoad = true;
 
         [Inject]
         public void Construct(SignalBus signalBus)
@@ -44,10 +48,30 @@ namespace RestaurantLoop.UI
             _signalBus.Unsubscribe<MenuReadySignal>(HideLoading);
         }
 
+        private void Awake()
+        {
+            UpdateBackground();
+        }
+
         private void ShowLoading()
         {
             _loadingStartedAt = Time.time;
+            UpdateBackground();
             loadingRoot.SetActive(true);
+        }
+
+        private void UpdateBackground()
+        {
+            if (_backgroundImage == null) return;
+
+            if (_isFirstLoad)
+            {
+                if (_initialBackground != null) _backgroundImage.sprite = _initialBackground;
+            }
+            else
+            {
+                if (_inBetweenLevelsBackground != null) _backgroundImage.sprite = _inBetweenLevelsBackground;
+            }
         }
 
         private void HideLoading()
@@ -62,6 +86,7 @@ namespace RestaurantLoop.UI
             else
             {
                 loadingRoot.SetActive(false);
+                _isFirstLoad = false;
             }
         }
 
@@ -69,6 +94,7 @@ namespace RestaurantLoop.UI
         {
             yield return new WaitForSeconds(delay);
             loadingRoot.SetActive(false);
+            _isFirstLoad = false;
         }
     }
 }

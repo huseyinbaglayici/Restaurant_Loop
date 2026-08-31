@@ -18,7 +18,7 @@ MonoBehaviour:
   ReferenceGridWidth: 7
   ReferenceGridHeight: 9
   CameraZoomSensitivity: 0.5
-  BeltFoodHeight: -3.8
+  BeltFoodHeight: -3.6
   QueueFoodHeight: -3.9
   ExitStackFoodHeight: -3.75
   BeltSpeed: 4
@@ -30,7 +30,7 @@ MonoBehaviour:
   QueueRowSpacing: 1.5
   QueueShiftSpeed: 4
   TrayDispenserHeight: -3.9
-  TrayBeltHeight: -3.8
+  TrayBeltHeight: -3.6
   TrayDispenserOffset: {x: -0.7, y: 0, z: 0}
   ExitStackGroundHeight: -4.05
   ExitStackZOffsetFromGrid: 1
