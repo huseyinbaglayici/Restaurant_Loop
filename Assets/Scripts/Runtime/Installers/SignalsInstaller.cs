@@ -30,6 +30,7 @@ namespace RestaurantLoop.Installers
             Container.DeclareSignal<FoodConsumedSignal>().OptionalSubscriber();
             Container.DeclareSignal<FoodDeliveredToCustomerSignal>().OptionalSubscriber();
             Container.DeclareSignal<BeltClearedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<ExitStackOverflowSignal>().OptionalSubscriber();
 
             Container.DeclareSignal<TutorialStepActivatedSignal>().OptionalSubscriber();
             Container.DeclareSignal<TutorialEndedSignal>().OptionalSubscriber();
