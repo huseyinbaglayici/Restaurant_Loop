@@ -23,6 +23,12 @@ namespace RestaurantLoop.Runtime.Conveyor
         private AnimationClipPlayable _incoming;
         private Coroutine _crossfadeRoutine;
 
+        // Whatever the currently running _crossfadeRoutine still owes a caller — StopCrossfade() must
+        // fire this before dropping the routine, or an interrupted PlayServeReaction(false, DespawnCustomer)
+        // (second order finishing while the first-order reaction is still mid-playback) silently loses the
+        // despawn callback and leaves the customer stuck on screen forever.
+        private Action _pendingOnComplete;
+
 private void Awake()
         {
             _animator = GetComponentInChildren<Animator>(true);
@@ -79,6 +85,7 @@ private void Awake()
             }
 
             StopCrossfade();
+            _pendingOnComplete = onComplete;
             _crossfadeRoutine = StartCoroutine(CrossfadeAndReactRoutine(clip, hasSecondOrderRemaining, onComplete));
         }
 
@@ -100,6 +107,7 @@ private void Awake()
             // clear before PlayIdleWithRandomOffset() — it calls StopCrossfade(), which would
             // otherwise call StopCoroutine() on this very routine from inside itself.
             _crossfadeRoutine = null;
+            _pendingOnComplete = null;
 
             if (returnToIdleAfter) PlayIdleWithRandomOffset();
 
@@ -165,6 +173,13 @@ private void Awake()
                 _incoming.Destroy();
                 _incoming = default;
             }
+
+            // The routine never reached its own completion point, so whatever it still owed (e.g. the
+            // despawn callback on a Served reaction) would otherwise vanish with it — fire it now instead
+            // of leaking a customer that's already logically gone but never disappears on screen.
+            var pending = _pendingOnComplete;
+            _pendingOnComplete = null;
+            pending?.Invoke();
         }
     }
 }
