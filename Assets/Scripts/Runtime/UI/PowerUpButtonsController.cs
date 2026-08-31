@@ -69,17 +69,18 @@ namespace RestaurantLoop.Runtime.UI
             _economyService = economyService;
             _audioService = audioService;
             _audioLibrary = audioLibrary;
+
+            RegisterTutorialTargets();
+        }
+
+        private void OnEnable()
+        {
+            RegisterTutorialTargets();
         }
 
         private void Start()
         {
-            // Register button targets for tutorial tool hover
-            if (_registry != null)
-            {
-                if (_buttonShuffle != null) _registry.Register(PowerUpButtonId.Shuffle, (RectTransform)_buttonShuffle.transform);
-                if (_buttonPickFromBottom != null) _registry.Register(PowerUpButtonId.PickFromBottom, (RectTransform)_buttonPickFromBottom.transform);
-                if (_buttonExtraTray != null) _registry.Register(PowerUpButtonId.ExtraTray, (RectTransform)_buttonExtraTray.transform);
-            }
+            RegisterTutorialTargets();
 
             // Auto-resolve child visual references if unassigned in Inspector
             AutoResolveReferences();
@@ -138,6 +139,19 @@ namespace RestaurantLoop.Runtime.UI
             }
 
             _signalBus?.Unsubscribe<LevelResumedSignal>(HandleLevelResumed);
+        }
+
+        private void RegisterTutorialTargets()
+        {
+            if (_registry == null) return;
+
+            if (_buttonShuffle == null) _buttonShuffle = FindChildByKeywords(transform, "shuffle", "karistir")?.GetComponent<Button>();
+            if (_buttonPickFromBottom == null) _buttonPickFromBottom = FindChildByKeywords(transform, "pickfrombottom", "bottom", "dip", "alttan")?.GetComponent<Button>();
+            if (_buttonExtraTray == null) _buttonExtraTray = FindChildByKeywords(transform, "extratray", "tray", "tepsi", "ekstra")?.GetComponent<Button>();
+
+            if (_buttonShuffle != null) _registry.Register(PowerUpButtonId.Shuffle, (RectTransform)_buttonShuffle.transform);
+            if (_buttonPickFromBottom != null) _registry.Register(PowerUpButtonId.PickFromBottom, (RectTransform)_buttonPickFromBottom.transform);
+            if (_buttonExtraTray != null) _registry.Register(PowerUpButtonId.ExtraTray, (RectTransform)_buttonExtraTray.transform);
         }
 
         private void HandleCoinsChanged(int coins) => RefreshAllSlots();

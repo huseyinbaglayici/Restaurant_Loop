@@ -21,7 +21,9 @@ MonoBehaviour:
   _goldIconOffset: {x: -80, y: -6}
   _goldIconScale: 2
   _goldIconSize: {x: 34, y: 34}
-  _powerUpTutorialPanelPos: {x: 0, y: -430}
+  _powerUpTutorialPanelPos: {x: 0, y: -300}
+  _powerUpFingerOffset: {x: 100, y: -60}
+  _powerUpBlockerOffset: {x: -115, y: -275}
   _definitions:
   - Id: 0
     Name: Shuffle
@@ -33,6 +35,8 @@ MonoBehaviour:
     LockedSprite: {fileID: 21300000, guid: a2b55034bc578fa4e984f59f274300d9, type: 3}
     CustomTextOffset: {x: 0, y: 0}
     CustomTutorialPanelPos: {x: 0, y: 0}
+    CustomFingerOffset: {x: 0, y: 0}
+    CustomBlockerOffset: {x: 0, y: 0}
   - Id: 1
     Name: Pick From Bottom
     UnlockOnFirstFail: 0
@@ -43,6 +47,8 @@ MonoBehaviour:
     LockedSprite: {fileID: 21300000, guid: a0cfe28ef1ec01c4d87cc4740d1ab8ed, type: 3}
     CustomTextOffset: {x: 0, y: 0}
     CustomTutorialPanelPos: {x: 0, y: 0}
+    CustomFingerOffset: {x: 0, y: 0}
+    CustomBlockerOffset: {x: 0, y: 0}
   - Id: 2
     Name: Extra Tray
     UnlockOnFirstFail: 1
@@ -53,4 +59,6 @@ MonoBehaviour:
     LockedSprite: {fileID: 21300000, guid: a898543fbd40eeb4f9dc4e59c91bea81, type: 3}
     CustomTextOffset: {x: 0, y: 0}
     CustomTutorialPanelPos: {x: 0, y: 0}
+    CustomFingerOffset: {x: 0, y: 0}
+    CustomBlockerOffset: {x: 0, y: 0}
   _levelGrants: []

@@ -16,7 +16,7 @@ MonoBehaviour:
   EnableDynamicCameraScale: 1
   AutoCenterBeltGrid: 1
   ReferenceGridWidth: 7
-  ReferenceGridHeight: 9
+  ReferenceGridHeight: 7
   CameraZoomSensitivity: 0.5
   BeltFoodHeight: -3.6
   QueueFoodHeight: -3.9

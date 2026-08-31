@@ -70,16 +70,31 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void OnDespawned()
         {
-            _foodImage.transform.DOKill(true);
-            if (_amountText != null) _amountText.transform.DOKill(true);
+            if (this == null || gameObject == null) return;
 
-            _foodImage.transform.SetParent(_firstOrderHolder, false);
-            _amountText.transform.SetParent(_firstOrderHolder, false);
-            _secondFoodImage.transform.SetParent(_secondOrderHolder.transform, false);
-            _secondAmountText.transform.SetParent(_secondOrderHolder.transform, false);
+            if (_foodImage != null)
+            {
+                _foodImage.transform.DOKill(true);
+                if (_firstOrderHolder != null) _foodImage.transform.SetParent(_firstOrderHolder, false);
+                _foodImage.transform.localScale = Vector3.one;
+            }
 
-            _foodImage.transform.localScale = Vector3.one;
-            if (_amountText != null) _amountText.transform.localScale = Vector3.one;
+            if (_amountText != null)
+            {
+                _amountText.transform.DOKill(true);
+                if (_firstOrderHolder != null) _amountText.transform.SetParent(_firstOrderHolder, false);
+                _amountText.transform.localScale = Vector3.one;
+            }
+
+            if (_secondFoodImage != null && _secondOrderHolder != null)
+            {
+                _secondFoodImage.transform.SetParent(_secondOrderHolder.transform, false);
+            }
+
+            if (_secondAmountText != null && _secondOrderHolder != null)
+            {
+                _secondAmountText.transform.SetParent(_secondOrderHolder.transform, false);
+            }
 
             gameObject.SetActive(false);
         }

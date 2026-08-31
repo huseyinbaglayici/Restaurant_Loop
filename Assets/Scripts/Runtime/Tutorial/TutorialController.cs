@@ -150,13 +150,23 @@ namespace RestaurantLoop.Runtime.Tutorial
 
             var settings = _powerUpSettings ?? Resources.Load<PowerUpSettings>("PowerUpSettings");
             Vector2? customPanelPos = null;
+            Vector2? fingerOffset = null;
+            Vector2? blockerOffset = null;
 
             bool isPowerUpRelated = step.HoverKind == TutorialHoverTargetKind.PowerUpButton ||
-                                   step.Trigger == TutorialTriggerCondition.OnFirstLevelFail;
+                                   step.PowerUpButton != PowerUpButtonId.Shuffle || // if specific powerup assigned
+                                   step.Trigger == TutorialTriggerCondition.OnFirstLevelFail ||
+                                   (_currentStepIndex + 1 < _level.TutorialSteps.Count && _level.TutorialSteps[_currentStepIndex + 1].HoverKind == TutorialHoverTargetKind.PowerUpButton);
 
             if (isPowerUpRelated && settings != null)
             {
-                var def = step.HoverKind == TutorialHoverTargetKind.PowerUpButton ? settings.GetDefinition(step.PowerUpButton) : null;
+                PowerUpButtonId powerUpId = step.HoverKind == TutorialHoverTargetKind.PowerUpButton 
+                    ? step.PowerUpButton 
+                    : (_currentStepIndex + 1 < _level.TutorialSteps.Count && _level.TutorialSteps[_currentStepIndex + 1].HoverKind == TutorialHoverTargetKind.PowerUpButton 
+                        ? _level.TutorialSteps[_currentStepIndex + 1].PowerUpButton 
+                        : step.PowerUpButton);
+
+                var def = settings.GetDefinition(powerUpId);
                 if (def != null && def.CustomTutorialPanelPos != Vector2.zero)
                 {
                     customPanelPos = def.CustomTutorialPanelPos;
@@ -165,9 +175,27 @@ namespace RestaurantLoop.Runtime.Tutorial
                 {
                     customPanelPos = settings.PowerUpTutorialPanelPos;
                 }
+
+                if (def != null && def.CustomFingerOffset != Vector2.zero)
+                {
+                    fingerOffset = def.CustomFingerOffset;
+                }
+                else if (settings.PowerUpFingerOffset != Vector2.zero)
+                {
+                    fingerOffset = settings.PowerUpFingerOffset;
+                }
+
+                if (def != null && def.CustomBlockerOffset != Vector2.zero)
+                {
+                    blockerOffset = def.CustomBlockerOffset;
+                }
+                else if (settings.PowerUpBlockerOffset != Vector2.zero)
+                {
+                    blockerOffset = settings.PowerUpBlockerOffset;
+                }
             }
 
-            _view.Show(step.Text, ResolveScreenPos(step), tapToAdvance, customPanelPos);
+            _view.Show(step.Text, ResolveScreenPos(step), tapToAdvance, customPanelPos, fingerOffset, blockerOffset);
             _signalBus.Fire(new TutorialStepActivatedSignal { Step = step });
         }
 
