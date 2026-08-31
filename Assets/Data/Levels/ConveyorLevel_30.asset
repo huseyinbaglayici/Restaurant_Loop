@@ -1,0 +1,974 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdd3fcc6215405a4fa27e28134ec531a, type: 3}
+  m_Name: ConveyorLevel_30
+  m_EditorClassIdentifier: 
+  LevelId: 30
+  Difficulty: 0
+  Environment: {fileID: 723497061726727076, guid: f49e09aeb79d57542bee99742c7c0883,
+    type: 3}
+  GridWidth: 10
+  GridHeight: 10
+  ConveyorCells:
+  - Coord: {x: 1, y: 0}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 2, y: 0}
+    Shape: 1
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 2, y: 1}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 2, y: 2}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 2, y: 3}
+    Shape: 1
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 3, y: 3}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 4, y: 3}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 5, y: 3}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 6, y: 3}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 7, y: 3}
+    Shape: 1
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 7, y: 2}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 7, y: 1}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 7, y: 0}
+    Shape: 1
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 8, y: 0}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 9, y: 0}
+    Shape: 1
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 0, y: 0}
+    Shape: 1
+    Rotation: 270
+    IsGate: 1
+  - Coord: {x: 9, y: 1}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 9, y: 2}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 9, y: 3}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 9, y: 4}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 9, y: 5}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 9, y: 6}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 9, y: 7}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 9, y: 8}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 0, y: 1}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 0, y: 2}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 0, y: 3}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 0, y: 4}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 0, y: 5}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 0, y: 6}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 0, y: 7}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 0, y: 8}
+    Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 0, y: 9}
+    Shape: 1
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 9, y: 9}
+    Shape: 1
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 8, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 7, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 6, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 5, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 4, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 3, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 2, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 1, y: 9}
+    Shape: 0
+    Rotation: 180
+    IsGate: 0
+  ConveyorEntities: []
+  BakedPath:
+    OrderedPath:
+    - {x: 1, y: 0}
+    - {x: 2, y: 0}
+    - {x: 2, y: 1}
+    - {x: 2, y: 2}
+    - {x: 2, y: 3}
+    - {x: 3, y: 3}
+    - {x: 4, y: 3}
+    - {x: 5, y: 3}
+    - {x: 6, y: 3}
+    - {x: 7, y: 3}
+    - {x: 7, y: 2}
+    - {x: 7, y: 1}
+    - {x: 7, y: 0}
+    - {x: 8, y: 0}
+    - {x: 9, y: 0}
+    - {x: 9, y: 1}
+    - {x: 9, y: 2}
+    - {x: 9, y: 3}
+    - {x: 9, y: 4}
+    - {x: 9, y: 5}
+    - {x: 9, y: 6}
+    - {x: 9, y: 7}
+    - {x: 9, y: 8}
+    - {x: 9, y: 9}
+    - {x: 8, y: 9}
+    - {x: 7, y: 9}
+    - {x: 6, y: 9}
+    - {x: 5, y: 9}
+    - {x: 4, y: 9}
+    - {x: 3, y: 9}
+    - {x: 2, y: 9}
+    - {x: 1, y: 9}
+    - {x: 0, y: 9}
+    - {x: 0, y: 8}
+    - {x: 0, y: 7}
+    - {x: 0, y: 6}
+    - {x: 0, y: 5}
+    - {x: 0, y: 4}
+    - {x: 0, y: 3}
+    - {x: 0, y: 2}
+    - {x: 0, y: 1}
+  Customers:
+  - Coord: {x: 1, y: 7}
+    Order:
+      Type: 2
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 2, y: 7}
+    Order:
+      Type: 2
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 7, y: 7}
+    Order:
+      Type: 2
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 8, y: 7}
+    Order:
+      Type: 2
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 8, y: 1}
+    Order:
+      Type: 2
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 1, y: 1}
+    Order:
+      Type: 2
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 3, y: 2}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 4, y: 2}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 5, y: 2}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 6, y: 2}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 8, y: 3}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 8, y: 2}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 1, y: 3}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 1, y: 2}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 3, y: 7}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 5, y: 7}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 4, y: 7}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 6, y: 7}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 1, y: 6}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 1, y: 5}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 1, y: 4}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 3, y: 4}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 4, y: 4}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 5, y: 4}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 6, y: 4}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 8, y: 6}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 8, y: 5}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 8, y: 4}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 2, y: 4}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 7, y: 4}
+    Order:
+      Type: 3
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 2, y: 5}
+    Order:
+      Type: 4
+      Amount: 10
+      LinkId: 0
+    IsHidden: 1
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 2, y: 6}
+    Order:
+      Type: 4
+      Amount: 10
+      LinkId: 0
+    IsHidden: 1
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 3, y: 6}
+    Order:
+      Type: 4
+      Amount: 10
+      LinkId: 0
+    IsHidden: 1
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 3, y: 5}
+    Order:
+      Type: 4
+      Amount: 10
+      LinkId: 0
+    IsHidden: 1
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 7, y: 6}
+    Order:
+      Type: 4
+      Amount: 10
+      LinkId: 0
+    IsHidden: 1
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 7, y: 5}
+    Order:
+      Type: 4
+      Amount: 10
+      LinkId: 0
+    IsHidden: 1
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 6, y: 5}
+    Order:
+      Type: 4
+      Amount: 10
+      LinkId: 0
+    IsHidden: 1
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 6, y: 6}
+    Order:
+      Type: 4
+      Amount: 10
+      LinkId: 0
+    IsHidden: 1
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 4, y: 6}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 1
+    SecondOrder:
+      Type: 1
+      Amount: 5
+      LinkId: 0
+  - Coord: {x: 5, y: 6}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 1
+    SecondOrder:
+      Type: 1
+      Amount: 5
+      LinkId: 0
+  - Coord: {x: 5, y: 5}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 1
+    SecondOrder:
+      Type: 1
+      Amount: 5
+      LinkId: 0
+  - Coord: {x: 4, y: 5}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 1
+    SecondOrder:
+      Type: 1
+      Amount: 5
+      LinkId: 0
+  - Coord: {x: 3, y: 1}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 6, y: 1}
+    Order:
+      Type: 0
+      Amount: 5
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 4, y: 1}
+    Order:
+      Type: 2
+      Amount: 5
+      LinkId: 0
+    IsHidden: 1
+    HasSecondOrder: 1
+    SecondOrder:
+      Type: 1
+      Amount: 5
+      LinkId: 0
+  - Coord: {x: 5, y: 1}
+    Order:
+      Type: 2
+      Amount: 5
+      LinkId: 0
+    IsHidden: 1
+    HasSecondOrder: 1
+    SecondOrder:
+      Type: 1
+      Amount: 5
+      LinkId: 0
+  Queues:
+  - Entries:
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 4
+      Amount: 4
+      LinkId: 2
+    - Type: 2
+      Amount: 5
+      LinkId: 4
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 4
+      Amount: 4
+      LinkId: 5
+    - Type: 4
+      Amount: 4
+      LinkId: 0
+    - Type: 2
+      Amount: 3
+      LinkId: 7
+    - Type: 3
+      Amount: 5
+      LinkId: 0
+    - Type: 0
+      Amount: 4
+      LinkId: 9
+    - Type: 2
+      Amount: 3
+      LinkId: 0
+    - Type: 4
+      Amount: 5
+      LinkId: 0
+    - Type: 4
+      Amount: 4
+      LinkId: 0
+    - Type: 1
+      Amount: 4
+      LinkId: 0
+    - Type: 1
+      Amount: 3
+      LinkId: 12
+    - Type: 3
+      Amount: 5
+      LinkId: 0
+    - Type: 3
+      Amount: 3
+      LinkId: 0
+    - Type: 2
+      Amount: 5
+      LinkId: 13
+    - Type: 2
+      Amount: 5
+      LinkId: 0
+    - Type: 3
+      Amount: 5
+      LinkId: 0
+    - Type: 2
+      Amount: 3
+      LinkId: 0
+    - Type: 4
+      Amount: 4
+      LinkId: 15
+    - Type: 3
+      Amount: 3
+      LinkId: 0
+    - Type: 4
+      Amount: 4
+      LinkId: 0
+    - Type: 4
+      Amount: 5
+      LinkId: 0
+    - Type: 0
+      Amount: 5
+      LinkId: 0
+  - Entries:
+    - Type: 3
+      Amount: 4
+      LinkId: 1
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 3
+      Amount: 3
+      LinkId: 3
+    - Type: 0
+      Amount: 5
+      LinkId: 2
+    - Type: 4
+      Amount: 3
+      LinkId: 4
+    - Type: 0
+      Amount: 3
+      LinkId: 6
+    - Type: 4
+      Amount: 5
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 5
+    - Type: 1
+      Amount: 3
+      LinkId: 7
+    - Type: 0
+      Amount: 3
+      LinkId: 8
+    - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 4
+      Amount: 5
+      LinkId: 9
+    - Type: 4
+      Amount: 4
+      LinkId: 10
+    - Type: 4
+      Amount: 5
+      LinkId: 11
+    - Type: 1
+      Amount: 3
+      LinkId: 0
+    - Type: 3
+      Amount: 5
+      LinkId: 12
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 4
+      Amount: 3
+      LinkId: 0
+    - Type: 1
+      Amount: 3
+      LinkId: 13
+    - Type: 2
+      Amount: 4
+      LinkId: 0
+    - Type: 1
+      Amount: 5
+      LinkId: 14
+    - Type: 2
+      Amount: 3
+      LinkId: 0
+    - Type: 3
+      Amount: 4
+      LinkId: 15
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 2
+      Amount: 3
+      LinkId: 16
+  - Entries:
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 0
+      Amount: 5
+      LinkId: 1
+    - Type: 3
+      Amount: 5
+      LinkId: 0
+    - Type: 4
+      Amount: 4
+      LinkId: 3
+    - Type: 1
+      Amount: 4
+      LinkId: 0
+    - Type: 4
+      Amount: 3
+      LinkId: 0
+    - Type: 1
+      Amount: 5
+      LinkId: 6
+    - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 4
+      Amount: 3
+      LinkId: 8
+    - Type: 3
+      Amount: 5
+      LinkId: 0
+    - Type: 4
+      Amount: 3
+      LinkId: 0
+    - Type: 2
+      Amount: 3
+      LinkId: 10
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 3
+      Amount: 5
+      LinkId: 0
+    - Type: 0
+      Amount: 4
+      LinkId: 11
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 4
+      Amount: 4
+      LinkId: 0
+    - Type: 2
+      Amount: 3
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 14
+    - Type: 3
+      Amount: 4
+      LinkId: 0
+    - Type: 3
+      Amount: 4
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 4
+      Amount: 4
+      LinkId: 16
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+  IsTutorial: 0
+  TutorialSteps: []
