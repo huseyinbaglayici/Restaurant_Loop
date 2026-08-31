@@ -21,9 +21,9 @@ MonoBehaviour:
   _goldIconOffset: {x: -80, y: -6}
   _goldIconScale: 2
   _goldIconSize: {x: 34, y: 34}
-  _powerUpTutorialPanelPos: {x: 0, y: -300}
+  _powerUpTutorialPanelPos: {x: 0, y: -600}
   _powerUpFingerOffset: {x: 100, y: -60}
-  _powerUpBlockerOffset: {x: -115, y: -275}
+  _powerUpBlockerOffset: {x: 0, y: 90}
   _definitions:
   - Id: 0
     Name: Shuffle

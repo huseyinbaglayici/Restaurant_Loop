@@ -21,6 +21,8 @@ namespace RestaurantLoop.Runtime.Tutorial
         private Vector2 _defaultHighlightPos;
         private Vector2 _defaultBlockerPos;
         private Vector2 _currentFingerOffset;
+        private Vector2 _currentBlockerOffset;
+        private float _stepShownTime;
 
         public event Action OnAdvance;
 
@@ -40,12 +42,12 @@ namespace RestaurantLoop.Runtime.Tutorial
                 var invisButton = _invisibleBlocker.GetComponent<Button>();
                 if (invisButton != null)
                 {
-                    invisButton.onClick.AddListener(() => OnAdvance?.Invoke());
+                    invisButton.onClick.AddListener(HandleAdvanceClicked);
                 }
                 else
                 {
                     var btn = _invisibleBlocker.gameObject.AddComponent<Button>();
-                    btn.onClick.AddListener(() => OnAdvance?.Invoke());
+                    btn.onClick.AddListener(HandleAdvanceClicked);
                 }
 
                 _invisibleBlocker.anchorMin = Vector2.zero;
@@ -55,7 +57,7 @@ namespace RestaurantLoop.Runtime.Tutorial
             }
             else if (_advanceBlocker != null)
             {
-                _advanceBlocker.onClick.AddListener(() => OnAdvance?.Invoke());
+                _advanceBlocker.onClick.AddListener(HandleAdvanceClicked);
             }
 
             if (_advanceBlocker != null)
@@ -113,10 +115,12 @@ namespace RestaurantLoop.Runtime.Tutorial
             bool tapToAdvance, 
             Vector2? customPanelPos = null,
             Vector2? fingerOffset = null,
-            Vector2? blockerOffset = null)
+            Vector2? blockerOffset = null,
+            bool isPowerUpStep = false)
         {
             transform.SetAsLastSibling();
             _root.SetActive(true);
+            _stepShownTime = Time.unscaledTime;
             if (_text != null)
             {
                 _text.enableAutoSizing = false;
@@ -151,36 +155,87 @@ namespace RestaurantLoop.Runtime.Tutorial
             DisableFingerRaycasts();
             DisableNonBlockerRaycasts();
 
-            _currentFingerOffset = fingerOffset ?? Vector2.zero;
+            _currentFingerOffset = (isPowerUpStep && fingerOffset.HasValue) ? fingerOffset.Value : Vector2.zero;
+            _currentBlockerOffset = (isPowerUpStep && blockerOffset.HasValue) ? blockerOffset.Value : Vector2.zero;
+
             bool hasTarget = screenPos.HasValue;
+
+            // Finger: only active when there is a hover target
             _finger.gameObject.SetActive(hasTarget);
             if (hasTarget)
             {
-                ApplyFingerPosition(screenPos.Value);
+                ApplyRectPosition(_finger, screenPos.Value, _currentFingerOffset);
             }
 
-            // 1) SceneLoad / Info step: _invisibleBlocker is active (fullscreen tap-to-advance)
-            if (_invisibleBlocker != null)
+            // 1) NO HOVER (Info / Tap-to-advance step):
+            // Invisible blocker is active fullscreen so clicking anywhere advances immediately.
+            // Advance blocker is completely hidden.
+            if (!hasTarget)
             {
-                _invisibleBlocker.gameObject.SetActive(tapToAdvance);
-                var invisImg = _invisibleBlocker.GetComponent<Graphic>();
-                if (invisImg != null)
+                if (_advanceBlocker != null)
                 {
-                    invisImg.raycastTarget = tapToAdvance;
+                    _advanceBlocker.gameObject.SetActive(false);
+                }
+
+                if (_invisibleBlocker != null)
+                {
+                    _invisibleBlocker.gameObject.SetActive(true);
+                    var invisImg = _invisibleBlocker.GetComponent<Graphic>();
+                    if (invisImg != null) invisImg.raycastTarget = true;
+                }
+                else if (_advanceBlocker != null)
+                {
+                    // Fallback if _invisibleBlocker is not assigned in scene: use _advanceBlocker as fullscreen tap-to-advance
+                    _advanceBlocker.gameObject.SetActive(true);
+                    if (_advanceBlocker.image != null) _advanceBlocker.image.raycastTarget = true;
+                    var advanceRect = _advanceBlocker.transform as RectTransform;
+                    if (advanceRect != null)
+                    {
+                        advanceRect.anchorMin = Vector2.zero;
+                        advanceRect.anchorMax = Vector2.one;
+                        advanceRect.sizeDelta = Vector2.zero;
+                        advanceRect.anchoredPosition = Vector2.zero;
+                    }
+                }
+            }
+            else
+            {
+                // 2) HOVER STEP (QueueLane, PowerUpButton, etc.):
+                // Invisible blocker is disabled so interactions pass through.
+                if (_invisibleBlocker != null)
+                {
+                    _invisibleBlocker.gameObject.SetActive(false);
+                }
+
+                // AdvanceBlocker is ALWAYS active on hover steps:
+                if (_advanceBlocker != null)
+                {
+                    _advanceBlocker.gameObject.SetActive(true);
+                    var advanceRect = _advanceBlocker.transform as RectTransform;
+                    if (advanceRect != null)
+                    {
+                        Vector2 offset = (isPowerUpStep && blockerOffset.HasValue) ? blockerOffset.Value : Vector2.zero;
+                        ApplyRectPosition(advanceRect, screenPos.Value, offset);
+                    }
+                }
+            }
+        }
+
+        private void ApplyRectPosition(RectTransform rect, Vector3 screenOrWorldPos, Vector2 offset)
+        {
+            if (rect == null) return;
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay && canvas.worldCamera != null)
+            {
+                if (RectTransformUtility.ScreenPointToWorldPointInRectangle(rect.parent as RectTransform ?? rect, screenOrWorldPos, canvas.worldCamera, out Vector3 worldPos))
+                {
+                    rect.position = worldPos + (Vector3)offset;
+                    return;
                 }
             }
 
-            // 2) Hover step (with finger): _advanceBlocker is active only here, with custom offset from PowerUpSettings
-            if (_advanceBlocker != null)
-            {
-                _advanceBlocker.gameObject.SetActive(hasTarget);
-                var advanceRect = _advanceBlocker.transform as RectTransform;
-                if (advanceRect != null)
-                {
-                    Vector2 targetBlockerPos = blockerOffset.HasValue ? (_defaultBlockerPos + blockerOffset.Value) : _defaultBlockerPos;
-                    advanceRect.anchoredPosition = targetBlockerPos;
-                }
-            }
+            rect.position = screenOrWorldPos + (Vector3)offset;
         }
 
         public void UpdateFingerPosition(Vector3 screenPos)
@@ -188,26 +243,23 @@ namespace RestaurantLoop.Runtime.Tutorial
             if (_finger != null)
             {
                 if (!_finger.gameObject.activeSelf) _finger.gameObject.SetActive(true);
-                ApplyFingerPosition(screenPos);
+                ApplyRectPosition(_finger, screenPos, _currentFingerOffset);
+            }
+            if (_advanceBlocker != null && _advanceBlocker.gameObject.activeSelf)
+            {
+                var advanceRect = _advanceBlocker.transform as RectTransform;
+                if (advanceRect != null)
+                {
+                    ApplyRectPosition(advanceRect, screenPos, _currentBlockerOffset);
+                }
             }
         }
 
-        private void ApplyFingerPosition(Vector3 screenOrWorldPos)
+        private void HandleAdvanceClicked()
         {
-            if (_finger == null) return;
-
-            // Check if parent canvas is ScreenSpaceOverlay or ScreenSpaceCamera
-            Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay && canvas.worldCamera != null)
-            {
-                if (RectTransformUtility.ScreenPointToWorldPointInRectangle(_finger.parent as RectTransform ?? _finger, screenOrWorldPos, canvas.worldCamera, out Vector3 worldPos))
-                {
-                    _finger.position = worldPos + (Vector3)_currentFingerOffset;
-                    return;
-                }
-            }
-
-            _finger.position = screenOrWorldPos + (Vector3)_currentFingerOffset;
+            // Ignore accidental clicks in the first 0.25 seconds of step display
+            if (Time.unscaledTime - _stepShownTime < 0.25f) return;
+            OnAdvance?.Invoke();
         }
 
         public void Hide() => _root.SetActive(false);

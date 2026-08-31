@@ -2759,7 +2759,7 @@ GameObject:
   - component: {fileID: 236696527}
   - component: {fileID: 236696526}
   m_Layer: 0
-  m_Name: AdvanceBlocker
+  m_Name: InvisibleBlocker
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

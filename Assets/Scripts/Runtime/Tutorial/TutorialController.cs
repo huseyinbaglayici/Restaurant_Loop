@@ -153,10 +153,11 @@ namespace RestaurantLoop.Runtime.Tutorial
             Vector2? fingerOffset = null;
             Vector2? blockerOffset = null;
 
-            bool isPowerUpRelated = step.HoverKind == TutorialHoverTargetKind.PowerUpButton ||
-                                   step.PowerUpButton != PowerUpButtonId.Shuffle || // if specific powerup assigned
-                                   step.Trigger == TutorialTriggerCondition.OnFirstLevelFail ||
-                                   (_currentStepIndex + 1 < _level.TutorialSteps.Count && _level.TutorialSteps[_currentStepIndex + 1].HoverKind == TutorialHoverTargetKind.PowerUpButton);
+            bool isPowerUpRelated = step.HoverKind != TutorialHoverTargetKind.QueueLane &&
+                                   step.HoverKind != TutorialHoverTargetKind.ConveyorCell &&
+                                   (step.HoverKind == TutorialHoverTargetKind.PowerUpButton ||
+                                    step.Trigger == TutorialTriggerCondition.OnFirstLevelFail ||
+                                    (_currentStepIndex + 1 < _level.TutorialSteps.Count && _level.TutorialSteps[_currentStepIndex + 1].HoverKind == TutorialHoverTargetKind.PowerUpButton));
 
             if (isPowerUpRelated && settings != null)
             {
@@ -195,7 +196,7 @@ namespace RestaurantLoop.Runtime.Tutorial
                 }
             }
 
-            _view.Show(step.Text, ResolveScreenPos(step), tapToAdvance, customPanelPos, fingerOffset, blockerOffset);
+            _view.Show(step.Text, ResolveScreenPos(step), tapToAdvance, customPanelPos, fingerOffset, blockerOffset, isPowerUpRelated);
             _signalBus.Fire(new TutorialStepActivatedSignal { Step = step });
         }
 

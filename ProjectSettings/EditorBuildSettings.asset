@@ -23,7 +23,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Showcase/EylulGameplayScene.unity
     guid: d91d8686b1fdc5e4684c98d6fd94ca51
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Test/EylulGameplayScene.unity
     guid: 14f6f10a9bdf14f499cd81c4acf903cd
   - enabled: 0
