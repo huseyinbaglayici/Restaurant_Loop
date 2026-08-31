@@ -2005,8 +2005,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 147}
-  m_SizeDelta: {x: 0, y: 230}
+  m_AnchoredPosition: {x: 2, y: 149.8}
+  m_SizeDelta: {x: 0, y: 238.34}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &437472965
 MonoBehaviour:
@@ -2024,9 +2024,9 @@ MonoBehaviour:
     m_Left: 0
     m_Right: 0
     m_Top: 0
-    m_Bottom: 0
+    m_Bottom: -156
   m_ChildAlignment: 4
-  m_Spacing: 40
+  m_Spacing: 68
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
@@ -2831,7 +2831,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 10, y: -341.7}
+  m_AnchoredPosition: {x: 10, y: -365.7}
   m_SizeDelta: {x: 100, y: 31.4386}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &648012062
@@ -3309,7 +3309,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 371.5822}
+  m_SizeDelta: {x: 0, y: 410}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &862684469
 MonoBehaviour:
@@ -3331,7 +3331,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4175090452bd52c4bb60a6dca52f9875, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ebda61b1b52eac84baa20dd712374d26, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -4616,7 +4616,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1264202113
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4782,9 +4782,9 @@ MonoBehaviour:
   _buttonKeepPlayingClose: {fileID: 78676127}
   _buttonTryAgain: {fileID: 1348583992}
   _buttonExit: {fileID: 1243473124}
-  _keepPlayingLevelText: {fileID: 0}
+  _keepPlayingLevelText: {fileID: 928133059}
   _failedLevelText: {fileID: 1035690006}
-  _failedRibbonLevelText: {fileID: 0}
+  _failedRibbonLevelText: {fileID: 626335244}
   _coinRewardText: {fileID: 1419105036}
 --- !u!1 &1289239603
 GameObject:
@@ -4926,7 +4926,7 @@ MonoBehaviour:
   _panelCompleted: {fileID: 1289239603}
   _buttonNext: {fileID: 627505349}
   _levelText: {fileID: 0}
-  _coinRewardText: {fileID: 0}
+  _coinRewardText: {fileID: 1104618129}
 --- !u!1 &1307747932
 GameObject:
   m_ObjectHideFlags: 0
@@ -5722,11 +5722,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1523321638}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 5, y: 7}
-  m_SizeDelta: {x: 185, y: 185}
-  m_Pivot: {x: 0.5, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 90}
+  m_SizeDelta: {x: 175, y: 175}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1414090665
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6274,7 +6274,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 230, y: 230}
+  m_SizeDelta: {x: 180, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1532874811
 GameObject:
@@ -6680,11 +6680,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1768415780}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 195.7808, y: 213.7835}
-  m_Pivot: {x: 0.5, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 90}
+  m_SizeDelta: {x: 175, y: 175}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1647793348
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6765,7 +6765,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4cce520dc4b7c084794ec92507c5dd66, type: 3}
+  m_Sprite: {fileID: 21300000, guid: af5456fe98c221a4cbd835b394b7b568, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -7139,7 +7139,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 230, y: 230}
+  m_SizeDelta: {x: 180, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1713708195
 GameObject:
@@ -7180,7 +7180,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 10, y: -507}
+  m_AnchoredPosition: {x: 10, y: -531}
   m_SizeDelta: {x: 390, y: 115}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1713708197
@@ -7611,8 +7611,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 3.9000244, y: -91}
-  m_SizeDelta: {x: 185, y: 185}
+  m_AnchoredPosition: {x: 0.31, y: 4.7}
+  m_SizeDelta: {x: 180, y: 175}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &1758009731
 MonoBehaviour:
@@ -7746,7 +7746,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 230, y: 230}
+  m_SizeDelta: {x: 180, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1784432099
 GameObject:
@@ -7894,7 +7894,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: -76}
-  m_SizeDelta: {x: 0, y: 363.861}
+  m_SizeDelta: {x: 31.1147, y: 400}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &1797408474
 MonoBehaviour:
@@ -9456,6 +9456,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1784837647459083463, guid: 0c07845ab025e9a44a0b684ec45d0fd8,
+        type: 3}
+      propertyPath: m_Type
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1784837647459083463, guid: 0c07845ab025e9a44a0b684ec45d0fd8,
+        type: 3}
+      propertyPath: m_Color.a
+      value: 0.5019608
       objectReference: {fileID: 0}
     - target: {fileID: 3815935952285929172, guid: 0c07845ab025e9a44a0b684ec45d0fd8,
         type: 3}

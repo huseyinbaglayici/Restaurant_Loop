@@ -164,7 +164,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _foodHandoffAnchor: {fileID: 9223300000000002}
-  _playableAnimator: {fileID: 0}
+  _playableAnimator: {fileID: 933236920920615228}
   _visualVariantPicker: {fileID: 0}
 --- !u!1 &7678803205854670625
 GameObject:

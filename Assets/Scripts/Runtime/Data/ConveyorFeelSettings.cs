@@ -64,11 +64,12 @@ namespace Runtime.Data
         public float BeltSpinYDegreesPerSecond;
 
         [Header("Customer consume reaction")]
-        [Tooltip("Small scale punch played on the customer's model each time a food unit lands on them.")]
-        public Vector3 ConsumePunchStrength = new(0.05f, 0.05f, 0.05f);
+        [Tooltip("Small scale punch played on the customer's model each time a food unit lands on them. " +
+                 "0.05 read as basically invisible in practice — bumped up so a single bite actually registers.")]
+        public Vector3 ConsumePunchStrength = new(0.2f, 0.2f, 0.2f);
 
         public float ConsumePunchDuration = 0.15f;
-        public int ConsumePunchVibrato = 6;
+        public int ConsumePunchVibrato = 4;
         [Range(0f, 1f)] public float ConsumePunchElasticity = 0.6f;
     }
 }
