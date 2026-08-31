@@ -46,7 +46,7 @@ MonoBehaviour:
     ResetRotationOnArrive: 0
     Ease: 27
   BeltSpinYDegreesPerSecond: 0
-  ConsumePunchStrength: {x: 0.05, y: 0.05, z: 0.05}
+  ConsumePunchStrength: {x: 0.2, y: 0.2, z: 0.2}
   ConsumePunchDuration: 0.15
-  ConsumePunchVibrato: 6
+  ConsumePunchVibrato: 4
   ConsumePunchElasticity: 0.6

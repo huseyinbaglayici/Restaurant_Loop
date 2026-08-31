@@ -83,12 +83,14 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _signalBus.Subscribe<FoodDockedSignal>(OnFoodDocked);
             _signalBus.Subscribe<FoodDockLandedSignal>(OnFoodDockLanded);
+            _signalBus.Subscribe<ExitStackOverflowSignal>(OnExitStackOverflow);
         }
 
         public void Dispose()
         {
             _signalBus.TryUnsubscribe<FoodDockedSignal>(OnFoodDocked);
             _signalBus.TryUnsubscribe<FoodDockLandedSignal>(OnFoodDockLanded);
+            _signalBus.TryUnsubscribe<ExitStackOverflowSignal>(OnExitStackOverflow);
         }
 
         private void OnFoodDocked(FoodDockedSignal signal) => _lastDockedItemId = signal.ItemId;
@@ -99,6 +101,14 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _pendingDeadlockItemId = null;
             Debug.Log("[CustomerConsumeService] Deadlocked item landed in the exit stack — level failed.");
+            OnLevelEnded?.Invoke(false);
+        }
+
+        // Stack had no free slot at all for this item — unconditional loss, no WouldReach check needed
+        // (there's nowhere left to put anything, reachable or not).
+        private void OnExitStackOverflow(ExitStackOverflowSignal signal)
+        {
+            Debug.Log("[CustomerConsumeService] Exit stack overflowed — level failed.");
             OnLevelEnded?.Invoke(false);
         }
 

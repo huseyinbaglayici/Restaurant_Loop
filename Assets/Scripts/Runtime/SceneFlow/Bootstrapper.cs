@@ -1,4 +1,5 @@
 using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Zenject;
@@ -14,6 +15,9 @@ namespace RestaurantLoop.SceneFlow
     {
         private const string MainMenuSceneName = "MainMenuScene";
 
+        public static string ActiveMainMenuSceneName =>
+            ShowcaseModeConfig.IsEnabled ? ShowcaseModeConfig.TargetMainMenuSceneName : MainMenuSceneName;
+
         private SignalBus _signalBus;
 
         [Inject]
@@ -24,7 +28,8 @@ namespace RestaurantLoop.SceneFlow
 
         private void Start()
         {
-            var operation = SceneManager.LoadSceneAsync(MainMenuSceneName, LoadSceneMode.Additive);
+            var targetScene = ActiveMainMenuSceneName;
+            var operation = SceneManager.LoadSceneAsync(targetScene, LoadSceneMode.Additive);
             operation.completed += OnMainMenuLoaded;
         }
 

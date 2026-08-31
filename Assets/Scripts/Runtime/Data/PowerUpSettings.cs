@@ -32,6 +32,12 @@ namespace RestaurantLoop.Runtime.Data
 
         [Tooltip("Optional custom tutorial panel position for this specific powerup (if 0,0 uses global PowerUpTutorialPanelPos)")]
         public Vector2 CustomTutorialPanelPos;
+
+        [Tooltip("Optional custom finger offset for this specific powerup (if 0,0 uses global PowerUpFingerOffset)")]
+        public Vector2 CustomFingerOffset;
+
+        [Tooltip("Optional custom blocker offset for this specific powerup (if 0,0 uses global PowerUpBlockerOffset)")]
+        public Vector2 CustomBlockerOffset;
     }
 
     [Serializable]
@@ -66,9 +72,13 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Base pixel size of the gold icon")]
         [SerializeField] private Vector2 _goldIconSize = new Vector2(34f, 34f);
 
-        [Header("Tutorial Bubble Layout (Power-Up Tutorial Only)")]
+        [Header("Tutorial Layout (Power-Up Tutorial Only)")]
         [Tooltip("Anchored position for the tutorial explanation bubble when a power-up tutorial is active")]
         [SerializeField] private Vector2 _powerUpTutorialPanelPos = new Vector2(0f, -480f);
+        [Tooltip("Offset for the finger pointer during power-up tutorials")]
+        [SerializeField] private Vector2 _powerUpFingerOffset = Vector2.zero;
+        [Tooltip("Offset for the advance blocker during power-up tutorials")]
+        [SerializeField] private Vector2 _powerUpBlockerOffset = Vector2.zero;
 
         [Header("Power-Up Definitions")]
         [SerializeField] private List<PowerUpDefinition> _definitions = new()
@@ -91,6 +101,8 @@ namespace RestaurantLoop.Runtime.Data
         public float GoldIconScale => _goldIconScale > 0 ? _goldIconScale : 1f;
         public Vector2 GoldIconSize => _goldIconSize * GoldIconScale;
         public Vector2 PowerUpTutorialPanelPos => _powerUpTutorialPanelPos;
+        public Vector2 PowerUpFingerOffset => _powerUpFingerOffset;
+        public Vector2 PowerUpBlockerOffset => _powerUpBlockerOffset;
 
         public IReadOnlyList<PowerUpDefinition> Definitions => _definitions;
         public IReadOnlyList<LevelPowerUpGrant> LevelGrants => _levelGrants;

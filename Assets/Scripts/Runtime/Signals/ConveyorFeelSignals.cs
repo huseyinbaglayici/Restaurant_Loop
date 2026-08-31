@@ -68,6 +68,16 @@ namespace RestaurantLoop.Signals
         public int ItemId;
     }
 
+    // Fired when an item reaches the belt end and ExitStackAnchor.TryDock fails (every slot already
+    // occupied) — e.g. a linked pair docks two items in one tick, filling the last slot with the first
+    // and leaving the second with nowhere to go. CheckDeadlock's full-stack edge trigger already fired
+    // (or didn't need to, if an occupant still looked reachable) before this happened, so nothing else
+    // catches it — without this signal the item is just despawned and the level silently never fails.
+    public class ExitStackOverflowSignal
+    {
+        public int ItemId;
+    }
+
     public class FoodConsumedSignal
     {
         public int ItemId;

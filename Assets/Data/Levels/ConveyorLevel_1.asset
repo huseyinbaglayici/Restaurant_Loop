@@ -420,5 +420,19 @@ MonoBehaviour:
     - Type: 3
       Amount: 3
       LinkId: 0
-  IsTutorial: 0
-  TutorialSteps: []
+  IsTutorial: 1
+  TutorialSteps:
+  - Text: Tap the drink to send it to the conveyor belt.
+    Trigger: 0
+    HoverKind: 2
+    PowerUpButton: 0
+    QueueLaneIndex: 1
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}
+  - Text: Serve all customers!
+    Trigger: 0
+    HoverKind: 0
+    PowerUpButton: 0
+    QueueLaneIndex: 1
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}

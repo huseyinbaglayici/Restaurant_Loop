@@ -4,10 +4,10 @@ using Zenject;
 namespace RestaurantLoop.Runtime.Conveyor
 {
     // Once the queue is fully spent and everything left (belt + exit stack) is guaranteed to fit back on
-    // the exit stack, the level can't be lost anymore — only won. From that point on, waiting for more
-    // player clicks just stalls the win, so this switches the belt into an auto-clear loop: every exit
-    // stack occupant gets fed back onto the belt, belt speed doubles, and ConveyorManager stops docking
-    // items at the end of the belt and instead loops them back to the entry until every customer is served.
+    // the exit stack, the level can't be lost anymore — only won. From that point on this just speeds the
+    // belt up and stops it docking items (loops them back to the entry instead) so nothing ever piles into
+    // the exit stack again; the stack's existing occupants are left exactly where they are — the player
+    // still clicks them back onto the belt themselves, same as any other exit-stack item.
     public class ConveyorAutoClearService : ITickable
     {
         private const float LoopSpeedMultiplier = 2f;
@@ -58,12 +58,6 @@ namespace RestaurantLoop.Runtime.Conveyor
         private void Activate()
         {
             _activated = true;
-
-            for (int i = 0; i < _exitStackAnchor.SlotPositions.Length; i++)
-            {
-                if (!_exitStackAnchor.TryRemoveFromSlot(i, out var visual)) continue;
-                _conveyorManager.AddItemAtEntry(visual.Stack, visual, visual.transform.position);
-            }
 
             _conveyorManager.SpeedMultiplier = LoopSpeedMultiplier;
             _conveyorManager.EnableLoopMode();

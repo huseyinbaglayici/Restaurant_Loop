@@ -410,6 +410,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                     else
                     {
                         Debug.LogWarning("[ConveyorManager] Exit stack is full — item despawned.");
+                        _signalBus.Fire(new ExitStackOverflowSignal { ItemId = item.Id });
                         _foodPool.Despawn(item.Visual);
                     }
 

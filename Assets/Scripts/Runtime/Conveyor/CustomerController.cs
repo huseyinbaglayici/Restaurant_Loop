@@ -1,5 +1,4 @@
 using System;
-using DG.Tweening;
 using UnityEngine;
 using Zenject;
 
@@ -15,10 +14,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         // Should sit on the character's hand bone, not the UI canvas.
         [SerializeField] private Transform _foodHandoffAnchor;
 
-        [SerializeField] private CustomerPlayableAnimator _playableAnimator;
+        [SerializeField] private VATCustomerVisual _playableAnimator;
         [SerializeField] private CustomerVisualVariantPicker _visualVariantPicker;
-
-        private Tween _consumePunchTween;
 
         public Transform FoodHandoffAnchor => _foodHandoffAnchor;
 
@@ -28,12 +25,12 @@ namespace RestaurantLoop.Runtime.Conveyor
             gameObject.SetActive(true);
 
             _visualVariantPicker?.PickRandom();
-            if (_playableAnimator != null) _playableAnimator.PlayIdleWithRandomOffset();
+            // VATCustomerVisual randomizes its own idle phase from OnEnable, triggered by the
+            // SetActive(true) above cascading to its (always-active) child — no explicit call needed.
         }
 
         public void OnDespawned()
         {
-            _consumePunchTween?.Kill();
             _visualVariantPicker?.ReleaseActive();
             gameObject.SetActive(false);
         }
@@ -42,10 +39,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void PlayConsumePunch(Vector3 strength, float duration, int vibrato, float elasticity)
         {
             if (_playableAnimator == null) return;
-
-            var target = _playableAnimator.transform;
-            _consumePunchTween?.Kill(true);
-            _consumePunchTween = target.DOPunchScale(strength, duration, vibrato, elasticity);
+            _playableAnimator.PlayConsumePunch(strength, duration, vibrato, elasticity);
         }
 
         // hasSecondOrderRemaining == true: plays the "first order served" reaction, then returns to Idle.

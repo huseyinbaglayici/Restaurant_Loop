@@ -113,8 +113,8 @@ namespace RestaurantLoop.Audio
             // Hitting Play with GameplayScene or MainMenuScene already open (editor testing) skips that
             // chain entirely, so bootstrap straight off whatever's already active instead of staying silent.
             var activeSceneName = SceneManager.GetActiveScene().name;
-            if (activeSceneName == "GameplayScene") OnGameplayReady();
-            else if (activeSceneName == "MainMenuScene") OnMenuReady();
+            if (activeSceneName == "GameplayScene" || activeSceneName == "EylulGameplayScene") OnGameplayReady();
+            else if (activeSceneName == "MainMenuScene" || activeSceneName == "EylulMainMenuScene") OnMenuReady();
         }
 
         // Cold boot fires this too, but GameplaySceneReadySignal follows right behind it
