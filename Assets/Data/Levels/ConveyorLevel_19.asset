@@ -501,7 +501,7 @@ MonoBehaviour:
       LinkId: 3
     - Type: 1
       Amount: 5
-      LinkId: 0
+      LinkId: 4
     - Type: 1
       Amount: 5
       LinkId: 0
@@ -529,7 +529,7 @@ MonoBehaviour:
       LinkId: 2
     - Type: 0
       Amount: 5
-      LinkId: 3
+      LinkId: 4
     - Type: 1
       Amount: 3
       LinkId: 0

@@ -139,7 +139,7 @@ Material:
     - _KnotDensity: 0.5
     - _KnotPull: 2.4
     - _KnotSize: 0.05
-    - _KnotSpacing: 0.99
+    - _KnotSpacing: 1.13
     - _KnotSquash: 1.4
     - _LightThreshold: 0.95
     - _Metallic: 0

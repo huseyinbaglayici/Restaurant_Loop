@@ -556,78 +556,84 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 4, y: 5}
     Order:
+      Type: 1
+      Amount: 2
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 1
+    SecondOrder:
       Type: 2
       Amount: 6
-      LinkId: 0
-    IsHidden: 1
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
       LinkId: 0
   Queues:
   - Entries:
     - Type: 1
-      Amount: 3
-      LinkId: 2
-    - Type: 1
-      Amount: 4
-      LinkId: 0
-    - Type: 1
       Amount: 4
       LinkId: 0
     - Type: 1
       Amount: 3
+      LinkId: 4
+    - Type: 1
+      Amount: 3
       LinkId: 0
     - Type: 1
-      Amount: 5
+      Amount: 3
+      LinkId: 3
+    - Type: 1
+      Amount: 3
+      LinkId: 0
+    - Type: 1
+      Amount: 3
       LinkId: 0
     - Type: 1
       Amount: 4
       LinkId: 0
     - Type: 1
-      Amount: 4
+      Amount: 3
       LinkId: 0
   - Entries:
+    - Type: 2
+      Amount: 5
+      LinkId: 4
     - Type: 1
-      Amount: 3
+      Amount: 4
       LinkId: 0
     - Type: 2
-      Amount: 3
+      Amount: 4
+      LinkId: 3
+    - Type: 1
+      Amount: 5
       LinkId: 2
     - Type: 2
       Amount: 5
       LinkId: 1
     - Type: 1
       Amount: 5
-      LinkId: 3
-    - Type: 1
-      Amount: 3
       LinkId: 0
     - Type: 1
       Amount: 5
-      LinkId: 0
-    - Type: 2
-      Amount: 5
-      LinkId: 0
+      LinkId: 5
   - Entries:
     - Type: 1
       Amount: 4
-      LinkId: 1
-    - Type: 1
-      Amount: 5
       LinkId: 0
     - Type: 1
       Amount: 3
       LinkId: 0
-    - Type: 1
-      Amount: 5
-      LinkId: 0
-    - Type: 1
-      Amount: 4
-      LinkId: 0
     - Type: 2
+      Amount: 4
+      LinkId: 2
+    - Type: 1
       Amount: 5
-      LinkId: 3
+      LinkId: 1
+    - Type: 1
+      Amount: 3
+      LinkId: 0
+    - Type: 1
+      Amount: 3
+      LinkId: 5
+    - Type: 1
+      Amount: 3
+      LinkId: 0
   IsTutorial: 0
   TutorialSteps: []
