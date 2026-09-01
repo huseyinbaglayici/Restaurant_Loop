@@ -294,6 +294,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             float baseIconScale = _tableSettings != null ? _tableSettings.Queue2DIconScale : 1.5f;
+            float globalQueueScale = _placement != null ? _placement.GlobalQueueScale : 1f;
             float zoomMultiplier = 1f;
             if (_tableSettings != null && _tableSettings.ScaleWithCamera && _cameraController != null)
             {
@@ -302,7 +303,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 zoomMultiplier = 1f + (zoom - 1f) * multiplier;
             }
 
-            _queue2DHolder.transform.localScale = Vector3.one * (baseIconScale * zoomMultiplier);
+            _queue2DHolder.transform.localScale = Vector3.one * (baseIconScale * globalQueueScale * zoomMultiplier);
             _queue2DHolder.transform.localPosition = _tableSettings != null ? _tableSettings.Queue2DOffset : new Vector3(0f, 0.5f, 0f);
 
             Align2DWithCamera();
@@ -570,7 +571,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             float unitHeight = ResolveUnitHeight(_unitSourcePrefab[0], _unitAppliedRotation[0], _unitBaseScale[0] * scale);
             if (unitHeight <= 0.0001f) return FallbackStackSpacing;
 
-            return unitHeight * _placement.ResolveStackSpacingFactor(type);
+            return unitHeight * _placement.ResolveStackSpacingFactor(type, _location);
         }
 
         // Height along world Y after the unit's fixed orientation and scale are applied — a prefab laid
@@ -645,6 +646,20 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (ShouldUse2DQueue())
             {
                 Align2DWithCamera();
+
+                if (_queue2DHolder != null)
+                {
+                    float baseIconScale = _tableSettings != null ? _tableSettings.Queue2DIconScale : 1.5f;
+                    float globalQueueScale = _placement != null ? _placement.GlobalQueueScale : 1f;
+                    float zoomMultiplier = 1f;
+                    if (_tableSettings != null && _tableSettings.ScaleWithCamera && _cameraController != null)
+                    {
+                        float zoom = _cameraController.CameraZoomFactor;
+                        float multiplier = _tableSettings.FoodQueueScaleMultiplier;
+                        zoomMultiplier = 1f + (zoom - 1f) * multiplier;
+                    }
+                    _queue2DHolder.transform.localScale = Vector3.one * (baseIconScale * globalQueueScale * zoomMultiplier);
+                }
                 return;
             }
 

@@ -327,7 +327,7 @@ namespace Editor.LevelEditor
         private void DrawEntity(Painter2D painter, Vector2 center, FoodStackData stack)
         {
             float radius = CellSize * 0.32f;
-            painter.fillColor = FoodTypeUtil.ToColor(stack.Type);
+            painter.fillColor = ConveyorGridCanvas.GetFoodColor(stack.Type);
             painter.strokeColor = EntityOutline;
             painter.lineWidth = 1.5f;
             painter.BeginPath();

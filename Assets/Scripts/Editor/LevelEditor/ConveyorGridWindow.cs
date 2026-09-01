@@ -18,7 +18,7 @@ namespace Editor.LevelEditor
         private static readonly FoodType[] Palette =
         {
             FoodType.Hamburger, FoodType.Fries, FoodType.Meat, FoodType.Drink, FoodType.Donut,
-            FoodType.Sushi, FoodType.Pizza, FoodType.Croissant, FoodType.Kebab
+            FoodType.Sushi, FoodType.Pizza, FoodType.Croissant, FoodType.Kebab, FoodType.Steak
         };
 
         private ConveyorLevelDataSO _draft;
@@ -401,7 +401,7 @@ namespace Editor.LevelEditor
                 var captured = food;
                 var swatch = new Button(() => SelectFoodType(captured)) { text = FoodTypeUtil.ToIcon(food) };
                 swatch.AddToClassList(Css.PaletteSwatch);
-                swatch.style.backgroundColor = FoodTypeUtil.ToColor(food);
+                swatch.style.backgroundColor = ConveyorGridCanvas.GetFoodColor(food);
                 swatch.tooltip = food.ToString();
                 _paletteButtons.Add(swatch);
                 _paletteRow.Add(swatch);

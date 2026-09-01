@@ -20,6 +20,7 @@ MonoBehaviour:
   StackAmountFont: {fileID: 11400000, guid: 48caf0496452fbe4593cb66fb79f3861, type: 2}
   _entries:
   - Type: 0
+    Color: {r: 0.83921576, g: 0.2392157, b: 0.21568629, a: 1}
     OpenedPrefab: {fileID: 2050022874529901392, guid: f72e0b0ffc690824db8ceee7d07c2bc2,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
@@ -29,9 +30,9 @@ MonoBehaviour:
     CustomerIcon: {fileID: 21300000, guid: 6109e16a00345bd40ad79e7bc552ef1c, type: 3}
     QueueIcon: {fileID: 21300000, guid: 84745ebecfdc3dc4c8dc1a7c931de83b, type: 3}
     Icon: {fileID: 21300000, guid: 84745ebecfdc3dc4c8dc1a7c931de83b, type: 3}
-    GridColor: {r: 0, g: 0, b: 0, a: 0}
     FixedChildSlots: 0
   - Type: 1
+    Color: {r: 0.9921569, g: 0.65882355, b: 0, a: 1}
     OpenedPrefab: {fileID: 6743053913074042673, guid: cb0f08fac397392489771db9f7851d7d,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
@@ -39,11 +40,11 @@ MonoBehaviour:
       type: 3}
     ClosedRotationEuler: {x: 0, y: 0, z: 0}
     CustomerIcon: {fileID: 21300000, guid: e803c6ab4b3f18d438ff6c3fea8e5f0e, type: 3}
-    QueueIcon: {fileID: 21300000, guid: fa0cdbad0f644af469cd80ed492a1078, type: 3}
-    Icon: {fileID: 21300000, guid: fa0cdbad0f644af469cd80ed492a1078, type: 3}
-    GridColor: {r: 0, g: 0, b: 0, a: 0}
+    QueueIcon: {fileID: 21300000, guid: bdec0374fc120304da5ad12932742ebd, type: 3}
+    Icon: {fileID: 21300000, guid: bdec0374fc120304da5ad12932742ebd, type: 3}
     FixedChildSlots: 0
   - Type: 4
+    Color: {r: 0.9215687, g: 0.34117648, b: 0.48627454, a: 1}
     OpenedPrefab: {fileID: 2537419307790587190, guid: 3dc4e57de2b219344b6fcd2fcd3a3587,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
@@ -53,9 +54,9 @@ MonoBehaviour:
     CustomerIcon: {fileID: 21300000, guid: 3bb3574251788154599130938d560907, type: 3}
     QueueIcon: {fileID: 21300000, guid: 674fa23aa9ddbf540844e4a5801dd162, type: 3}
     Icon: {fileID: 21300000, guid: 674fa23aa9ddbf540844e4a5801dd162, type: 3}
-    GridColor: {r: 0, g: 0, b: 0, a: 0}
     FixedChildSlots: 0
   - Type: 3
+    Color: {r: 0.2, g: 0.55, b: 0.9, a: 1}
     OpenedPrefab: {fileID: 6301023921460893688, guid: 1c715b06ffaca4b4cbe54aba365ff11b,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
@@ -65,9 +66,9 @@ MonoBehaviour:
     CustomerIcon: {fileID: 21300000, guid: 306ed120a0c0c8b4884dde62ee9c504c, type: 3}
     QueueIcon: {fileID: 21300000, guid: 1d9cfdecce99c904697e429abccf485e, type: 3}
     Icon: {fileID: 21300000, guid: 1d9cfdecce99c904697e429abccf485e, type: 3}
-    GridColor: {r: 0, g: 0, b: 0, a: 0}
     FixedChildSlots: 0
   - Type: 2
+    Color: {r: 0.86666673, g: 0.7960785, b: 0.72156864, a: 1}
     OpenedPrefab: {fileID: 7714696736389709273, guid: 4d4b6691bebdbac4dacf809b05fb4275,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
@@ -77,5 +78,28 @@ MonoBehaviour:
     CustomerIcon: {fileID: 21300000, guid: 3ca1e28220e5df242bec86bc7f44d63a, type: 3}
     QueueIcon: {fileID: 21300000, guid: f076d9c7a40594d47875a295f5fa45f1, type: 3}
     Icon: {fileID: 21300000, guid: f076d9c7a40594d47875a295f5fa45f1, type: 3}
-    GridColor: {r: 0, g: 0, b: 0, a: 0}
+    FixedChildSlots: 0
+  - Type: 5
+    Color: {r: 0.854902, g: 0.8941177, b: 0.28627452, a: 1}
+    OpenedPrefab: {fileID: 7714696736389709273, guid: 4d4b6691bebdbac4dacf809b05fb4275,
+      type: 3}
+    OpenedRotationEuler: {x: 0, y: 0, z: 0}
+    ClosedPrefab: {fileID: 2830045199475947193, guid: 708750d9452a2bd46ad9c9e64b758990,
+      type: 3}
+    ClosedRotationEuler: {x: 0, y: 0, z: 0}
+    CustomerIcon: {fileID: 21300000, guid: 68237ef014c93ee44b516afa694d29f5, type: 3}
+    QueueIcon: {fileID: 21300000, guid: 5143f406a107c754187ec05aa84ae043, type: 3}
+    Icon: {fileID: 21300000, guid: 5143f406a107c754187ec05aa84ae043, type: 3}
+    FixedChildSlots: 0
+  - Type: 6
+    Color: {r: 0.9568628, g: 0.50980395, b: 0.039215688, a: 1}
+    OpenedPrefab: {fileID: 7714696736389709273, guid: 4d4b6691bebdbac4dacf809b05fb4275,
+      type: 3}
+    OpenedRotationEuler: {x: 0, y: 0, z: 0}
+    ClosedPrefab: {fileID: 2830045199475947193, guid: 708750d9452a2bd46ad9c9e64b758990,
+      type: 3}
+    ClosedRotationEuler: {x: 0, y: 0, z: 0}
+    CustomerIcon: {fileID: 21300000, guid: 9e052bb47c91d0c4fabc80f370bc82e9, type: 3}
+    QueueIcon: {fileID: 21300000, guid: 753b29d77c1b1f043af551580c8c45e4, type: 3}
+    Icon: {fileID: 21300000, guid: 753b29d77c1b1f043af551580c8c45e4, type: 3}
     FixedChildSlots: 0

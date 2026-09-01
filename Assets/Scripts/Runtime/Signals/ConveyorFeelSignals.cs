@@ -57,6 +57,7 @@ namespace RestaurantLoop.Signals
     public class FoodDockLandedSignal
     {
         public int ItemId;
+        public FoodItemController Visual;
     }
 
     // Fired instead of FoodDockedSignal when ConveyorManager.LoopModeActive is true and an item reaches

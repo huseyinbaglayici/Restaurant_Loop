@@ -18,6 +18,10 @@ namespace RestaurantLoop.Runtime.Data
         {
             public FoodType Type;
 
+            [Header("Color")]
+            [Tooltip("Bu yiyecek tipine özel renk (bağlantı prizması, UI vs. için). Boş bırakılırsa varsayılan renk kullanılır.")]
+            public Color Color;
+
             [Tooltip("Instantiated as-is for the opened unit visual — its own authored mesh, materials and " +
                      "orientation are used directly. Leave empty to keep the pool's generic unit prefab, " +
                      "tinted with the food type colour.")]
@@ -132,5 +136,23 @@ namespace RestaurantLoop.Runtime.Data
         }
 
         public bool TryGetIcon(FoodType type, out Sprite icon) => TryGetCustomerIcon(type, out icon);
+
+        public Color GetColor(FoodType type)
+        {
+            foreach (var entry in _entries)
+            {
+                if (entry.Type != type) continue;
+                var c = entry.Color;
+                if (c.r > 0.001f || c.g > 0.001f || c.b > 0.001f || c.a > 0.001f)
+                {
+                    c.a = 1f;
+                    return c;
+                }
+                break;
+            }
+            var fallback = FoodTypeUtil.ToColor(type);
+            fallback.a = 1f;
+            return fallback;
+        }
     }
 }

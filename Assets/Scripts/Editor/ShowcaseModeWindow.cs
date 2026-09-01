@@ -113,11 +113,29 @@ namespace RestaurantLoop.Editor
 
             EditorGUILayout.Space(8);
 
+            // Database Levels
+            var db = Resources.Load<LevelDatabase>("LevelDatabase");
+            var sortedLevels = (db != null && db.Levels != null) 
+                ? db.Levels.Where(l => l != null).OrderBy(l => l.LevelId).ToList() 
+                : new List<ConveyorLevelDataSO>();
+
             // Playlist Box
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField($"Seçili Level Sırası ({_playlist.Count} Level)", EditorStyles.boldLabel);
-            if (GUILayout.Button("Listeyi Temizle", GUILayout.Width(100)))
+
+            if (GUILayout.Button("+ Tümünü Sırayla Ekle", GUILayout.Width(140)))
+            {
+                _playlist.Clear();
+                foreach (var lvl in sortedLevels)
+                {
+                    _playlist.Add(lvl.LevelId);
+                }
+                _currentPlaylistIndex = 0;
+                SavePlaylist();
+            }
+
+            if (GUILayout.Button("Listeyi Temizle", GUILayout.Width(95)))
             {
                 _playlist.Clear();
                 _currentPlaylistIndex = 0;
@@ -178,14 +196,11 @@ namespace RestaurantLoop.Editor
             // Database Levels to Add
             EditorGUILayout.LabelField("Veritabanındaki Levellar (Eklemek için tıklayın):", EditorStyles.boldLabel);
 
-            var db = Resources.Load<LevelDatabase>("LevelDatabase");
             if (db == null || db.Levels == null || db.Levels.Count == 0)
             {
                 EditorGUILayout.HelpBox("Resources klasöründe LevelDatabase bulunamadı.", MessageType.Error);
                 return;
             }
-
-            var sortedLevels = db.Levels.Where(l => l != null).OrderBy(l => l.LevelId).ToList();
 
             _dbScrollPos = EditorGUILayout.BeginScrollView(_dbScrollPos);
             foreach (var level in sortedLevels)

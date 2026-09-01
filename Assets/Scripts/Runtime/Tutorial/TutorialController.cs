@@ -195,6 +195,14 @@ namespace RestaurantLoop.Runtime.Tutorial
                     blockerOffset = settings.PowerUpBlockerOffset;
                 }
             }
+            else if (step.HoverKind == TutorialHoverTargetKind.QueueLane && settings != null)
+            {
+                // QUEUE TUTORIAL STEP: Use custom QueueFingerOffset from PowerUpSettings
+                if (settings.QueueFingerOffset != Vector2.zero)
+                {
+                    fingerOffset = settings.QueueFingerOffset;
+                }
+            }
 
             _view.Show(step.Text, ResolveScreenPos(step), tapToAdvance, customPanelPos, fingerOffset, blockerOffset, isPowerUpRelated);
             _signalBus.Fire(new TutorialStepActivatedSignal { Step = step });

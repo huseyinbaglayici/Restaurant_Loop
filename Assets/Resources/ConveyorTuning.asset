@@ -18,9 +18,9 @@ MonoBehaviour:
   ReferenceGridWidth: 7
   ReferenceGridHeight: 7
   CameraZoomSensitivity: 0.5
-  BeltFoodHeight: -3.6
+  BeltFoodHeight: -3.3
   QueueFoodHeight: -3.9
-  ExitStackFoodHeight: -3.75
+  ExitStackFoodHeight: -3
   BeltSpeed: 4
   BeltTrackHeight: -4.45
   MinEntrySpacing: 1.5
@@ -38,9 +38,13 @@ MonoBehaviour:
   ExitStackSlotSpacing: 0.97
   ExtraRackVisualOffset: {x: 0, y: 0, z: 0}
   ExtraRackVisualRotation: {x: -90, y: -180, z: 0}
+  ExitRackSendCooldown: 0.35
   CustomerHeight: -4.45
   ClickRadiusPixels: 80
   LinkedPairBeltSpacing: 2
+  LinkPrismWidth: 0
+  LinkPrismHeight: 0.5
+  LinkPrismYOffset: -0.3
   LinkLineWidth: 0.3
   LinkLineSag: 0.35
   LinkLineSegments: 16

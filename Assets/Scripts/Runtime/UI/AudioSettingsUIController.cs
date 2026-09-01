@@ -42,17 +42,17 @@ namespace RestaurantLoop.Runtime.UI
                 }
             }
 
-            // Slider max değerlerini 0.2 yap
+            // Slider min/max değerleri standart 0.0 - 1.0 (Full)
             if (_musicSlider != null)
             {
                 _musicSlider.minValue = 0f;
-                _musicSlider.maxValue = 0.2f;
+                _musicSlider.maxValue = 1f;
             }
 
             if (_sfxSlider != null)
             {
                 _sfxSlider.minValue = 0f;
-                _sfxSlider.maxValue = 0.2f;
+                _sfxSlider.maxValue = 1f;
             }
         }
 

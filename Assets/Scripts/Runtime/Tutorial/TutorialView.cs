@@ -155,7 +155,7 @@ namespace RestaurantLoop.Runtime.Tutorial
             DisableFingerRaycasts();
             DisableNonBlockerRaycasts();
 
-            _currentFingerOffset = (isPowerUpStep && fingerOffset.HasValue) ? fingerOffset.Value : Vector2.zero;
+            _currentFingerOffset = fingerOffset ?? Vector2.zero;
             _currentBlockerOffset = (isPowerUpStep && blockerOffset.HasValue) ? blockerOffset.Value : Vector2.zero;
 
             bool hasTarget = screenPos.HasValue;

@@ -98,6 +98,9 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Extra Tray power-up: Euler rotation applied to the decorative extra rack visual.")]
         public Vector3 ExtraRackVisualRotation = new Vector3(0f, 90f, 0f);
 
+        [Tooltip("Delay in seconds after an item lands/docks in the exit rack before it can be clicked and sent back to the conveyor.")]
+        public float ExitRackSendCooldown = 0.35f;
+
         [Header("Customer (CustomerSpawner)")]
         [Tooltip("World Y a customer NPC stands at.")]
         public float CustomerHeight = 0f;
@@ -106,11 +109,20 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Click/tap hit-test radius in screen pixels.")]
         public float ClickRadiusPixels = 80f;
 
-        [Header("Queue Link Line (QueueLinkVisualizer)")]
+        [Header("Queue Link Visualizer (QueueLinkVisualizer)")]
         [Tooltip("Distance between the two items of a linked pair while riding on the conveyor belt (in belt progress/cell units). Defaults to 1 (adjacent cells), higher values increase the line length on conveyor).")]
         public float LinkedPairBeltSpacing = 1.4f;
 
-        [Tooltip("World units wide, the rope drawn between two linked queue items.")]
+        [Tooltip("Width (thickness perpendicular to link direction) of the 3D rectangular connection prism.")]
+        public float LinkPrismWidth = 0.5f;
+
+        [Tooltip("Height (Y axis / vertical thickness) of the 3D rectangular connection prism.")]
+        public float LinkPrismHeight = 0.35f;
+
+        [Tooltip("Vertical Y offset of the 3D connection prism relative to the food base position.")]
+        public float LinkPrismYOffset = 0.12f;
+
+        [Tooltip("World units wide, the rope drawn between two linked queue items (legacy fallback).")]
         public float LinkLineWidth = 0.06f;
 
         [Tooltip("World units the rope dips down at its midpoint — 0 draws it straight.")]

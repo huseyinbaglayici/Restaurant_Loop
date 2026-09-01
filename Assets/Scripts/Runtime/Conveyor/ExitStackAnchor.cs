@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
@@ -17,6 +18,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ExitSlotController.Pool _exitSlotPool;
         private readonly FoodItemController.Pool _foodPool;
         private readonly ExitSlotPrefabSettings _exitSlotPrefabSettings;
+        private readonly FoodFlightService _flightService;
         private readonly List<ExitSlotController> _spawnedFloors = new();
         private readonly List<GameObject> _extraRackVisuals = new();
 
@@ -44,7 +46,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorTuning tuning,
             ExitSlotController.Pool exitSlotPool,
             FoodItemController.Pool foodPool,
-            ExitSlotPrefabSettings exitSlotPrefabSettings)
+            ExitSlotPrefabSettings exitSlotPrefabSettings,
+            [Inject(Optional = true)] FoodFlightService flightService = null)
         {
             _level = level;
             _prefabSettings = prefabSettings;
@@ -52,6 +55,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _exitSlotPool = exitSlotPool;
             _foodPool = foodPool;
             _exitSlotPrefabSettings = exitSlotPrefabSettings;
+            _flightService = flightService;
 
             SlotPositions = ComputeSlotPositions();
         }
@@ -154,6 +158,16 @@ namespace RestaurantLoop.Runtime.Conveyor
             return position;
         }
 
+        public Vector3 GetFoodPositionForOccupant(FoodItemController visual)
+        {
+            if (visual == null) return Vector3.zero;
+            for (int i = 0; i < _occupants.Length; i++)
+            {
+                if (_occupants[i] == visual) return GetFoodPosition(i);
+            }
+            return Vector3.zero;
+        }
+
         // peek-only
         public bool TryGetOccupant(int slotIndex, out FoodItemController visual)
         {
@@ -178,6 +192,30 @@ namespace RestaurantLoop.Runtime.Conveyor
             visual = _occupants[slotIndex];
             _occupants[slotIndex] = null;
             return true;
+        }
+
+        public void CompactSlots(float duration = 0.22f)
+        {
+            int targetIndex = 0;
+            for (int i = 0; i < _occupants.Length; i++)
+            {
+                if (_occupants[i] == null) continue;
+
+                var occupant = _occupants[i];
+                if (i != targetIndex)
+                {
+                    _occupants[targetIndex] = occupant;
+                    _occupants[i] = null;
+
+                    var targetPos = GetFoodPosition(targetIndex);
+                    if (_flightService == null || !_flightService.IsFlying(occupant.transform))
+                    {
+                        occupant.transform.DOKill();
+                        occupant.transform.DOMove(targetPos, duration).SetEase(Ease.OutQuad);
+                    }
+                }
+                targetIndex++;
+            }
         }
 
         public const int MaxExtraSlots = 1;
