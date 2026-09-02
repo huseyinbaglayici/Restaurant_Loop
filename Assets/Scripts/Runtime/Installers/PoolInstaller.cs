@@ -36,6 +36,7 @@ namespace RestaurantLoop.Installers
             BindFeelSettings();
             BindPlacementSettings();
             BindTableSettings();
+            BindThemeSettings();
             BindCustomerPool();
         }
 
@@ -118,6 +119,12 @@ namespace RestaurantLoop.Installers
         {
             var tableSettings = Resources.Load<TableSettings>("TableSettings");
             if (tableSettings != null) Container.BindInstance(tableSettings).AsSingle();
+        }
+
+        private void BindThemeSettings()
+        {
+            var themeSettings = Resources.Load<ThemeSettings>("ThemeSettings");
+            if (themeSettings != null) Container.BindInstance(themeSettings).AsSingle();
         }
 
         private void BindFeelSettings()

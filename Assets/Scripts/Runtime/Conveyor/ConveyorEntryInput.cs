@@ -182,6 +182,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 }
 
                 _queueSpawner.PickFromBottomEnabled = false;
+                _cameraController?.FocusOnQueue(false);
 
                 // The queue visuals themselves fly onto the belt — no despawn + respawn snap. Goes through
                 // the pair-atomic entry point so both always land together (1 cell apart) instead of
@@ -203,6 +204,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _queueSpawner.TryDetachAt(bestLane, bestRow, out var pickedVisual);
             _queueSpawner.PickFromBottomEnabled = false;
+            _cameraController?.FocusOnQueue(false);
             _conveyorManager.AddItemAtEntry(stack, pickedVisual, pickedVisual.transform.position);
             _audioService.PlaySfx(_audioLibrary.FoodSendSfx);
             _signalBus.Fire(new TutorialActionPerformedSignal

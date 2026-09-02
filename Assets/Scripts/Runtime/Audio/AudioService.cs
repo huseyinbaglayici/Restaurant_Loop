@@ -1,5 +1,6 @@
 using System;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.SceneFlow;
 using RestaurantLoop.Signals;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -14,6 +15,8 @@ namespace RestaurantLoop.Audio
 
         private readonly SignalBus _signalBus;
         private readonly AudioLibrary _settings;
+        private readonly CurrentLevelProvider _currentLevelProvider;
+        private readonly ThemeSettings _themeSettings;
 
         private readonly AudioSource _musicSource;
         private readonly AudioSource _ambienceSource;
@@ -25,10 +28,16 @@ namespace RestaurantLoop.Audio
 
         public event Action<float, float> OnAudioSettingsChanged;
 
-        public AudioService(SignalBus signalBus, AudioLibrary settings)
+        public AudioService(
+            SignalBus signalBus,
+            AudioLibrary settings,
+            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
+            [Inject(Optional = true)] ThemeSettings themeSettings = null)
         {
             _signalBus = signalBus;
             _settings = settings;
+            _currentLevelProvider = currentLevelProvider;
+            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
 
             // PlayerPrefs'ten önceden kaydedilmiş değerleri yükle (ilk açılışta full 1.0 varsayılanı)
             float savedMusic = PlayerPrefs.GetFloat(PrefsMusicKey, 1f);
@@ -124,13 +133,34 @@ namespace RestaurantLoop.Audio
         private void OnMenuReady()
         {
             StopConveyorLoop();
-            PlayMusic(_settings.MenuMusic);
+
+            AudioClip menuMusic = _settings != null ? _settings.MenuMusic : null;
+            if (_currentLevelProvider?.Current != null && _themeSettings != null)
+            {
+                var theme = _themeSettings.GetTheme(_currentLevelProvider.Current.Theme);
+                if (theme != null && theme.MenuMusic != null) menuMusic = theme.MenuMusic;
+            }
+
+            if (menuMusic != null) PlayMusic(menuMusic);
         }
 
         private void OnGameplayReady()
         {
-            PlayMusic(_settings.GameplayMusic);
-            PlayAmbience(_settings.GameplayAmbience);
+            AudioClip gameplayMusic = _settings != null ? _settings.GameplayMusic : null;
+            AudioClip ambience = _settings != null ? _settings.GameplayAmbience : null;
+
+            if (_currentLevelProvider?.Current != null && _themeSettings != null)
+            {
+                var theme = _themeSettings.GetTheme(_currentLevelProvider.Current.Theme);
+                if (theme != null)
+                {
+                    if (theme.GameplayMusic != null) gameplayMusic = theme.GameplayMusic;
+                    if (theme.GameplayAmbience != null) ambience = theme.GameplayAmbience;
+                }
+            }
+
+            if (gameplayMusic != null) PlayMusic(gameplayMusic);
+            if (ambience != null) PlayAmbience(ambience);
         }
 
         // Stop gameplay ambience and conveyor loop the moment a level ends, before the async scene unload even starts —

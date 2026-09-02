@@ -27,6 +27,16 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Extra damping/multiplier for camera zoom out (e.g. 0.8 = zoom out 20% less to reduce empty side space).")]
         public float CameraZoomSensitivity = 0.85f;
 
+        [Header("Pick From Bottom Camera Tuning")]
+        [Tooltip("Pick from bottom aktifken kameranın kuyruğa ve stack'lere doğru kayacağı dünya ofseti (Z/Y).")]
+        public Vector3 CameraPickFromBottomOffset = new Vector3(0f, -0.6f, -1.8f);
+
+        [Tooltip("Kameranın kuyruğa kayma ve geri dönme animasyon süresi (saniye).")]
+        public float CameraPickFromBottomDuration = 0.35f;
+
+        [Tooltip("Pick from bottom aktifken kameranın hafif yaklaşma/zoom çarpanı (1.0 = zoomsuz, <1.0 = daha yakın).")]
+        public float CameraPickFromBottomOrthoMultiplier = 0.95f;
+
         [Header("Food (item height per stage)")]
         [Tooltip("World Y every food item sits at while it is on the belt.")]
         public float BeltFoodHeight = 1f;

@@ -97,6 +97,7 @@ namespace RestaurantLoop.Runtime.Data
     {
         public int LevelId;
         public LevelDifficulty Difficulty;
+        public ThemeType Theme = ThemeType.Asian;
         public GameObject Environment;
 
         [Header("Conveyor Grid")]

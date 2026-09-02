@@ -83,9 +83,12 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Kamera zoom çarpanı.")]
         public float BubbleCameraScaleMultiplier = 1.0f;
 
-        [Header("Fonts")]
+        [Header("Fonts & Badges")]
         [Tooltip("Font asset used for stack amount numbers across 2D queue and 3D conveyor.")]
         public TMPro.TMP_FontAsset StackAmountFont;
+
+        [Tooltip("Bantta (Conveyor) ve Rafta (Stack) yemeklerin tepesindeki sayı rozetinin ekstra Y yükseklik ofseti.")]
+        public float ConveyorBadgeHeightOffset = 0.8f;
 
         [SerializeField] private List<Entry> _entries = new();
 

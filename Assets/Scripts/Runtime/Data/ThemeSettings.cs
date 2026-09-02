@@ -1,0 +1,58 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace RestaurantLoop.Runtime.Data
+{
+    public enum ThemeType
+    {
+        Asian,
+        Italian
+    }
+
+    [System.Serializable]
+    public class ThemeEntry
+    {
+        public ThemeType Theme;
+        [Tooltip("3D Environment / Background decor prefab placed behind the conveyor belt.")]
+        public GameObject EnvironmentPrefab;
+        [Tooltip("Custom position offset for this specific theme's environment (X, Y, Z).")]
+        public Vector3 EnvironmentOffset = Vector3.zero;
+        [Tooltip("Custom Euler rotation for this specific theme's environment.")]
+        public Vector3 EnvironmentRotation = Vector3.zero;
+        [Tooltip("Custom scale multiplier for this specific theme's environment. Defaults to (1,1,1).")]
+        public Vector3 EnvironmentScale = Vector3.one;
+        [Tooltip("Loading screen background sprite for this theme.")]
+        public Sprite LoadingScreenBackground;
+        [Tooltip("Main menu background sprite for this theme.")]
+        public Sprite MainMenuBackground;
+        [Tooltip("Gameplay background music for this theme.")]
+        public AudioClip GameplayMusic;
+        [Tooltip("Menu background music for this theme (optional).")]
+        public AudioClip MenuMusic;
+        [Tooltip("Gameplay ambience track for this theme (optional).")]
+        public AudioClip GameplayAmbience;
+    }
+
+    [CreateAssetMenu(fileName = "ThemeSettings", menuName = "RestaurantLoop/Theme Settings")]
+    public class ThemeSettings : ScriptableObject
+    {
+        [SerializeField] private List<ThemeEntry> _themes = new()
+        {
+            new ThemeEntry { Theme = ThemeType.Asian },
+            new ThemeEntry { Theme = ThemeType.Italian }
+        };
+
+        public IReadOnlyList<ThemeEntry> Themes => _themes;
+
+        public ThemeEntry GetTheme(ThemeType theme)
+        {
+            foreach (var entry in _themes)
+            {
+                if (entry != null && entry.Theme == theme)
+                    return entry;
+            }
+
+            return _themes.Count > 0 ? _themes[0] : new ThemeEntry { Theme = ThemeType.Asian };
+        }
+    }
+}

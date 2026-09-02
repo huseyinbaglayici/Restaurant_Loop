@@ -29,7 +29,7 @@ namespace Editor.LevelEditor
         private Toggle _isTutorialField;
         private Button _tutorialStepsButton;
         private EnumField _difficultyField;
-        private PopupField<GameObject> _environmentField;
+        private EnumField _themeField;
         private Label _cellCountLabel;
         private readonly List<Button> _paletteButtons = new();
         private readonly Dictionary<CanvasMode, Button> _modeButtons = new();
@@ -119,8 +119,7 @@ namespace Editor.LevelEditor
         {
             _levelIdField.SetValueWithoutNotify(_draft.LevelId);
             _difficultyField.SetValueWithoutNotify(_draft.Difficulty);
-            _environmentField.SetValueWithoutNotify(
-                _environmentField.choices.Contains(_draft.Environment) ? _draft.Environment : null);
+            _themeField.SetValueWithoutNotify(_draft.Theme);
             _widthField.SetValueWithoutNotify(_draft.GridWidth);
             _heightField.SetValueWithoutNotify(_draft.GridHeight);
             _isTutorialField.SetValueWithoutNotify(_draft.IsTutorial);
@@ -150,15 +149,11 @@ namespace Editor.LevelEditor
             _difficultyField.AddToClassList(Css.Num);
             bar.Add(_difficultyField);
 
-            var environmentChoices = (ConveyorSettingsProvider.GetOrCreate().EnvironmentPresets
-                ?.Where(p => p != null) ?? Enumerable.Empty<GameObject>()).ToList();
-            environmentChoices.Add(null);
-            _environmentField = new PopupField<GameObject>("Environment", environmentChoices, 0,
-                p => p == null ? "None" : p.name, p => p == null ? "None" : p.name);
-            _environmentField.AddToClassList(Css.Num);
-            _environmentField.RegisterValueChangedCallback(evt => _draft.Environment = evt.newValue);
-            bar.Add(_environmentField);
-            _draft.Environment = _environmentField.value;
+            _themeField = new EnumField("Theme", ThemeType.Asian);
+            _themeField.AddToClassList(Css.Num);
+            _themeField.RegisterValueChangedCallback(evt => _draft.Theme = (ThemeType)evt.newValue);
+            bar.Add(_themeField);
+            _draft.Theme = (ThemeType)_themeField.value;
 
             _isTutorialField = new Toggle("Tutorial");
             _isTutorialField.AddToClassList(Css.Toggle);
@@ -196,7 +191,7 @@ namespace Editor.LevelEditor
             Undo.RecordObject(_draft, "New Level");
             _draft.LevelId = _levelIdField.value;
             _draft.Difficulty = LevelDifficulty.None;
-            _draft.Environment = ConveyorSettingsProvider.GetOrCreate().EnvironmentPresets?.FirstOrDefault(p => p != null);
+            _draft.Theme = ThemeType.Asian;
             _draft.GridWidth = 8;
             _draft.GridHeight = 8;
             _draft.ConveyorCells.Clear();
@@ -214,7 +209,7 @@ namespace Editor.LevelEditor
             AssetFolderUtil.EnsureFolder(LevelFolder);
             _draft.LevelId = _levelIdField.value;
             _draft.Difficulty = (LevelDifficulty)_difficultyField.value;
-            _draft.Environment = _environmentField.value;
+            _draft.Theme = (ThemeType)_themeField.value;
             string path = $"{LevelFolder}/ConveyorLevel_{_draft.LevelId}.asset";
 
             var asset = AssetDatabase.LoadAssetAtPath<ConveyorLevelDataSO>(path);
@@ -223,7 +218,7 @@ namespace Editor.LevelEditor
 
             asset.LevelId = _draft.LevelId;
             asset.Difficulty = _draft.Difficulty;
-            asset.Environment = _draft.Environment;
+            asset.Theme = _draft.Theme;
             asset.GridWidth = _draft.GridWidth;
             asset.GridHeight = _draft.GridHeight;
             asset.ConveyorCells = new List<ConveyorCellData>(_draft.ConveyorCells);
@@ -311,6 +306,7 @@ namespace Editor.LevelEditor
             Undo.RecordObject(_draft, "Load Level");
             _draft.LevelId = loaded.LevelId;
             _draft.Difficulty = loaded.Difficulty;
+            _draft.Theme = loaded.Theme;
             _draft.Environment = loaded.Environment;
             _draft.GridWidth = loaded.GridWidth;
             _draft.GridHeight = loaded.GridHeight;

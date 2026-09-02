@@ -1,7 +1,9 @@
 using System.Collections;
+using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.SceneFlow;
+using RestaurantLoop.Signals;
 using UnityEngine;
 using Zenject;
-using RestaurantLoop.Signals;
 
 namespace RestaurantLoop.UI
 {
@@ -25,13 +27,20 @@ namespace RestaurantLoop.UI
         [SerializeField] private Sprite _inBetweenLevelsBackground;
 
         private SignalBus _signalBus;
+        private CurrentLevelProvider _currentLevelProvider;
+        private ThemeSettings _themeSettings;
         private float _loadingStartedAt;
         private bool _isFirstLoad = true;
 
         [Inject]
-        public void Construct(SignalBus signalBus)
+        public void Construct(
+            SignalBus signalBus,
+            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
+            [Inject(Optional = true)] ThemeSettings themeSettings = null)
         {
             _signalBus = signalBus;
+            _currentLevelProvider = currentLevelProvider;
+            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
 
             // Note: MainMenuReadySignal is NOT one of the hide triggers — on cold boot that signal
             // chains straight into loading GameplayScene (see SceneLoader), and this screen should
@@ -63,6 +72,22 @@ namespace RestaurantLoop.UI
         private void UpdateBackground()
         {
             if (_backgroundImage == null) return;
+
+            Sprite themeBg = null;
+            if (_currentLevelProvider?.Current != null && _themeSettings != null)
+            {
+                var theme = _themeSettings.GetTheme(_currentLevelProvider.Current.Theme);
+                if (theme != null && theme.LoadingScreenBackground != null)
+                {
+                    themeBg = theme.LoadingScreenBackground;
+                }
+            }
+
+            if (themeBg != null)
+            {
+                _backgroundImage.sprite = themeBg;
+                return;
+            }
 
             if (_isFirstLoad)
             {

@@ -11,17 +11,27 @@ namespace RestaurantLoop.Runtime.UI
     {
         [SerializeField] private TextMeshProUGUI _levelInfoText;
         [SerializeField] private TextMeshProUGUI _difficultyText;
+        [Tooltip("Inspector'dan Main Menu arka plan Image objesini buraya bağlayabilirsiniz.")]
+        [SerializeField] private UnityEngine.UI.Image _menuBackgroundImage;
 
         private CurrentLevelProvider _currentLevelProvider;
+        private ThemeSettings _themeSettings;
         private SignalBus _signalBus;
 
         [Inject]
         public void Construct(
-            CurrentLevelProvider currentLevelProvider,
+            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
+            [Inject(Optional = true)] ThemeSettings themeSettings = null,
             [Inject(Optional = true)] SignalBus signalBus = null)
         {
             _currentLevelProvider = currentLevelProvider;
+            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
             _signalBus = signalBus;
+        }
+
+        private void Awake()
+        {
+            if (_themeSettings == null) _themeSettings = Resources.Load<ThemeSettings>("ThemeSettings");
         }
 
         private void OnEnable()
@@ -58,23 +68,41 @@ namespace RestaurantLoop.Runtime.UI
 
         public void UpdateView()
         {
-            if (_currentLevelProvider == null) return;
+            if (_themeSettings == null) _themeSettings = Resources.Load<ThemeSettings>("ThemeSettings");
 
-            var level = _currentLevelProvider.Current;
-            if (level == null)
+            ConveyorLevelDataSO level = _currentLevelProvider?.Current;
+            if (level == null && _currentLevelProvider != null)
             {
                 _currentLevelProvider.ResolveFromSave();
                 level = _currentLevelProvider.Current;
             }
 
-            if (level == null) return;
-
-            if (_levelInfoText != null)
+            if (level != null && _levelInfoText != null)
             {
                 _levelInfoText.text = $"Level {level.LevelId}";
             }
 
-            if (_difficultyText == null) return;
+            // Update Theme Background
+            if (_themeSettings != null)
+            {
+                ThemeType themeType = level != null ? level.Theme : ThemeType.Asian;
+                var theme = _themeSettings.GetTheme(themeType);
+                if (theme != null && theme.MainMenuBackground != null)
+                {
+                    if (_menuBackgroundImage != null)
+                    {
+                        _menuBackgroundImage.sprite = theme.MainMenuBackground;
+                    }
+                    else
+                    {
+                        // Fallback: Check if there's a background Image component on root / parent
+                        var bg = transform.parent != null ? transform.parent.Find("Background")?.GetComponent<UnityEngine.UI.Image>() : null;
+                        if (bg != null) bg.sprite = theme.MainMenuBackground;
+                    }
+                }
+            }
+
+            if (level == null || _difficultyText == null) return;
 
             bool isHard = level.Difficulty is LevelDifficulty.Hard or LevelDifficulty.SuperHard;
             _difficultyText.gameObject.SetActive(isHard || level.Difficulty == LevelDifficulty.Bonus);

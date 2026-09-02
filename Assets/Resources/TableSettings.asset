@@ -28,4 +28,4 @@ MonoBehaviour:
   ScaleWithCamera: 1
   TableScaleMultiplier: 1
   ZoomOffsetCompensation: {x: 0, y: 0, z: 0}
-  FoodQueueScaleMultiplier: 1
+  FoodQueueScaleMultiplier: 0.5

@@ -26,6 +26,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
+    ConveyorStackSpacing: 1
+    ExitStackSpacing: 0
     StackSpacingFactor: 1
   - Type: 1
     Queue:
@@ -37,6 +39,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
+    ConveyorStackSpacing: 1
+    ExitStackSpacing: 0
     StackSpacingFactor: 1
   - Type: 2
     Queue:
@@ -48,6 +52,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
+    ConveyorStackSpacing: 1
+    ExitStackSpacing: 0
     StackSpacingFactor: 2
   - Type: 3
     Queue:
@@ -59,6 +65,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
+    ConveyorStackSpacing: 1
+    ExitStackSpacing: 0
     StackSpacingFactor: 0.3
   - Type: 4
     Queue:
@@ -70,6 +78,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
+    ConveyorStackSpacing: 1
+    ExitStackSpacing: 0
     StackSpacingFactor: 1
   - Type: 5
     Queue:
@@ -81,6 +91,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
+    ConveyorStackSpacing: 0.5
+    ExitStackSpacing: 0
     StackSpacingFactor: 1
   - Type: 6
     Queue:
@@ -92,6 +104,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
+    ConveyorStackSpacing: 0.5
+    ExitStackSpacing: 0
     StackSpacingFactor: 1
   - Type: 7
     Queue:
@@ -103,6 +117,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 0.7
       OpenedScale: 0.7
+    ConveyorStackSpacing: 1
+    ExitStackSpacing: 0
     StackSpacingFactor: 1
   - Type: 8
     Queue:
@@ -114,6 +130,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 0.7
       OpenedScale: 0.7
+    ConveyorStackSpacing: 1
+    ExitStackSpacing: 0
     StackSpacingFactor: 1
   - Type: 9
     Queue:
@@ -125,4 +143,6 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
+    ConveyorStackSpacing: 1
+    ExitStackSpacing: 0
     StackSpacingFactor: 1

@@ -12,12 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98e81803ea4a89b4c9d3d85b49cb3150, type: 3}
   m_Name: FoodMeshSettings
   m_EditorClassIdentifier: 
-  HiddenOrderBubble: {fileID: 21300000, guid: e3a4dc025a19e434893bde0529cfe2cf, type: 3}
+  HiddenOrderBubble: {fileID: 21300000, guid: 52ed48028d80d564daa61936d8102699, type: 3}
   CustomerBubbleScale: 1.3
   CustomerBubbleHeight: 3
   ScaleBubbleWithCamera: 0
   BubbleCameraScaleMultiplier: 1
   StackAmountFont: {fileID: 11400000, guid: 48caf0496452fbe4593cb66fb79f3861, type: 2}
+  ConveyorBadgeHeightOffset: 0.85
   _entries:
   - Type: 0
     Color: {r: 0.83921576, g: 0.2392157, b: 0.21568629, a: 1}

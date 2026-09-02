@@ -17,9 +17,12 @@ MonoBehaviour:
   AutoCenterBeltGrid: 1
   ReferenceGridWidth: 7
   ReferenceGridHeight: 7
-  CameraZoomSensitivity: 0.5
+  CameraZoomSensitivity: 0.75
+  CameraPickFromBottomOffset: {x: 0, y: -0.6, z: -4}
+  CameraPickFromBottomDuration: 0.35
+  CameraPickFromBottomOrthoMultiplier: 0.95
   BeltFoodHeight: -3.3
-  QueueFoodHeight: -3.9
+  QueueFoodHeight: -3.3
   ExitStackFoodHeight: -3
   BeltSpeed: 4
   BeltTrackHeight: -4.45
@@ -43,7 +46,7 @@ MonoBehaviour:
   ClickRadiusPixels: 80
   LinkedPairBeltSpacing: 2
   LinkPrismWidth: 0
-  LinkPrismHeight: 0.5
+  LinkPrismHeight: 0.3
   LinkPrismYOffset: -0.3
   LinkLineWidth: 0.3
   LinkLineSag: 0.35
