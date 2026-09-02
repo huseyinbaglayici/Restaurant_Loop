@@ -1,5 +1,6 @@
 using System;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.SceneFlow;
 using RestaurantLoop.Signals;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -14,48 +15,58 @@ namespace RestaurantLoop.Audio
 
         private readonly SignalBus _signalBus;
         private readonly AudioLibrary _settings;
+        private readonly CurrentLevelProvider _currentLevelProvider;
+        private readonly ThemeSettings _themeSettings;
 
         private readonly AudioSource _musicSource;
         private readonly AudioSource _ambienceSource;
         private readonly AudioSource _sfxSource;
         private readonly AudioSource _conveyorSource;
 
-        public float MusicVolume => _settings != null ? _settings.MusicVolume : 0.5f;
-        public float SfxVolume => _settings != null ? _settings.SfxVolume : 0.5f;
+        public float MusicVolume => _settings != null ? _settings.MusicVolume : 1f;
+        public float SfxVolume => _settings != null ? _settings.SfxVolume : 1f;
 
         public event Action<float, float> OnAudioSettingsChanged;
 
-        public AudioService(SignalBus signalBus, AudioLibrary settings)
+        public AudioService(
+            SignalBus signalBus,
+            AudioLibrary settings,
+            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
+            [Inject(Optional = true)] ThemeSettings themeSettings = null)
         {
             _signalBus = signalBus;
             _settings = settings;
+            _currentLevelProvider = currentLevelProvider;
+            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
 
-            // PlayerPrefs'ten önceden kaydedilmiş değerleri yükle (ilk açılışta AudioLibrary'deki varsayılanı kullanır)
-            if (PlayerPrefs.HasKey(PrefsMusicKey))
+            // PlayerPrefs'ten önceden kaydedilmiş değerleri yükle (ilk açılışta full 1.0 varsayılanı)
+            float savedMusic = PlayerPrefs.GetFloat(PrefsMusicKey, 1f);
+            float savedSfx = PlayerPrefs.GetFloat(PrefsSfxKey, 1f);
+
+            if (_settings != null)
             {
-                _settings.MusicVolume = PlayerPrefs.GetFloat(PrefsMusicKey);
-            }
-            if (PlayerPrefs.HasKey(PrefsSfxKey))
-            {
-                _settings.SfxVolume = PlayerPrefs.GetFloat(PrefsSfxKey);
+                _settings.MusicVolume = savedMusic;
+                _settings.AmbienceVolume = savedMusic * 0.4f;
+                _settings.SfxVolume = savedSfx;
+                _settings.ConveyorVolume = savedSfx * 0.5f;
             }
 
             var root = new GameObject("AudioService");
             UnityEngine.Object.DontDestroyOnLoad(root);
 
-            _musicSource = CreateSource(root.transform, "Music", loop: true, volume: _settings.MusicVolume);
-            _ambienceSource = CreateSource(root.transform, "Ambience", loop: true, volume: _settings.AmbienceVolume);
+            _musicSource = CreateSource(root.transform, "Music", loop: true, volume: _settings != null ? _settings.MusicVolume : 1f);
+            _ambienceSource = CreateSource(root.transform, "Ambience", loop: true, volume: _settings != null ? _settings.AmbienceVolume : 0.4f);
             _sfxSource = CreateSource(root.transform, "Sfx", loop: false, volume: 1f);
-            _conveyorSource = CreateSource(root.transform, "Conveyor", loop: true, volume: _settings.ConveyorVolume > 0f ? _settings.ConveyorVolume : _settings.SfxVolume * 2f);
+            _conveyorSource = CreateSource(root.transform, "Conveyor", loop: true, volume: _settings != null ? _settings.ConveyorVolume : 0.5f);
         }
 
         public void SetMusicVolume(float volume)
         {
-            volume = Mathf.Clamp(volume, 0f, 0.2f); // Max 0.2
+            volume = Mathf.Clamp01(volume); // Full 0.0 to 1.0
             if (_settings != null)
             {
                 _settings.MusicVolume = volume;
-                _settings.AmbienceVolume = volume * 0.5f; // Ambiyans da müzik seviyesine orantılı ayarlanır
+                _settings.AmbienceVolume = volume * 0.4f;
             }
             if (_musicSource != null)
             {
@@ -63,7 +74,7 @@ namespace RestaurantLoop.Audio
             }
             if (_ambienceSource != null)
             {
-                _ambienceSource.volume = volume * 0.5f;
+                _ambienceSource.volume = volume * 0.4f;
             }
             PlayerPrefs.SetFloat(PrefsMusicKey, volume);
             PlayerPrefs.Save();
@@ -73,15 +84,15 @@ namespace RestaurantLoop.Audio
 
         public void SetSfxVolume(float volume)
         {
-            volume = Mathf.Clamp(volume, 0f, 0.2f); // Max 0.2
+            volume = Mathf.Clamp01(volume); // Full 0.0 to 1.0
             if (_settings != null)
             {
                 _settings.SfxVolume = volume;
-                _settings.ConveyorVolume = volume;
+                _settings.ConveyorVolume = volume * 0.5f;
             }
             if (_conveyorSource != null)
             {
-                _conveyorSource.volume = volume;
+                _conveyorSource.volume = volume * 0.5f;
             }
             PlayerPrefs.SetFloat(PrefsSfxKey, volume);
             PlayerPrefs.Save();
@@ -122,13 +133,34 @@ namespace RestaurantLoop.Audio
         private void OnMenuReady()
         {
             StopConveyorLoop();
-            PlayMusic(_settings.MenuMusic);
+
+            AudioClip menuMusic = _settings != null ? _settings.MenuMusic : null;
+            if (_currentLevelProvider?.Current != null && _themeSettings != null)
+            {
+                var theme = _themeSettings.GetTheme(_currentLevelProvider.Current.Theme);
+                if (theme != null && theme.MenuMusic != null) menuMusic = theme.MenuMusic;
+            }
+
+            if (menuMusic != null) PlayMusic(menuMusic);
         }
 
         private void OnGameplayReady()
         {
-            PlayMusic(_settings.GameplayMusic);
-            PlayAmbience(_settings.GameplayAmbience);
+            AudioClip gameplayMusic = _settings != null ? _settings.GameplayMusic : null;
+            AudioClip ambience = _settings != null ? _settings.GameplayAmbience : null;
+
+            if (_currentLevelProvider?.Current != null && _themeSettings != null)
+            {
+                var theme = _themeSettings.GetTheme(_currentLevelProvider.Current.Theme);
+                if (theme != null)
+                {
+                    if (theme.GameplayMusic != null) gameplayMusic = theme.GameplayMusic;
+                    if (theme.GameplayAmbience != null) ambience = theme.GameplayAmbience;
+                }
+            }
+
+            if (gameplayMusic != null) PlayMusic(gameplayMusic);
+            if (ambience != null) PlayAmbience(ambience);
         }
 
         // Stop gameplay ambience and conveyor loop the moment a level ends, before the async scene unload even starts —

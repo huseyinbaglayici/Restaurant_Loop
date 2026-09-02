@@ -59,6 +59,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private void OnDisable()
         {
             // A pooled respawn must never inherit a mid-tween scale/position from a previous customer.
+            _isExiting = false;
             ResetTransform();
         }
 
@@ -116,9 +117,12 @@ namespace RestaurantLoop.Runtime.Conveyor
         private const float ConsumeComboStep = 0.35f;
         private const float ConsumeComboMax = 2.2f;
         private float _consumeComboScale = 1f;
+        private bool _isExiting;
 
         public void PlayConsumePunch(Vector3 strength, float duration, int vibrato, float elasticity)
         {
+            if (_isExiting) return;
+
             bool punchAlreadyRunning = _scaleTween != null && _scaleTween.active && _scaleTween.IsPlaying();
             _consumeComboScale = punchAlreadyRunning
                 ? Mathf.Min(_consumeComboScale + ConsumeComboStep, ConsumeComboMax)
@@ -137,6 +141,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         // and the visual vanish land on the same frame instead of a scale pop-then-snap.
         public void PlayServeReaction(bool hasSecondOrderRemaining, Action onComplete)
         {
+            if (_isExiting) return;
+            if (!hasSecondOrderRemaining) _isExiting = true;
+
             ResetTransform();
 
             var seq = DOTween.Sequence();
@@ -168,6 +175,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             seq.OnComplete(() =>
             {
+                _isExiting = false;
                 transform.localScale = _restLocalScale;
                 transform.localPosition = _restLocalPosition;
                 transform.localRotation = _restLocalRotation;

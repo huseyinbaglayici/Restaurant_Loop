@@ -13,12 +13,52 @@ MonoBehaviour:
   m_Name: ConveyorLevel_99
   m_EditorClassIdentifier: 
   LevelId: 99
-  Difficulty: 2
+  Difficulty: 0
   Environment: {fileID: 723497061726727076, guid: f49e09aeb79d57542bee99742c7c0883,
     type: 3}
   GridWidth: 7
-  GridHeight: 9
+  GridHeight: 8
   ConveyorCells:
+  - Coord: {x: 0, y: 0}
+    Shape: 1
+    Rotation: 270
+    IsGate: 1
+  - Coord: {x: 6, y: 0}
+    Shape: 1
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 6, y: 7}
+    Shape: 1
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 0, y: 7}
+    Shape: 1
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 1, y: 0}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 2, y: 0}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 3, y: 0}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 4, y: 0}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 5, y: 0}
+    Shape: 0
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 6, y: 1}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
   - Coord: {x: 6, y: 2}
     Shape: 0
     Rotation: 90
@@ -39,33 +79,25 @@ MonoBehaviour:
     Shape: 0
     Rotation: 90
     IsGate: 0
-  - Coord: {x: 6, y: 7}
-    Shape: 0
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 5, y: 8}
+  - Coord: {x: 5, y: 7}
     Shape: 0
     Rotation: 180
     IsGate: 0
-  - Coord: {x: 4, y: 8}
+  - Coord: {x: 4, y: 7}
     Shape: 0
     Rotation: 180
     IsGate: 0
-  - Coord: {x: 3, y: 8}
+  - Coord: {x: 3, y: 7}
     Shape: 0
     Rotation: 180
     IsGate: 0
-  - Coord: {x: 2, y: 8}
+  - Coord: {x: 2, y: 7}
     Shape: 0
     Rotation: 180
     IsGate: 0
-  - Coord: {x: 1, y: 8}
+  - Coord: {x: 1, y: 7}
     Shape: 0
     Rotation: 180
-    IsGate: 0
-  - Coord: {x: 0, y: 7}
-    Shape: 0
-    Rotation: 270
     IsGate: 0
   - Coord: {x: 0, y: 6}
     Shape: 0
@@ -87,50 +119,19 @@ MonoBehaviour:
     Shape: 0
     Rotation: 270
     IsGate: 0
-  - Coord: {x: 6, y: 8}
-    Shape: 1
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 0, y: 8}
-    Shape: 1
-    Rotation: 180
-    IsGate: 0
-  - Coord: {x: 6, y: 1}
-    Shape: 1
-    Rotation: 0
-    IsGate: 0
-  - Coord: {x: 1, y: 1}
-    Shape: 0
-    Rotation: 0
-    IsGate: 0
-  - Coord: {x: 2, y: 1}
-    Shape: 0
-    Rotation: 0
-    IsGate: 0
-  - Coord: {x: 3, y: 1}
-    Shape: 0
-    Rotation: 0
-    IsGate: 0
-  - Coord: {x: 4, y: 1}
-    Shape: 0
-    Rotation: 0
-    IsGate: 0
-  - Coord: {x: 5, y: 1}
-    Shape: 0
-    Rotation: 0
-    IsGate: 0
   - Coord: {x: 0, y: 1}
-    Shape: 1
+    Shape: 0
     Rotation: 270
-    IsGate: 1
+    IsGate: 0
   ConveyorEntities: []
   BakedPath:
     OrderedPath:
-    - {x: 1, y: 1}
-    - {x: 2, y: 1}
-    - {x: 3, y: 1}
-    - {x: 4, y: 1}
-    - {x: 5, y: 1}
+    - {x: 1, y: 0}
+    - {x: 2, y: 0}
+    - {x: 3, y: 0}
+    - {x: 4, y: 0}
+    - {x: 5, y: 0}
+    - {x: 6, y: 0}
     - {x: 6, y: 1}
     - {x: 6, y: 2}
     - {x: 6, y: 3}
@@ -138,145 +139,23 @@ MonoBehaviour:
     - {x: 6, y: 5}
     - {x: 6, y: 6}
     - {x: 6, y: 7}
-    - {x: 6, y: 8}
-    - {x: 5, y: 8}
-    - {x: 4, y: 8}
-    - {x: 3, y: 8}
-    - {x: 2, y: 8}
-    - {x: 1, y: 8}
-    - {x: 0, y: 8}
+    - {x: 5, y: 7}
+    - {x: 4, y: 7}
+    - {x: 3, y: 7}
+    - {x: 2, y: 7}
+    - {x: 1, y: 7}
     - {x: 0, y: 7}
     - {x: 0, y: 6}
     - {x: 0, y: 5}
     - {x: 0, y: 4}
     - {x: 0, y: 3}
     - {x: 0, y: 2}
+    - {x: 0, y: 1}
   Customers:
-  - Coord: {x: 1, y: 3}
-    Order:
-      Type: 3
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
-  - Coord: {x: 1, y: 4}
-    Order:
-      Type: 1
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
-  - Coord: {x: 1, y: 5}
-    Order:
-      Type: 1
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
-  - Coord: {x: 5, y: 5}
-    Order:
-      Type: 1
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
-  - Coord: {x: 5, y: 4}
-    Order:
-      Type: 3
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
-  - Coord: {x: 5, y: 3}
-    Order:
-      Type: 3
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
-  - Coord: {x: 2, y: 6}
-    Order:
-      Type: 1
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
-  - Coord: {x: 2, y: 5}
-    Order:
-      Type: 1
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
-  - Coord: {x: 2, y: 4}
-    Order:
-      Type: 1
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
-  - Coord: {x: 2, y: 3}
-    Order:
-      Type: 3
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
   - Coord: {x: 2, y: 2}
     Order:
-      Type: 3
-      Amount: 2
-      LinkId: 0
-    IsHidden: 0
-    HasSecondOrder: 0
-    SecondOrder:
-      Type: 0
-      Amount: 0
-      LinkId: 0
-  - Coord: {x: 3, y: 2}
-    Order:
-      Type: 3
-      Amount: 2
+      Type: 6
+      Amount: 1
       LinkId: 0
     IsHidden: 0
     HasSecondOrder: 0
@@ -286,6 +165,94 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 4, y: 2}
     Order:
+      Type: 6
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 3, y: 2}
+    Order:
+      Type: 6
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 3, y: 3}
+    Order:
+      Type: 5
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 2, y: 3}
+    Order:
+      Type: 5
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 2, y: 4}
+    Order:
+      Type: 4
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 3, y: 4}
+    Order:
+      Type: 4
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 4, y: 4}
+    Order:
+      Type: 0
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 4, y: 3}
+    Order:
+      Type: 2
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 2, y: 5}
+    Order:
       Type: 3
       Amount: 2
       LinkId: 0
@@ -295,7 +262,7 @@ MonoBehaviour:
       Type: 0
       Amount: 0
       LinkId: 0
-  - Coord: {x: 4, y: 3}
+  - Coord: {x: 3, y: 5}
     Order:
       Type: 3
       Amount: 2
@@ -309,7 +276,7 @@ MonoBehaviour:
   - Coord: {x: 4, y: 5}
     Order:
       Type: 1
-      Amount: 2
+      Amount: 1
       LinkId: 0
     IsHidden: 0
     HasSecondOrder: 0
@@ -317,10 +284,10 @@ MonoBehaviour:
       Type: 0
       Amount: 0
       LinkId: 0
-  - Coord: {x: 4, y: 4}
+  - Coord: {x: 1, y: 3}
     Order:
-      Type: 3
-      Amount: 2
+      Type: 7
+      Amount: 1
       LinkId: 0
     IsHidden: 0
     HasSecondOrder: 0
@@ -328,10 +295,43 @@ MonoBehaviour:
       Type: 0
       Amount: 0
       LinkId: 0
-  - Coord: {x: 4, y: 6}
+  - Coord: {x: 1, y: 4}
     Order:
-      Type: 1
-      Amount: 2
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 1, y: 5}
+    Order:
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 1, y: 6}
+    Order:
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 2, y: 6}
+    Order:
+      Type: 7
+      Amount: 1
       LinkId: 0
     IsHidden: 0
     HasSecondOrder: 0
@@ -341,8 +341,8 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 3, y: 6}
     Order:
-      Type: 1
-      Amount: 2
+      Type: 7
+      Amount: 1
       LinkId: 0
     IsHidden: 0
     HasSecondOrder: 0
@@ -350,10 +350,10 @@ MonoBehaviour:
       Type: 0
       Amount: 0
       LinkId: 0
-  - Coord: {x: 3, y: 5}
+  - Coord: {x: 4, y: 6}
     Order:
-      Type: 1
-      Amount: 2
+      Type: 7
+      Amount: 1
       LinkId: 0
     IsHidden: 0
     HasSecondOrder: 0
@@ -361,10 +361,10 @@ MonoBehaviour:
       Type: 0
       Amount: 0
       LinkId: 0
-  - Coord: {x: 3, y: 3}
+  - Coord: {x: 5, y: 6}
     Order:
-      Type: 3
-      Amount: 2
+      Type: 7
+      Amount: 1
       LinkId: 0
     IsHidden: 0
     HasSecondOrder: 0
@@ -372,10 +372,109 @@ MonoBehaviour:
       Type: 0
       Amount: 0
       LinkId: 0
-  - Coord: {x: 3, y: 4}
+  - Coord: {x: 5, y: 5}
     Order:
-      Type: 3
-      Amount: 2
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 5, y: 4}
+    Order:
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 5, y: 3}
+    Order:
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 1, y: 2}
+    Order:
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 5, y: 2}
+    Order:
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 1, y: 1}
+    Order:
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 5, y: 1}
+    Order:
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 2, y: 1}
+    Order:
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 3, y: 1}
+    Order:
+      Type: 7
+      Amount: 1
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 4, y: 1}
+    Order:
+      Type: 7
+      Amount: 1
       LinkId: 0
     IsHidden: 0
     HasSecondOrder: 0
@@ -385,45 +484,54 @@ MonoBehaviour:
       LinkId: 0
   Queues:
   - Entries:
-    - Type: 0
-      Amount: 1
+    - Type: 6
+      Amount: 3
+      LinkId: 0
+    - Type: 3
+      Amount: 3
       LinkId: 0
     - Type: 0
       Amount: 1
       LinkId: 0
-    - Type: 0
-      Amount: 1
-      LinkId: 0
-  - Entries:
-    - Type: 0
-      Amount: 1
-      LinkId: 0
-    - Type: 0
-      Amount: 1
-      LinkId: 0
-    - Type: 0
-      Amount: 1
+    - Type: 2
+      Amount: 3
       LinkId: 0
   - Entries:
-    - Type: 0
+    - Type: 5
+      Amount: 3
+      LinkId: 0
+    - Type: 1
       Amount: 1
       LinkId: 0
-    - Type: 0
+    - Type: 2
+      Amount: 5
+      LinkId: 0
+    - Type: 2
+      Amount: 4
+      LinkId: 0
+  - Entries:
+    - Type: 4
+      Amount: 3
+      LinkId: 0
+    - Type: 2
       Amount: 1
       LinkId: 0
-    - Type: 0
-      Amount: 1
+    - Type: 2
+      Amount: 4
+      LinkId: 0
+    - Type: 2
+      Amount: 5
       LinkId: 0
   IsTutorial: 0
   TutorialSteps:
-  - Text: Click on the food stack to send it to the conveyor belt.
+  - Text: Tap the drink to send it to the conveyor belt.
     Trigger: 0
     HoverKind: 2
     PowerUpButton: 0
     QueueLaneIndex: 1
     QueueRowIndex: 0
     ConveyorCell: {x: 0, y: 0}
-  - Text: Serve all customers.
+  - Text: Serve all customers!
     Trigger: 0
     HoverKind: 0
     PowerUpButton: 0

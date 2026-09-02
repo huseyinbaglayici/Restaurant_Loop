@@ -24,6 +24,7 @@ MonoBehaviour:
   _powerUpTutorialPanelPos: {x: 0, y: -600}
   _powerUpFingerOffset: {x: 100, y: -60}
   _powerUpBlockerOffset: {x: 0, y: 90}
+  _queueFingerOffset: {x: 20, y: 20}
   _definitions:
   - Id: 0
     Name: Shuffle
@@ -61,4 +62,7 @@ MonoBehaviour:
     CustomTutorialPanelPos: {x: 0, y: 0}
     CustomFingerOffset: {x: 0, y: 0}
     CustomBlockerOffset: {x: 0, y: 0}
-  _levelGrants: []
+  _levelGrants:
+  - Level: 21
+    PowerUp: 0
+    Amount: 5

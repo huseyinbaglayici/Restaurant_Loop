@@ -1,3 +1,4 @@
+using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 using Zenject;
@@ -16,6 +17,12 @@ namespace RestaurantLoop.Runtime.Conveyor
         public Camera Camera => _camera;
         private readonly Vector3 _offsetFromQueueCenter;
         private readonly float _initialOrthoSize;
+        private Vector3 _defaultPosition;
+        private float _defaultOrthoSize;
+        private Tween _moveTween;
+        private Tween _orthoTween;
+        private bool _isFocusedOnQueue;
+
         public float CameraZoomFactor { get; private set; } = 1f;
 
         public CameraController(ConveyorLevelDataSO level, ConveyorTuning tuning, QueueAnchor queueAnchor, Camera camera)
@@ -59,6 +66,47 @@ namespace RestaurantLoop.Runtime.Conveyor
             var targetPos = queueCenter + _offsetFromQueueCenter;
             targetPos.x = queueCenter.x;
             _camera.transform.position = targetPos;
+
+            _defaultPosition = targetPos;
+            _defaultOrthoSize = _camera.orthographicSize;
+        }
+
+        public void FocusOnQueue(bool enabled)
+        {
+            if (_isFocusedOnQueue == enabled || _camera == null) return;
+            _isFocusedOnQueue = enabled;
+
+            _moveTween?.Kill();
+            _orthoTween?.Kill();
+
+            float duration = _tuning != null && _tuning.CameraPickFromBottomDuration > 0f
+                ? _tuning.CameraPickFromBottomDuration
+                : 0.35f;
+
+            if (enabled)
+            {
+                Vector3 shift = _tuning != null ? _tuning.CameraPickFromBottomOffset : new Vector3(0f, -0.6f, -1.8f);
+                Vector3 targetPos = _defaultPosition + shift;
+
+                _moveTween = _camera.transform.DOMove(targetPos, duration).SetEase(Ease.OutCubic);
+
+                if (_camera.orthographic)
+                {
+                    float multiplier = _tuning != null && _tuning.CameraPickFromBottomOrthoMultiplier > 0f
+                        ? _tuning.CameraPickFromBottomOrthoMultiplier
+                        : 0.95f;
+                    _orthoTween = DOTween.To(() => _camera.orthographicSize, x => _camera.orthographicSize = x, _defaultOrthoSize * multiplier, duration).SetEase(Ease.OutCubic);
+                }
+            }
+            else
+            {
+                _moveTween = _camera.transform.DOMove(_defaultPosition, duration).SetEase(Ease.OutCubic);
+
+                if (_camera.orthographic)
+                {
+                    _orthoTween = DOTween.To(() => _camera.orthographicSize, x => _camera.orthographicSize = x, _defaultOrthoSize, duration).SetEase(Ease.OutCubic);
+                }
+            }
         }
     }
 }

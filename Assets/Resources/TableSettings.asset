@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   TablePrefab: {fileID: 707737151484778837, guid: a656b9ea0d2323d4dba66bf2d105fa59,
     type: 3}
-  BasePosition: {x: 3, y: -4, z: 7}
+  BasePosition: {x: 3, y: -4, z: -9}
   BaseRotation: {x: -90, y: 0, z: 0}
-  BaseScale: {x: 272, y: 125, z: 150}
-  GapFromExitRack: 2.5
+  BaseScale: {x: 272, y: 223, z: 150}
+  GapFromExitRack: 3.8
   TableXOffset: 0
-  QueueFoodZOffsetOnTable: -0.4
+  QueueFoodZOffsetOnTable: -1.5
   QueueFoodXOffsetOnTable: 0
   QueueCenterOffset: {x: 0, y: 0, z: 0}
   Enable2DQueueVisuals: 1
@@ -28,4 +28,4 @@ MonoBehaviour:
   ScaleWithCamera: 1
   TableScaleMultiplier: 1
   ZoomOffsetCompensation: {x: 0, y: 0, z: 0}
-  FoodQueueScaleMultiplier: 1
+  FoodQueueScaleMultiplier: 0.5

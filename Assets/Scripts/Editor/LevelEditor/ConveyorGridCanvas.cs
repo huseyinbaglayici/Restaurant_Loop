@@ -43,6 +43,21 @@ namespace Editor.LevelEditor
         private static readonly Color CustomerOutline = new(0.10f, 0.24f, 0.22f);
         private static readonly Color GateColor = new(0.2f, 0.9f, 0.95f);
 
+        private static FoodMeshSettings _cachedFoodMeshSettings;
+        private static FoodMeshSettings GetFoodMeshSettings()
+        {
+            if (_cachedFoodMeshSettings == null)
+                _cachedFoodMeshSettings = Resources.Load<FoodMeshSettings>("FoodMeshSettings");
+            return _cachedFoodMeshSettings;
+        }
+
+        public static Color GetFoodColor(FoodType type)
+        {
+            var settings = GetFoodMeshSettings();
+            if (settings != null) return settings.GetColor(type);
+            return FoodTypeUtil.ToColor(type);
+        }
+
         private bool _isDragging;
         private bool _eraseMode;
         private Vector2Int? _hoverCell;
@@ -504,7 +519,7 @@ namespace Editor.LevelEditor
 
             // customers
             foreach (var kv in Customers)
-                DrawCustomer(painter, CellCenterLocal(kv.Key), kv.Value.IsHidden, kv.Value.HasSecondOrder);
+                DrawCustomer(painter, CellCenterLocal(kv.Key), kv.Value);
 
             if (_hoverCell.HasValue)
             {
@@ -652,7 +667,7 @@ namespace Editor.LevelEditor
         {
             float radius = CellSize * 0.22f;
 
-            painter.fillColor = FoodTypeUtil.ToColor(stack.Type);
+            painter.fillColor = GetFoodColor(stack.Type);
             painter.strokeColor = EntityOutline;
             painter.lineWidth = 1.5f;
             painter.BeginPath();
@@ -661,13 +676,68 @@ namespace Editor.LevelEditor
             painter.Stroke();
         }
 
-        private void DrawCustomer(Painter2D painter, Vector2 center, bool isHidden, bool hasSecondOrder)
+        private void DrawCustomer(Painter2D painter, Vector2 center, CustomerEntity customer)
         {
             float half = CellSize * 0.38f;
             var r = new Rect(center.x - half, center.y - half, half * 2, half * 2);
 
-            // hidden: dimmed
-            painter.fillColor = isHidden ? new Color(CustomerColor.r, CustomerColor.g, CustomerColor.b, 0.4f) : CustomerColor;
+            Color color1 = GetFoodColor(customer.Order.Type);
+            if (customer.IsHidden)
+            {
+                color1.a = 0.55f;
+            }
+
+            if (customer.HasSecondOrder)
+            {
+                Color color2 = GetFoodColor(customer.SecondOrder.Type);
+                if (customer.IsHidden)
+                {
+                    color2.a = 0.55f;
+                }
+
+                // Left half (Order 1)
+                var leftR = new Rect(r.xMin, r.yMin, half, half * 2);
+                painter.fillColor = color1;
+                painter.BeginPath();
+                painter.MoveTo(leftR.position);
+                painter.LineTo(new Vector2(leftR.xMax, leftR.yMin));
+                painter.LineTo(new Vector2(leftR.xMax, leftR.yMax));
+                painter.LineTo(new Vector2(leftR.xMin, leftR.yMax));
+                painter.ClosePath();
+                painter.Fill();
+
+                // Right half (Order 2)
+                var rightR = new Rect(center.x, r.yMin, half, half * 2);
+                painter.fillColor = color2;
+                painter.BeginPath();
+                painter.MoveTo(rightR.position);
+                painter.LineTo(new Vector2(rightR.xMax, rightR.yMin));
+                painter.LineTo(new Vector2(rightR.xMax, rightR.yMax));
+                painter.LineTo(new Vector2(rightR.xMin, rightR.yMax));
+                painter.ClosePath();
+                painter.Fill();
+
+                // Center dividing line
+                painter.strokeColor = CustomerOutline;
+                painter.lineWidth = 2f;
+                painter.BeginPath();
+                painter.MoveTo(new Vector2(center.x, r.yMin));
+                painter.LineTo(new Vector2(center.x, r.yMax));
+                painter.Stroke();
+            }
+            else
+            {
+                painter.fillColor = color1;
+                painter.BeginPath();
+                painter.MoveTo(r.position);
+                painter.LineTo(new Vector2(r.xMax, r.yMin));
+                painter.LineTo(new Vector2(r.xMax, r.yMax));
+                painter.LineTo(new Vector2(r.xMin, r.yMax));
+                painter.ClosePath();
+                painter.Fill();
+            }
+
+            // Outline border
             painter.strokeColor = CustomerOutline;
             painter.lineWidth = 2f;
             painter.BeginPath();
@@ -676,18 +746,7 @@ namespace Editor.LevelEditor
             painter.LineTo(new Vector2(r.xMax, r.yMax));
             painter.LineTo(new Vector2(r.xMin, r.yMax));
             painter.ClosePath();
-            painter.Fill();
             painter.Stroke();
-
-            if (hasSecondOrder)
-            {
-                painter.strokeColor = CustomerOutline;
-                painter.lineWidth = 2f;
-                painter.BeginPath();
-                painter.MoveTo(new Vector2(center.x, r.yMin));
-                painter.LineTo(new Vector2(center.x, r.yMax));
-                painter.Stroke();
-            }
         }
 
         private void DrawGateMarker(Painter2D painter, Vector2 center)

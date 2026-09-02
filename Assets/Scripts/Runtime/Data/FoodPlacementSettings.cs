@@ -39,13 +39,32 @@ namespace RestaurantLoop.Runtime.Data
             public LocationScale FoodStack = LocationScale.Default;
             public LocationScale Conveyor = LocationScale.Default;
 
-            [Header("Stacking")]
-            [Tooltip("Gap between this food type's stacked units, as a fraction of one unit's actual rendered " +
-                     "height. 1 = units touch, below 1 = they overlap, above 1 = they float apart. 0 or less " +
-                     "is read as 1.")]
+            [Header("Stacking Spacing")]
+            [Tooltip("Bantta (Conveyor) giderken üst üste binen stack birimlerinin arasındaki boşluk/aralık çarpanı (1 = tam temas, >1 = aralarında boşluk bırakır, <1 = iç içe geçer).")]
+            public float ConveyorStackSpacing = 1f;
+
+            [Tooltip("Üst rafta (Exit Stack / Rack) dururken üst üste binen stack birimlerinin arasındaki boşluk/aralık çarpanı (1 = tam temas, >1 = aralarında boşluk bırakır, 0 ise Conveyor değeri kullanılır).")]
+            public float ExitStackSpacing = 0f;
+
+            [Tooltip("Genel/Varsayılan stack boşluk çarpanı (1 = tam temas).")]
             public float StackSpacingFactor = 1f;
         }
 
+        [Header("Global Scale Multipliers (All Foods)")]
+        [Tooltip("Global scale multiplier for all food/bubbles in Queue (default 1.0). Multiplies on top of per-food scales.")]
+        [SerializeField] private float _globalQueueScale = 1f;
+
+        [Tooltip("Global scale multiplier for all food in Rack / FoodStack (default 1.0). Multiplies on top of per-food scales.")]
+        [SerializeField] private float _globalFoodStackScale = 1f;
+
+        [Tooltip("Global scale multiplier for all food on Conveyor belt (default 1.0). Multiplies on top of per-food scales.")]
+        [SerializeField] private float _globalConveyorScale = 1f;
+
+        public float GlobalQueueScale => _globalQueueScale > 0f ? _globalQueueScale : 1f;
+        public float GlobalFoodStackScale => _globalFoodStackScale > 0f ? _globalFoodStackScale : 1f;
+        public float GlobalConveyorScale => _globalConveyorScale > 0f ? _globalConveyorScale : 1f;
+
+        [Header("Per-Food Entries")]
         [SerializeField] private List<Entry> _entries = new();
 
         public float ResolveScale(FoodType type, FoodLocation location, FoodVisualState state)
@@ -53,13 +72,31 @@ namespace RestaurantLoop.Runtime.Data
             var entry = FindEntry(type);
             var locationScale = entry != null ? SelectLocation(entry, location) : LocationScale.Default;
             float raw = state == FoodVisualState.Opened ? locationScale.OpenedScale : locationScale.ClosedScale;
-            return raw > 0f ? raw : 1f;
+            float scale = raw > 0f ? raw : 1f;
+
+            float globalMultiplier = location switch
+            {
+                FoodLocation.Queue => GlobalQueueScale,
+                FoodLocation.FoodStack => GlobalFoodStackScale,
+                FoodLocation.Conveyor => GlobalConveyorScale,
+                _ => 1f
+            };
+
+            return scale * globalMultiplier;
         }
 
-        public float ResolveStackSpacingFactor(FoodType type)
+        public float ResolveStackSpacingFactor(FoodType type, FoodLocation location = FoodLocation.Conveyor)
         {
             var entry = FindEntry(type);
-            float factor = entry != null ? entry.StackSpacingFactor : 1f;
+            if (entry == null) return 1f;
+
+            float factor = location switch
+            {
+                FoodLocation.FoodStack => entry.ExitStackSpacing > 0f ? entry.ExitStackSpacing : (entry.ConveyorStackSpacing > 0f ? entry.ConveyorStackSpacing : entry.StackSpacingFactor),
+                FoodLocation.Conveyor => entry.ConveyorStackSpacing > 0f ? entry.ConveyorStackSpacing : entry.StackSpacingFactor,
+                _ => entry.StackSpacingFactor > 0f ? entry.StackSpacingFactor : (entry.ConveyorStackSpacing > 0f ? entry.ConveyorStackSpacing : 1f)
+            };
+
             return factor > 0f ? factor : 1f;
         }
 

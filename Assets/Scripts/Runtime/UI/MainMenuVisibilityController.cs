@@ -12,13 +12,22 @@ namespace RestaurantLoop.UI
     public class MainMenuVisibilityController : MonoBehaviour
     {
         [SerializeField] private GameObject menuRoot;
+        [SerializeField] private UnityEngine.UI.Image _menuBackgroundImage;
 
         private SignalBus _signalBus;
+        private SceneFlow.CurrentLevelProvider _currentLevelProvider;
+        private Runtime.Data.ThemeSettings _themeSettings;
 
         [Inject]
-        public void Construct(SignalBus signalBus)
+        public void Construct(
+            SignalBus signalBus,
+            [Inject(Optional = true)] SceneFlow.CurrentLevelProvider currentLevelProvider = null,
+            [Inject(Optional = true)] Runtime.Data.ThemeSettings themeSettings = null)
         {
             _signalBus = signalBus;
+            _currentLevelProvider = currentLevelProvider;
+            _themeSettings = themeSettings ?? Resources.Load<Runtime.Data.ThemeSettings>("ThemeSettings");
+
             _signalBus.Subscribe<GameplaySceneReadySignal>(HideMenu);
             _signalBus.Subscribe<MenuReadySignal>(ShowMenu);
 
@@ -33,6 +42,37 @@ namespace RestaurantLoop.UI
 
         private void HideMenu() => menuRoot.SetActive(false);
 
-        private void ShowMenu() => menuRoot.SetActive(true);
+        private void ShowMenu()
+        {
+            UpdateThemeBackground();
+            menuRoot.SetActive(true);
+        }
+
+        private void UpdateThemeBackground()
+        {
+            var targetImage = _menuBackgroundImage;
+            if (targetImage == null && menuRoot != null)
+            {
+                // Auto-resolve Background Image from menuRoot if not assigned in Inspector
+                var bgTransform = menuRoot.transform.Find("Background") ?? menuRoot.transform.Find("BG") ?? menuRoot.transform.Find("Bg");
+                if (bgTransform != null) targetImage = bgTransform.GetComponent<UnityEngine.UI.Image>();
+            }
+
+            if (targetImage == null) return;
+
+            if (_currentLevelProvider != null && _themeSettings != null)
+            {
+                if (_currentLevelProvider.Current == null) _currentLevelProvider.ResolveFromSave();
+
+                if (_currentLevelProvider.Current != null)
+                {
+                    var theme = _themeSettings.GetTheme(_currentLevelProvider.Current.Theme);
+                    if (theme != null && theme.MainMenuBackground != null)
+                    {
+                        targetImage.sprite = theme.MainMenuBackground;
+                    }
+                }
+            }
+        }
     }
 }

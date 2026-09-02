@@ -34,6 +34,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly CustomerSpawner _customerSpawner;
         private readonly RuntimeCustomerState _customerState;
         private readonly CustomerConsumeService _consumeService;
+        private readonly ExitStackAnchor _exitStackAnchor;
         private readonly IAudioService _audioService;
         private readonly AudioLibrary _audioLibrary;
 
@@ -53,6 +54,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             CustomerSpawner customerSpawner,
             RuntimeCustomerState customerState,
             CustomerConsumeService consumeService,
+            [Inject(Optional = true)] ExitStackAnchor exitStackAnchor,
             IAudioService audioService,
             AudioLibrary audioLibrary)
         {
@@ -65,6 +67,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _customerSpawner = customerSpawner;
             _customerState = customerState;
             _consumeService = consumeService;
+            _exitStackAnchor = exitStackAnchor;
             _audioService = audioService;
             _audioLibrary = audioLibrary;
         }
@@ -117,11 +120,12 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (_beltVisuals.Count == 0) return;
 
             float deltaTime = Time.deltaTime;
-            float delta = _tuning.BeltSpeed * _conveyorManager.SpeedMultiplier * deltaTime;
-            float lastProgress = Mathf.Max(0, _conveyorManager.PathLength - 1);
 
-            foreach (var beltVisual in _beltVisuals.Values)
+            foreach (var kvp in _beltVisuals)
             {
+                int id = kvp.Key;
+                var beltVisual = kvp.Value;
+
                 // While flying in from the queue the flight owns the transform and targets the fixed
                 // entry point (Progress held at its start value) — advancing Progress here too would
                 // drag that point forward under the flight, landing the item a belt-speed's worth of
@@ -129,8 +133,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                 if (beltVisual.IsEnteringBelt) continue;
                 if (beltVisual.Visual == null) continue;
 
-                beltVisual.Progress = Mathf.Min(beltVisual.Progress + delta, lastProgress);
-                beltVisual.Visual.transform.position = _conveyorManager.SampleWorldPosition(beltVisual.Progress);
+                float progress = _conveyorManager.GetProgressById(id);
+                beltVisual.Progress = progress;
+                beltVisual.Visual.transform.position = _conveyorManager.SampleWorldPosition(progress);
 
                 if (!Mathf.Approximately(_feel.BeltSpinYDegreesPerSecond, 0f))
                     beltVisual.Visual.transform.Rotate(0f, _feel.BeltSpinYDegreesPerSecond * deltaTime, 0f, Space.World);
@@ -203,16 +208,27 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             int id = signal.ItemId;
             var visual = signal.Visual;
-            var slotPosition = signal.SlotWorldPosition;
+            var fallbackSlotPosition = signal.SlotWorldPosition;
 
             _beltVisuals.Remove(id);
             if (visual == null) return;
 
             visual.SetLocation(FoodLocation.FoodStack);
-            _flightService.Launch(visual.transform, slotPosition, _feel.BeltToStack, () =>
+
+            Vector3 TargetPosition()
+            {
+                if (_exitStackAnchor != null)
+                {
+                    var pos = _exitStackAnchor.GetFoodPositionForOccupant(visual);
+                    if (pos != Vector3.zero) return pos;
+                }
+                return fallbackSlotPosition;
+            }
+
+            _flightService.Launch(visual.transform, TargetPosition, _feel.BeltToStack, () =>
             {
                 _audioService.PlaySfx(_audioLibrary.FoodDropToRackSfx);
-                _signalBus.Fire(new FoodDockLandedSignal { ItemId = id });
+                _signalBus.Fire(new FoodDockLandedSignal { ItemId = id, Visual = visual });
             });
         }
 
@@ -236,18 +252,28 @@ namespace RestaurantLoop.Runtime.Conveyor
             // launch from, so there's nothing to wait on here.
             if (sourceVisual == null) return;
 
+            if (fullyConsumed && signal.PartnerVisual != null)
+            {
+                int removeKey = -1;
+                foreach (var kvp in _beltVisuals)
+                {
+                    if (kvp.Value != null && kvp.Value.Visual == signal.PartnerVisual)
+                    {
+                        removeKey = kvp.Key;
+                        break;
+                    }
+                }
+                if (removeKey != -1) _beltVisuals.Remove(removeKey);
+                if (signal.PartnerItemId.HasValue) _beltVisuals.Remove(signal.PartnerItemId.Value);
+
+                _flightService.Cancel(signal.PartnerVisual.transform);
+                _foodPool.Despawn(signal.PartnerVisual);
+            }
+
             if (sourceVisual.UsesFixedChildSlots)
             {
                 LaunchFixedSlotConsumeFlight(id, sourceVisual, fullyConsumed, coord, takenStack, serveResult, levelWon);
                 return;
-            }
-
-            if (fullyConsumed && signal.PartnerVisual != null && signal.PartnerItemId.HasValue)
-            {
-                int pId = signal.PartnerItemId.Value;
-                _beltVisuals.Remove(pId);
-                _flightService.Cancel(signal.PartnerVisual.transform);
-                _foodPool.Despawn(signal.PartnerVisual);
             }
 
             var flyer = ResolveConsumeFlyer(id, sourceVisual, takenStack, fullyConsumed);

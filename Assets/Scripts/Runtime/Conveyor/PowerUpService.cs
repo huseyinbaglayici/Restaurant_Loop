@@ -6,20 +6,27 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly QueueSpawner _queueSpawner;
         private readonly ExitStackAnchor _exitStackAnchor;
         private readonly TrayDispenserAnchor _trayDispenserAnchor;
+        private readonly CameraController _cameraController;
 
         public PowerUpService(
             QueueSpawner queueSpawner,
             ExitStackAnchor exitStackAnchor,
-            TrayDispenserAnchor trayDispenserAnchor)
+            TrayDispenserAnchor trayDispenserAnchor,
+            [Zenject.Inject(Optional = true)] CameraController cameraController = null)
         {
             _queueSpawner = queueSpawner;
             _exitStackAnchor = exitStackAnchor;
             _trayDispenserAnchor = trayDispenserAnchor;
+            _cameraController = cameraController;
         }
 
         public void ActivateShuffle() => _queueSpawner.ShuffleLanes();
 
-        public void ActivatePickFromBottom() => _queueSpawner.PickFromBottomEnabled = true;
+        public void ActivatePickFromBottom()
+        {
+            _queueSpawner.PickFromBottomEnabled = true;
+            _cameraController?.FocusOnQueue(true);
+        }
 
         public bool CanActivateExtraTray() => _exitStackAnchor != null && _exitStackAnchor.CanAddExtraSlot;
 

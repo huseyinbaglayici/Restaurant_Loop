@@ -80,6 +80,10 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Offset for the advance blocker during power-up tutorials")]
         [SerializeField] private Vector2 _powerUpBlockerOffset = Vector2.zero;
 
+        [Header("Queue Tutorial Layout (Queue Step Only)")]
+        [Tooltip("Custom offset for the finger pointer during Queue Lane tutorial steps")]
+        [SerializeField] private Vector2 _queueFingerOffset = Vector2.zero;
+
         [Header("Power-Up Definitions")]
         [SerializeField] private List<PowerUpDefinition> _definitions = new()
         {
@@ -103,6 +107,7 @@ namespace RestaurantLoop.Runtime.Data
         public Vector2 PowerUpTutorialPanelPos => _powerUpTutorialPanelPos;
         public Vector2 PowerUpFingerOffset => _powerUpFingerOffset;
         public Vector2 PowerUpBlockerOffset => _powerUpBlockerOffset;
+        public Vector2 QueueFingerOffset => _queueFingerOffset;
 
         public IReadOnlyList<PowerUpDefinition> Definitions => _definitions;
         public IReadOnlyList<LevelPowerUpGrant> LevelGrants => _levelGrants;

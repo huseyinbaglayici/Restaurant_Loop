@@ -18,6 +18,10 @@ namespace RestaurantLoop.Runtime.Data
         {
             public FoodType Type;
 
+            [Header("Color")]
+            [Tooltip("Bu yiyecek tipine özel renk (bağlantı prizması, UI vs. için). Boş bırakılırsa varsayılan renk kullanılır.")]
+            public Color Color;
+
             [Tooltip("Instantiated as-is for the opened unit visual — its own authored mesh, materials and " +
                      "orientation are used directly. Leave empty to keep the pool's generic unit prefab, " +
                      "tinted with the food type colour.")]
@@ -79,9 +83,12 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Kamera zoom çarpanı.")]
         public float BubbleCameraScaleMultiplier = 1.0f;
 
-        [Header("Fonts")]
+        [Header("Fonts & Badges")]
         [Tooltip("Font asset used for stack amount numbers across 2D queue and 3D conveyor.")]
         public TMPro.TMP_FontAsset StackAmountFont;
+
+        [Tooltip("Bantta (Conveyor) ve Rafta (Stack) yemeklerin tepesindeki sayı rozetinin ekstra Y yükseklik ofseti.")]
+        public float ConveyorBadgeHeightOffset = 0.8f;
 
         [SerializeField] private List<Entry> _entries = new();
 
@@ -132,5 +139,23 @@ namespace RestaurantLoop.Runtime.Data
         }
 
         public bool TryGetIcon(FoodType type, out Sprite icon) => TryGetCustomerIcon(type, out icon);
+
+        public Color GetColor(FoodType type)
+        {
+            foreach (var entry in _entries)
+            {
+                if (entry.Type != type) continue;
+                var c = entry.Color;
+                if (c.r > 0.001f || c.g > 0.001f || c.b > 0.001f || c.a > 0.001f)
+                {
+                    c.a = 1f;
+                    return c;
+                }
+                break;
+            }
+            var fallback = FoodTypeUtil.ToColor(type);
+            fallback.a = 1f;
+            return fallback;
+        }
     }
 }

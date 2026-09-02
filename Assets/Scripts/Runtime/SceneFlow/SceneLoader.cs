@@ -13,8 +13,21 @@ namespace RestaurantLoop.SceneFlow
         private readonly SignalBus _signalBus;
         private readonly CurrentLevelProvider _currentLevelProvider;
 
-        public static string ActiveGameplaySceneName =>
-            ShowcaseModeConfig.IsEnabled ? ShowcaseModeConfig.TargetSceneName : GameplaySceneName;
+        public static string ActiveGameplaySceneName
+        {
+            get
+            {
+                if (ShowcaseModeConfig.IsEnabled) return ShowcaseModeConfig.TargetSceneName;
+
+                // Fallback to EylulGameplayScene if GameplayScene is not in build
+                if (Application.CanStreamedLevelBeLoaded("EylulGameplayScene") && !Application.CanStreamedLevelBeLoaded(GameplaySceneName))
+                {
+                    return "EylulGameplayScene";
+                }
+
+                return GameplaySceneName;
+            }
+        }
 
         private AsyncOperation _pendingUnload;
 

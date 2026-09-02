@@ -488,78 +488,109 @@ MonoBehaviour:
       Type: 0
       Amount: 0
       LinkId: 0
+  - Coord: {x: 3, y: 4}
+    Order:
+      Type: 1
+      Amount: 3
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
+  - Coord: {x: 6, y: 4}
+    Order:
+      Type: 1
+      Amount: 3
+      LinkId: 0
+    IsHidden: 0
+    HasSecondOrder: 0
+    SecondOrder:
+      Type: 0
+      Amount: 0
+      LinkId: 0
   Queues:
   - Entries:
     - Type: 3
-      Amount: 3
-      LinkId: 0
-    - Type: 3
-      Amount: 5
-      LinkId: 0
-    - Type: 4
-      Amount: 3
-      LinkId: 3
-    - Type: 1
-      Amount: 5
-      LinkId: 4
-    - Type: 1
-      Amount: 5
-      LinkId: 0
-    - Type: 3
-      Amount: 3
-      LinkId: 0
-    - Type: 0
       Amount: 4
       LinkId: 0
     - Type: 1
+      Amount: 3
+      LinkId: 0
+    - Type: 1
+      Amount: 3
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 1
+    - Type: 1
+      Amount: 4
+      LinkId: 0
+    - Type: 1
+      Amount: 4
+      LinkId: 0
+    - Type: 1
+      Amount: 3
+      LinkId: 0
+    - Type: 4
+      Amount: 5
+      LinkId: 0
+    - Type: 4
       Amount: 4
       LinkId: 0
   - Entries:
     - Type: 3
       Amount: 5
       LinkId: 0
-    - Type: 1
+    - Type: 3
       Amount: 4
       LinkId: 0
-    - Type: 4
-      Amount: 5
-      LinkId: 1
-    - Type: 4
+    - Type: 1
       Amount: 4
+      LinkId: 1
+    - Type: 1
+      Amount: 5
+      LinkId: 0
+    - Type: 3
+      Amount: 4
+      LinkId: 0
+    - Type: 3
+      Amount: 5
+      LinkId: 0
+    - Type: 0
+      Amount: 3
       LinkId: 2
     - Type: 0
-      Amount: 5
-      LinkId: 4
-    - Type: 1
       Amount: 3
       LinkId: 0
-    - Type: 1
-      Amount: 5
-      LinkId: 0
-    - Type: 0
-      Amount: 3
+    - Type: 3
+      Amount: 4
       LinkId: 0
   - Entries:
+    - Type: 4
+      Amount: 3
+      LinkId: 0
     - Type: 1
       Amount: 5
-      LinkId: 1
+      LinkId: 0
+    - Type: 1
+      Amount: 5
+      LinkId: 0
     - Type: 3
+      Amount: 5
+      LinkId: 0
+    - Type: 1
+      Amount: 3
+      LinkId: 0
+    - Type: 1
       Amount: 3
       LinkId: 2
     - Type: 3
       Amount: 5
       LinkId: 0
-    - Type: 3
+    - Type: 0
       Amount: 3
-      LinkId: 0
-    - Type: 3
-      Amount: 4
-      LinkId: 0
-    - Type: 1
-      Amount: 5
-      LinkId: 0
-    - Type: 3
-      Amount: 5
       LinkId: 0
   IsTutorial: 0
   TutorialSteps: []

@@ -212,7 +212,12 @@ namespace RestaurantLoop.Runtime.Conveyor
             _conveyorAmountText.fontSize = 5.5f;
             _conveyorAmountText.color = Color.white;
             _conveyorAmountText.fontStyle = FontStyles.Bold;
-            _conveyorAmountText.sortingOrder = 20;
+            _conveyorAmountText.sortingOrder = 100;
+            var meshRenderer = textObj.GetComponent<MeshRenderer>();
+            if (meshRenderer != null)
+            {
+                meshRenderer.sortingOrder = 100;
+            }
         }
 
         public void SetAmountBadgeVisible(bool visible)
@@ -263,10 +268,73 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _conveyorAmountBadge.transform.rotation = cam.transform.rotation;
 
                 // Yemeğin yüksekliğine göre tepesinde ve hafif sağında duracak dünya ofseti
-                float height = _usesFixedChildSlots ? 0.7f : (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) + 0.35f);
-                Vector3 worldOffset = Vector3.up * height + cam.transform.right * 0.35f;
+                float extraOffset = _foodMeshSettings != null ? _foodMeshSettings.ConveyorBadgeHeightOffset : 0.8f;
+                float height = _usesFixedChildSlots
+                    ? (0.7f + extraOffset)
+                    : (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) + extraOffset);
+                Vector3 worldOffset = Vector3.up * height + cam.transform.right * 0.4f;
                 _conveyorAmountBadge.transform.position = transform.position + worldOffset;
             }
+        }
+
+        private TableSettings ResolveTableSettings()
+        {
+            if (_tableSettings == null)
+            {
+                _tableSettings = Resources.Load<TableSettings>("TableSettings");
+            }
+            return _tableSettings;
+        }
+
+        private CameraController ResolveCameraController()
+        {
+            if (_cameraController == null && ProjectContext.HasInstance)
+            {
+                try
+                {
+                    _cameraController = ProjectContext.Instance.Container.TryResolve<CameraController>();
+                }
+                catch { }
+            }
+            return _cameraController;
+        }
+
+        private float GetQueue2DScaleMultiplier()
+        {
+            var tableSettings = ResolveTableSettings();
+            if (tableSettings == null) return 1f;
+
+            float baseIconScale = tableSettings.Queue2DIconScale;
+            float globalQueueScale = _placement != null ? _placement.GlobalQueueScale : 1f;
+            float zoomMultiplier = 1f;
+
+            if (tableSettings.ScaleWithCamera)
+            {
+                var camCtrl = ResolveCameraController();
+                float zoom = camCtrl != null ? camCtrl.CameraZoomFactor : 1f;
+
+                // Fallback to Main Camera orthographic ratio if CameraController wasn't resolved yet
+                if (camCtrl == null)
+                {
+                    var cam = Camera.main;
+                    if (cam != null && cam.orthographic)
+                    {
+                        // Standard base ortho size is around 8.5
+                        float baseOrtho = 8.5f;
+                        if (cam.orthographicSize > baseOrtho)
+                        {
+                            zoom = cam.orthographicSize / baseOrtho;
+                        }
+                    }
+                }
+
+                float multiplier = tableSettings.FoodQueueScaleMultiplier > 0f 
+                    ? tableSettings.FoodQueueScaleMultiplier 
+                    : tableSettings.TableScaleMultiplier;
+                zoomMultiplier = 1f + (zoom - 1f) * multiplier;
+            }
+
+            return baseIconScale * globalQueueScale * zoomMultiplier;
         }
 
         private void ApplyQueue2DVisual(FoodStackData stack)
@@ -293,17 +361,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _queue2DAmountText.text = stack.Amount > 0 ? stack.Amount.ToString() : "";
             }
 
-            float baseIconScale = _tableSettings != null ? _tableSettings.Queue2DIconScale : 1.5f;
-            float zoomMultiplier = 1f;
-            if (_tableSettings != null && _tableSettings.ScaleWithCamera && _cameraController != null)
-            {
-                float zoom = _cameraController.CameraZoomFactor;
-                float multiplier = _tableSettings.FoodQueueScaleMultiplier;
-                zoomMultiplier = 1f + (zoom - 1f) * multiplier;
-            }
-
-            _queue2DHolder.transform.localScale = Vector3.one * (baseIconScale * zoomMultiplier);
-            _queue2DHolder.transform.localPosition = _tableSettings != null ? _tableSettings.Queue2DOffset : new Vector3(0f, 0.5f, 0f);
+            var tableSettings = ResolveTableSettings();
+            _queue2DHolder.transform.localScale = Vector3.one * GetQueue2DScaleMultiplier();
+            _queue2DHolder.transform.localPosition = tableSettings != null ? tableSettings.Queue2DOffset : new Vector3(0f, 0.5f, 0f);
 
             Align2DWithCamera();
         }
@@ -570,7 +630,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             float unitHeight = ResolveUnitHeight(_unitSourcePrefab[0], _unitAppliedRotation[0], _unitBaseScale[0] * scale);
             if (unitHeight <= 0.0001f) return FallbackStackSpacing;
 
-            return unitHeight * _placement.ResolveStackSpacingFactor(type);
+            return unitHeight * _placement.ResolveStackSpacingFactor(type, _location);
         }
 
         // Height along world Y after the unit's fixed orientation and scale are applied — a prefab laid
@@ -591,7 +651,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (prefab == null) return null;
 
             var meshFilters = prefab.GetComponentsInChildren<MeshFilter>(true);
-            if (meshFilters.Length == 0) return null;
+            var spriteRenderers = prefab.GetComponentsInChildren<SpriteRenderer>(true);
+            if (meshFilters.Length == 0 && spriteRenderers.Length == 0) return null;
 
             var worldToRoot = prefab.transform.worldToLocalMatrix;
             Bounds? combined = null;
@@ -612,6 +673,33 @@ namespace RestaurantLoop.Runtime.Conveyor
                 {
                     var corner = meshBounds.center + Vector3.Scale(extents, new Vector3(x, y, z));
                     localBounds.Encapsulate(meshToRoot.MultiplyPoint3x4(corner));
+                }
+
+                if (combined.HasValue)
+                {
+                    var c = combined.Value;
+                    c.Encapsulate(localBounds);
+                    combined = c;
+                }
+                else combined = localBounds;
+            }
+
+            for (int i = 0; i < spriteRenderers.Length; i++)
+            {
+                var sr = spriteRenderers[i];
+                if (sr.sprite == null) continue;
+
+                var srToRoot = worldToRoot * sr.transform.localToWorldMatrix;
+                var spriteBounds = sr.sprite.bounds;
+                var extents = spriteBounds.extents;
+
+                var localBounds = new Bounds(srToRoot.MultiplyPoint3x4(spriteBounds.center), Vector3.zero);
+                for (int x = -1; x <= 1; x += 2)
+                for (int y = -1; y <= 1; y += 2)
+                for (int z = -1; z <= 1; z += 2)
+                {
+                    var corner = spriteBounds.center + Vector3.Scale(extents, new Vector3(x, y, z));
+                    localBounds.Encapsulate(srToRoot.MultiplyPoint3x4(corner));
                 }
 
                 if (combined.HasValue)
@@ -645,6 +733,11 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (ShouldUse2DQueue())
             {
                 Align2DWithCamera();
+
+                if (_queue2DHolder != null)
+                {
+                    _queue2DHolder.transform.localScale = Vector3.one * GetQueue2DScaleMultiplier();
+                }
                 return;
             }
 
