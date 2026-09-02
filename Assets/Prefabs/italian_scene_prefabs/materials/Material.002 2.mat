@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Japanese_wood_medium
-  m_Shader: {fileID: 4800000, guid: 4bf5e337892e7dd4b8f8fa5a74a4b863, type: 3}
+  m_Name: Material.002 2
+  m_Shader: {fileID: 4800000, guid: c6e7332f6f55ef149830f390e3e43b78, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -72,6 +72,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _VATPositions:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -105,100 +109,64 @@ Material:
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DirectionalStrength: 0.55
-    - _DisableGrain: 0
-    - _DisableKnots: 0
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EdgeLight: 0.18
-    - _EnableSeams: 0
     - _EnvironmentReflections: 1
-    - _GlossMapScale: 0
+    - _GlossMapScale: 1
     - _Glossiness: 0
-    - _GlossyReflections: 0
+    - _GlossyReflections: 1
     - _GradientEnd: 0.5
     - _GradientIntensity: 0.1
     - _GradientSpace: 0
     - _GradientStart: -0.5
-    - _GrainAxis: 0
-    - _GrainFreq: 18.2
-    - _GrainGroup: 0.4
-    - _GrainGroupScale: 0.9
-    - _GrainSoftness: 0.1
-    - _GrainSteps: 3
-    - _GrainStrength: 0.52
-    - _GrainWave: 0.14
-    - _GrainWaveScale: 3
-    - _GrainWidth: 0.174
-    - _GrainWidthVariation: 0.8
-    - _GrooveDepth: 0.5
-    - _GrooveNormalStrength: 1
-    - _GrooveWidth: 0.05
-    - _HemisphereWrap: 0.85
-    - _KnotCoreLightness: 0.45
-    - _KnotDarkness: 0.9
-    - _KnotDensity: 0.5
-    - _KnotPull: 2.4
-    - _KnotSize: 0.05
-    - _KnotSpacing: 1.13
-    - _KnotSquash: 1.4
+    - _HemisphereWrap: 0.92
     - _LightThreshold: 0.95
     - _Metallic: 0
+    - _Mode: 0
     - _OcclusionStrength: 1
-    - _Parallax: 0.005
-    - _PatternRotation: 0
-    - _PlankLength: 0.9
-    - _PlankStagger: 0.5
-    - _PlankTintVariation: 0.08
-    - _PlankWidth: 0.14
-    - _ProjectionAxis: 0
+    - _Parallax: 0.02
     - _QueueOffset: 0
     - _ReceiveShadowStrength: 0.35
     - _ReceiveShadows: 1
     - _Roundness: 0.3
     - _Saturation: 0.95
-    - _ScaleCompensation: 1
-    - _SeamDarken: 0.45
     - _ShadowBrightness: 0.62
     - _ShadowThreshold: 0.12
-    - _Smoothness: 0.5
+    - _Smoothness: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _ToneSpread: 0.55
-    - _ToneWarmth: 0.35
     - _ToonStepSoftness: 0.55
     - _ToonSteps: 3
-    - _TwoToneMode: 0
+    - _UVSec: 0
     - _UseMainLightDirection: 0
-    - _WoodScale: 1
+    - _VATTexHeight: 1
+    - _VATToggle: 0
+    - _VertexColorToggle: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0.6313755, g: 0.3294083, b: 0.18431485, a: 1}
     - _BottomGradientColor: {r: 0.92, g: 0.89, b: 0.91, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.6313755, g: 0.32940826, b: 0.18431482, a: 1}
     - _CreaseColor: {r: 0.62, g: 0.54999995, b: 0.58, a: 1}
     - _EdgeLightColor: {r: 1, g: 0.96999997, b: 0.92, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
     - _FakeLightDirection: {r: -0.35, g: 0.85, b: -0.4, a: 0}
-    - _GrooveColor: {r: 0.35999998, g: 0.19999996, b: 0.09999997, a: 1}
     - _GroundColor: {r: 0.62, g: 0.56, b: 0.58, a: 1}
     - _LightTint: {r: 1, g: 0.97999996, b: 0.94, a: 1}
-    - _PatternOffset: {r: 0, g: 0, b: 0, a: 0}
     - _RoundPivot: {r: 0, g: 0, b: 0, a: 0}
     - _ShadowColorTint: {r: 0.7, g: 0.62, b: 0.65999997, a: 1}
     - _ShadowTint: {r: 0.72, g: 0.65999997, b: 0.7, a: 1}
     - _SkyColor: {r: 1.06, g: 1.03, b: 0.97999996, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _TopGradientColor: {r: 1.03, g: 1.01, b: 0.98999995, a: 1}
-    - _WoodColor: {r: 0.85882354, g: 0.64135456, b: 0.47058824, a: 1}
-    - _WoodDark: {r: 0.7, g: 0.4699999, b: 0.24999997, a: 1}
-    - _WoodLight: {r: 0.95, g: 0.8399999, b: 0.65, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &259597421258307300
+--- !u!114 &5455635908427850216
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

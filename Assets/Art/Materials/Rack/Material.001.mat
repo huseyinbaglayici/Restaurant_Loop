@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 4bf5e337892e7dd4b8f8fa5a74a4b863, type: 3}
   m_Parent: {fileID: 2100000, guid: 10bf2b0ec5d182f4cbc32081f40409f1, type: 2}
   m_ModifiedSerializedProperties: 12
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _KNOTS_OFF
   m_InvalidKeywords:
   - _DROPSHADOW_ON
   m_LightmapFlags: 4
@@ -28,9 +29,16 @@ Material:
     m_Ints: []
     m_Floats:
     - _Cull: 0
+    - _DisableKnots: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _GrainFreq: 6.7
+    - _GrainGroupScale: 0.61
+    - _GrainSoftness: 0.04
+    - _GrainStrength: 0.197
+    - _GrainWidth: 0.125
+    - _GrainWidthVariation: 0.522
     - _Parallax: 0.02
     - _Roundness: 0.033
     m_Colors:
