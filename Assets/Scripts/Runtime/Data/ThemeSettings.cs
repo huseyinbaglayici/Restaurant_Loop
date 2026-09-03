@@ -39,16 +39,6 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Bu tema için Tepsi Dağıtıcı (Tray Dispenser) prefab'i veya görseli (Opsiyonel).")]
         public GameObject TrayDispenserPrefab;
 
-        [Header("Theme Materials (Opsiyonel alternatif)")]
-        [Tooltip("Bu tema için Rack (çıkış rafı) materyali.")]
-        public Material RackMaterial;
-        [Tooltip("Bu tema için Tepsi Dağıtıcı (Tray Dispenser) materyali.")]
-        public Material TrayDispenserMaterial;
-        [Tooltip("Bu tema için Conveyor (Bant) materyali.")]
-        public Material ConveyorMaterial;
-        [Tooltip("Bu tema için Conveyor Köşe (Corner) materyali (opsiyonel, boşsa ConveyorMaterial kullanılır).")]
-        public Material ConveyorCornerMaterial;
-
         [Header("Loading & Main Menu UI")]
         [Tooltip("Loading screen background sprite for this theme.")]
         public Sprite LoadingScreenBackground;

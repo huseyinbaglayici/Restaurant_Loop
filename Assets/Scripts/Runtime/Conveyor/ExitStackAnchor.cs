@@ -120,25 +120,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             {
                 rack.ApplyThemeVisual(theme.RackPrefab);
             }
-            else
-            {
-                ApplyRackMaterial(rack.gameObject);
-            }
 
             _spawnedFloors.Add(rack);
-        }
-
-        private void ApplyRackMaterial(GameObject obj)
-        {
-            if (obj == null || _themeSettings == null || _level == null) return;
-            var theme = _themeSettings.GetTheme(_level.Theme);
-            if (theme == null || theme.RackMaterial == null) return;
-
-            var renderers = obj.GetComponentsInChildren<MeshRenderer>(true);
-            foreach (var r in renderers)
-            {
-                r.sharedMaterial = theme.RackMaterial;
-            }
         }
 
         public void Dispose()
@@ -281,10 +264,6 @@ namespace RestaurantLoop.Runtime.Conveyor
                     extraRackPrefab,
                     newSlotPosition + _tuning.ExtraRackVisualOffset,
                     Quaternion.Euler(_tuning.ExtraRackVisualRotation));
-                if (theme == null || theme.ExtraRackPrefab == null)
-                {
-                    ApplyRackMaterial(visual);
-                }
                 _extraRackVisuals.Add(visual);
             }
             else

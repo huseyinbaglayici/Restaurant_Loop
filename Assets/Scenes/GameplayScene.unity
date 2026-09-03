@@ -5739,6 +5739,7 @@ MonoBehaviour:
   _buttonTryAgain: {fileID: 1348583992}
   _buttonExit: {fileID: 1243473124}
   _keepPlayingLevelText: {fileID: 928133059}
+  _keepPlayingCostText: {fileID: 0}
   _failedLevelText: {fileID: 1035690006}
   _failedRibbonLevelText: {fileID: 626335244}
   _coinRewardText: {fileID: 1419105036}

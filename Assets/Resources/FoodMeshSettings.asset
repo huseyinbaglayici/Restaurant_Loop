@@ -17,6 +17,10 @@ MonoBehaviour:
   CustomerBubbleHeight: 3
   ScaleBubbleWithCamera: 0
   BubbleCameraScaleMultiplier: 1
+  EnableBubblePulsing: 1
+  BubblePulseScale: 1.1
+  BubblePulseDuration: 0.7
+  BubblePulseColor: {r: 1.12, g: 1.12, b: 1.12, a: 1}
   StackAmountFont: {fileID: 11400000, guid: 48caf0496452fbe4593cb66fb79f3861, type: 2}
   ConveyorBadgeHeightOffset: 0.85
   _entries:
@@ -82,10 +86,10 @@ MonoBehaviour:
     FixedChildSlots: 0
   - Type: 5
     Color: {r: 0.854902, g: 0.8941177, b: 0.28627452, a: 1}
-    OpenedPrefab: {fileID: 7714696736389709273, guid: 4d4b6691bebdbac4dacf809b05fb4275,
+    OpenedPrefab: {fileID: 5030000000000000001, guid: 7a333333333333333333333333333333,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
-    ClosedPrefab: {fileID: 2830045199475947193, guid: 708750d9452a2bd46ad9c9e64b758990,
+    ClosedPrefab: {fileID: 5040000000000000001, guid: 7a444444444444444444444444444444,
       type: 3}
     ClosedRotationEuler: {x: 0, y: 0, z: 0}
     CustomerIcon: {fileID: 21300000, guid: c1451985897318c49915e58259176d4f, type: 3}
@@ -94,10 +98,10 @@ MonoBehaviour:
     FixedChildSlots: 0
   - Type: 6
     Color: {r: 0.9568628, g: 0.50980395, b: 0.039215688, a: 1}
-    OpenedPrefab: {fileID: 7714696736389709273, guid: 4d4b6691bebdbac4dacf809b05fb4275,
+    OpenedPrefab: {fileID: 5020000000000000001, guid: 7a222222222222222222222222222222,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
-    ClosedPrefab: {fileID: 2830045199475947193, guid: 708750d9452a2bd46ad9c9e64b758990,
+    ClosedPrefab: {fileID: 5010000000000000001, guid: 7a111111111111111111111111111111,
       type: 3}
     ClosedRotationEuler: {x: 0, y: 0, z: 0}
     CustomerIcon: {fileID: 21300000, guid: 0bec808964831144da94217d8c13e7a9, type: 3}

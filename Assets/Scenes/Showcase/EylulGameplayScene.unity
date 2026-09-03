@@ -6376,7 +6376,7 @@ MonoBehaviour:
   _mainCamera: {fileID: 0}
   _levelText: {fileID: 1989372339}
   _moneyText: {fileID: 1971849326}
-  _trayDispenserRoot: {fileID: 8111390360900650364}
+  _trayDispenserRoot: {fileID: 0}
   _customerOrderCanvasRoot: {fileID: 517041083}
   _orderIconsGroup: {fileID: 1542402105}
   _orderTextsGroup: {fileID: 1532874812}
@@ -12668,74 +12668,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0.7, y: -24.9}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1001 &787953273212994319
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -7.349917
-      objectReference: {fileID: 0}
-    - target: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -0.06299803
-      objectReference: {fileID: 0}
-    - target: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.7071067
-      objectReference: {fileID: 0}
-    - target: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0.7071068
-      objectReference: {fileID: 0}
-    - target: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9150942627471622608, guid: 830427759e61c5b43ab49727396e861f,
-        type: 3}
-      propertyPath: m_Name
-      value: tepsi_dagitici
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 830427759e61c5b43ab49727396e861f, type: 3}
 --- !u!1001 &1500103634340516689
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12887,12 +12819,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 233e4caef76c44f4c8b6c0e1b6f8cd49, type: 3}
---- !u!4 &8111390360900650364 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8481823433558940522, guid: 830427759e61c5b43ab49727396e861f,
-    type: 3}
-  m_PrefabInstance: {fileID: 787953273212994319}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -12903,7 +12829,6 @@ SceneRoots:
   - {fileID: 2038444599}
   - {fileID: 1076133228}
   - {fileID: 500391775}
-  - {fileID: 787953273212994319}
   - {fileID: 1416733620}
   - {fileID: 517041083}
   - {fileID: 1009259461}

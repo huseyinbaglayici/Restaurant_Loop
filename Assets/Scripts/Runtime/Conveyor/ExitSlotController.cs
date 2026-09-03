@@ -6,13 +6,15 @@ namespace RestaurantLoop.Runtime.Conveyor
     public class ExitSlotController : MonoBehaviour, IPoolable<Vector3>
     {
         private GameObject _activeThemeVisual;
-        private GameObject _baseVisualChild;
+        private readonly System.Collections.Generic.List<GameObject> _originalChildren = new();
+        private Renderer[] _originalRenderers;
 
         private void Awake()
         {
-            if (transform.childCount > 0)
+            _originalRenderers = GetComponents<Renderer>();
+            for (int i = 0; i < transform.childCount; i++)
             {
-                _baseVisualChild = transform.GetChild(0).gameObject;
+                _originalChildren.Add(transform.GetChild(i).gameObject);
             }
         }
 
@@ -20,7 +22,16 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             if (overridePrefab != null)
             {
-                if (_baseVisualChild != null) _baseVisualChild.SetActive(false);
+                if (_originalRenderers != null)
+                {
+                    foreach (var r in _originalRenderers) r.enabled = false;
+                }
+
+                foreach (var child in _originalChildren)
+                {
+                    if (child != null) child.SetActive(false);
+                }
+
                 if (_activeThemeVisual == null || _activeThemeVisual.name != overridePrefab.name)
                 {
                     if (_activeThemeVisual != null) Destroy(_activeThemeVisual);
@@ -35,7 +46,16 @@ namespace RestaurantLoop.Runtime.Conveyor
             else
             {
                 if (_activeThemeVisual != null) _activeThemeVisual.SetActive(false);
-                if (_baseVisualChild != null) _baseVisualChild.SetActive(true);
+
+                if (_originalRenderers != null)
+                {
+                    foreach (var r in _originalRenderers) r.enabled = true;
+                }
+
+                foreach (var child in _originalChildren)
+                {
+                    if (child != null) child.SetActive(true);
+                }
             }
         }
 

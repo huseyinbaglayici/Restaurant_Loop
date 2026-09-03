@@ -58,10 +58,6 @@ namespace RestaurantLoop.Runtime.Conveyor
                     {
                         piece.ApplyThemeVisual(theme.ConveyorStraightPrefab);
                     }
-                    else if (theme != null && theme.ConveyorMaterial != null)
-                    {
-                        ApplyMaterial(piece.gameObject, theme.ConveyorMaterial);
-                    }
                     _spawnedStraight.Add(piece);
                 }
                 else
@@ -71,26 +67,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                     {
                         piece.ApplyThemeVisual(theme.ConveyorCornerPrefab);
                     }
-                    else
-                    {
-                        var mat = theme != null ? (theme.ConveyorCornerMaterial != null ? theme.ConveyorCornerMaterial : theme.ConveyorMaterial) : null;
-                        if (mat != null)
-                        {
-                            ApplyMaterial(piece.gameObject, mat);
-                        }
-                    }
                     _spawnedCorner.Add(piece);
                 }
-            }
-        }
-
-        private void ApplyMaterial(GameObject obj, Material material)
-        {
-            if (obj == null || material == null) return;
-            var renderers = obj.GetComponentsInChildren<MeshRenderer>(true);
-            foreach (var r in renderers)
-            {
-                r.sharedMaterial = material;
             }
         }
 
