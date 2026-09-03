@@ -26,10 +26,10 @@ MonoBehaviour:
   _entries:
   - Type: 0
     Color: {r: 0.83921576, g: 0.2392157, b: 0.21568629, a: 1}
-    OpenedPrefab: {fileID: 2050022874529901392, guid: f72e0b0ffc690824db8ceee7d07c2bc2,
+    OpenedPrefab: {fileID: 5040000000000000001, guid: 7a75e6234d4a5bd4bad9cd4fa9fdf57f,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
-    ClosedPrefab: {fileID: 4522757509411977420, guid: 0ce9181b57f9e9c4b9ee0c4fbc113b69,
+    ClosedPrefab: {fileID: 5040000000000000001, guid: 51bcb49fd06b2b44ebeeb02950af88c5,
       type: 3}
     ClosedRotationEuler: {x: 0, y: 0, z: 0}
     CustomerIcon: {fileID: 21300000, guid: 0164fb0e2d0aa5040bdad52a16d0b5b6, type: 3}
@@ -50,10 +50,10 @@ MonoBehaviour:
     FixedChildSlots: 0
   - Type: 4
     Color: {r: 0.9215687, g: 0.34117648, b: 0.48627454, a: 1}
-    OpenedPrefab: {fileID: 2537419307790587190, guid: 3dc4e57de2b219344b6fcd2fcd3a3587,
+    OpenedPrefab: {fileID: 5040000000000000001, guid: 09148bb5fb8b32b40a50379bc37288fc,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
-    ClosedPrefab: {fileID: 2866541499900841170, guid: 8caef4126299bf34db57663121800b50,
+    ClosedPrefab: {fileID: 5040000000000000001, guid: e451deae4c428cb4e9e77d3d2607b14b,
       type: 3}
     ClosedRotationEuler: {x: 0, y: 0, z: 0}
     CustomerIcon: {fileID: 21300000, guid: 912e67cb62fda784c8dd922f127ddef5, type: 3}
@@ -62,10 +62,10 @@ MonoBehaviour:
     FixedChildSlots: 0
   - Type: 3
     Color: {r: 0.2, g: 0.55, b: 0.9, a: 1}
-    OpenedPrefab: {fileID: 6301023921460893688, guid: 1c715b06ffaca4b4cbe54aba365ff11b,
+    OpenedPrefab: {fileID: 5040000000000000001, guid: d29fbaaca7aeaf4439ac31f0f84e77e8,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
-    ClosedPrefab: {fileID: 6301023921460893688, guid: 1c715b06ffaca4b4cbe54aba365ff11b,
+    ClosedPrefab: {fileID: 5040000000000000001, guid: 4c64ec41cecf1c143950af9f50a99d22,
       type: 3}
     ClosedRotationEuler: {x: 0, y: 0, z: 0}
     CustomerIcon: {fileID: 21300000, guid: 71cfb198280573c49a29f11ab0451d4a, type: 3}
@@ -86,10 +86,10 @@ MonoBehaviour:
     FixedChildSlots: 0
   - Type: 5
     Color: {r: 0.854902, g: 0.8941177, b: 0.28627452, a: 1}
-    OpenedPrefab: {fileID: 5030000000000000001, guid: 7a333333333333333333333333333333,
+    OpenedPrefab: {fileID: 5040000000000000001, guid: 7a444444444444444444444444444444,
       type: 3}
     OpenedRotationEuler: {x: 0, y: 0, z: 0}
-    ClosedPrefab: {fileID: 5040000000000000001, guid: 7a444444444444444444444444444444,
+    ClosedPrefab: {fileID: 5030000000000000001, guid: 7a333333333333333333333333333333,
       type: 3}
     ClosedRotationEuler: {x: 0, y: 0, z: 0}
     CustomerIcon: {fileID: 21300000, guid: c1451985897318c49915e58259176d4f, type: 3}

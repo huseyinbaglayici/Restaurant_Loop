@@ -44,17 +44,17 @@ MonoBehaviour:
     StackSpacingFactor: 1
   - Type: 2
     Queue:
+      ClosedScale: 1.35
+      OpenedScale: 1.35
+    FoodStack:
       ClosedScale: 1.18
       OpenedScale: 1.18
-    FoodStack:
-      ClosedScale: 1
-      OpenedScale: 1
     Conveyor:
-      ClosedScale: 1
-      OpenedScale: 1
-    ConveyorStackSpacing: 1
-    ExitStackSpacing: 0
-    StackSpacingFactor: 2
+      ClosedScale: 1.18
+      OpenedScale: 1.18
+    ConveyorStackSpacing: 2
+    ExitStackSpacing: 2
+    StackSpacingFactor: 4
   - Type: 3
     Queue:
       ClosedScale: 1.18

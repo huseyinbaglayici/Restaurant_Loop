@@ -27,7 +27,7 @@ MonoBehaviour:
   QueueFoodHeight: -3.3
   ExitStackFoodHeight: -3.5
   BeltSpeed: 4
-  BeltTrackHeight: -4.45
+  BeltTrackHeight: -4.8
   MinEntrySpacing: 1.5
   EntryHoverHeight: 1
   QueueLaneSpacing: 1.75
@@ -35,7 +35,7 @@ MonoBehaviour:
   QueueRowSpacing: 1.5
   QueueShiftSpeed: 4
   TrayDispenserHeight: -4.5
-  TrayBeltHeight: -4
+  TrayBeltHeight: -4.7
   TrayDispenserOffset: {x: -0.7, y: 0, z: 0}
   ExitStackGroundHeight: -4.05
   ExitStackZOffsetFromGrid: 1.5
