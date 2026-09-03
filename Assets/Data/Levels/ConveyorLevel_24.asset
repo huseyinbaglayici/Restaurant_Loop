@@ -689,114 +689,114 @@ MonoBehaviour:
       LinkId: 0
   Queues:
   - Entries:
-    - Type: 0
-      Amount: 4
+    - Type: 2
+      Amount: 3
       LinkId: 0
-    - Type: 6
+    - Type: 2
       Amount: 5
       LinkId: 0
     - Type: 2
-      Amount: 4
-      LinkId: 2
-    - Type: 2
-      Amount: 4
-      LinkId: 0
-    - Type: 6
       Amount: 5
       LinkId: 0
     - Type: 2
+      Amount: 3
+      LinkId: 0
+    - Type: 2
       Amount: 4
       LinkId: 0
-    - Type: 4
+    - Type: 2
       Amount: 4
       LinkId: 4
     - Type: 2
-      Amount: 3
-      LinkId: 6
-    - Type: 2
-      Amount: 3
+      Amount: 4
       LinkId: 0
     - Type: 2
       Amount: 3
-      LinkId: 0
-    - Type: 2
-      Amount: 5
+      LinkId: 5
+    - Type: 0
+      Amount: 3
       LinkId: 0
     - Type: 0
-      Amount: 4
+      Amount: 3
+      LinkId: 0
+    - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 6
+      Amount: 3
       LinkId: 0
   - Entries:
     - Type: 2
       Amount: 4
-      LinkId: 3
-    - Type: 0
-      Amount: 3
-      LinkId: 2
-    - Type: 0
+      LinkId: 0
+    - Type: 2
       Amount: 3
       LinkId: 1
     - Type: 6
       Amount: 3
-      LinkId: 0
+      LinkId: 2
     - Type: 2
       Amount: 3
+      LinkId: 3
+    - Type: 0
+      Amount: 4
       LinkId: 4
     - Type: 2
       Amount: 3
       LinkId: 0
-    - Type: 2
-      Amount: 5
+    - Type: 6
+      Amount: 3
       LinkId: 5
     - Type: 2
-      Amount: 5
-      LinkId: 0
-    - Type: 4
       Amount: 5
       LinkId: 6
-    - Type: 2
-      Amount: 4
-      LinkId: 0
-    - Type: 0
-      Amount: 3
-      LinkId: 7
-    - Type: 2
-      Amount: 3
-      LinkId: 0
-  - Entries:
-    - Type: 6
-      Amount: 5
-      LinkId: 0
-    - Type: 0
-      Amount: 3
-      LinkId: 3
-    - Type: 2
-      Amount: 5
-      LinkId: 0
-    - Type: 4
-      Amount: 3
-      LinkId: 1
-    - Type: 0
-      Amount: 5
-      LinkId: 5
-    - Type: 0
-      Amount: 5
-      LinkId: 0
-    - Type: 2
-      Amount: 3
-      LinkId: 0
-    - Type: 2
-      Amount: 3
-      LinkId: 0
     - Type: 2
       Amount: 4
       LinkId: 7
     - Type: 2
       Amount: 3
       LinkId: 0
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 8
+  - Entries:
+    - Type: 0
+      Amount: 3
+      LinkId: 1
+    - Type: 2
+      Amount: 5
+      LinkId: 2
+    - Type: 6
+      Amount: 5
+      LinkId: 3
+    - Type: 0
+      Amount: 5
+      LinkId: 0
     - Type: 2
       Amount: 4
       LinkId: 0
     - Type: 2
+      Amount: 5
+      LinkId: 0
+    - Type: 6
+      Amount: 4
+      LinkId: 6
+    - Type: 4
+      Amount: 4
+      LinkId: 0
+    - Type: 2
+      Amount: 5
+      LinkId: 0
+    - Type: 4
+      Amount: 5
+      LinkId: 7
+    - Type: 2
+      Amount: 3
+      LinkId: 8
+    - Type: 4
       Amount: 3
       LinkId: 0
   IsTutorial: 0
