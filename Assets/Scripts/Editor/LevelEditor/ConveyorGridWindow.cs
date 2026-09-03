@@ -307,7 +307,6 @@ namespace Editor.LevelEditor
             _draft.LevelId = loaded.LevelId;
             _draft.Difficulty = loaded.Difficulty;
             _draft.Theme = loaded.Theme;
-            _draft.Environment = loaded.Environment;
             _draft.GridWidth = loaded.GridWidth;
             _draft.GridHeight = loaded.GridHeight;
             _draft.ConveyorCells = new List<ConveyorCellData>(loaded.ConveyorCells);

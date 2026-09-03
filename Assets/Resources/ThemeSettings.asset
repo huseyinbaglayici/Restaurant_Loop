@@ -22,11 +22,18 @@ MonoBehaviour:
   - Theme: 0
     EnvironmentPrefab: {fileID: 2934624780439002064, guid: 449c03f72d92bb445a74bbc8573c9d08,
       type: 3}
-    EnvironmentOffset: {x: 530, y: 555, z: 468.5}
-    CameraYOffsetMultiplier: 2
-    CameraZOffsetMultiplier: 0
+    EnvironmentOffset: {x: 530, y: 583, z: 458.5}
+    CameraZoomYShiftMultiplier: 1.5
+    CameraZoomZShiftMultiplier: 1.5
+    CameraZOffsetMultiplier: 12
     EnvironmentRotation: {x: 0, y: 0, z: 0}
     EnvironmentScale: {x: 1, y: 1, z: 1}
+    ConveyorStraightPrefab: {fileID: 0}
+    ConveyorCornerPrefab: {fileID: 0}
+    RackPrefab: {fileID: 0}
+    ExtraRackPrefab: {fileID: 0}
+    TrayDispenserPrefab: {fileID: 7739251874248869225, guid: 3af9380c40bb1294e8a4955d06d94d29,
+      type: 3}
     LoadingScreenBackground: {fileID: 21300000, guid: 4c2a16d0ec2acd14ca5e5abf7cb39265,
       type: 3}
     MainMenuBackground: {fileID: 21300000, guid: fa704e95498217a40bed7a5f2b0c3afa,
@@ -37,13 +44,24 @@ MonoBehaviour:
     MenuMusic: {fileID: 8300000, guid: 0b74fdc3462458e42841e389c970035f, type: 3}
     GameplayAmbience: {fileID: 8300000, guid: 454dc65fa2c8b1042861e05cf626e7ac, type: 3}
   - Theme: 1
-    EnvironmentPrefab: {fileID: 5017051981744081265, guid: 7488bc7c627dd7d49a53c86b8ca0a3cd,
+    EnvironmentPrefab: {fileID: 4929085771407618199, guid: 485d186fcb555884badd011cdebb3520,
       type: 3}
-    EnvironmentOffset: {x: 0, y: -58, z: 22.1}
-    CameraYOffsetMultiplier: 1
-    CameraZOffsetMultiplier: 0
+    EnvironmentOffset: {x: 530, y: 578.25, z: 460.7}
+    CameraZoomYShiftMultiplier: 1.5
+    CameraZoomZShiftMultiplier: 1.5
+    CameraZOffsetMultiplier: 30
     EnvironmentRotation: {x: 0, y: 0, z: 0}
     EnvironmentScale: {x: 1, y: 1, z: 1}
+    ConveyorStraightPrefab: {fileID: 7417020118612242394, guid: ca41ff8ba20f5434e96f3a77689d268c,
+      type: 3}
+    ConveyorCornerPrefab: {fileID: 5871807015339100654, guid: 50ee81de3f8b2bd418f1eed34f0b513e,
+      type: 3}
+    RackPrefab: {fileID: 1484749495282116401, guid: 68f650accabb1f342a253ac6e13d5728,
+      type: 3}
+    ExtraRackPrefab: {fileID: 3618467948489367326, guid: 0b8db54f78050964e899e76c48c6cb52,
+      type: 3}
+    TrayDispenserPrefab: {fileID: 9150942627471622608, guid: 9cc11cb102510da4b925aa87da1f1142,
+      type: 3}
     LoadingScreenBackground: {fileID: 21300000, guid: 5361862cf9f58b4498a4191ec051055c,
       type: 3}
     MainMenuBackground: {fileID: 21300000, guid: ecb3ac7bd7a6cbf47b1211537fe89384,

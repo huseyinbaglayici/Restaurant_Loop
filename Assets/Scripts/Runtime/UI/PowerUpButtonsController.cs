@@ -1,3 +1,4 @@
+using DG.Tweening;
 using RestaurantLoop.Audio;
 using RestaurantLoop.Economy;
 using RestaurantLoop.Runtime.Conveyor;
@@ -168,7 +169,7 @@ namespace RestaurantLoop.Runtime.UI
                 int price = _settings != null ? _settings.GetGoldPrice(PowerUpButtonId.Shuffle) : 100;
                 if (_economyService != null && !_economyService.TrySpendCoins(price))
                 {
-                    PlayFailSound();
+                    PlayNotEnoughCoinsFeedback(_countShuffleText);
                     return;
                 }
                 _inventory?.AddCount(PowerUpButtonId.Shuffle, 1);
@@ -195,7 +196,7 @@ namespace RestaurantLoop.Runtime.UI
                 int price = _settings != null ? _settings.GetGoldPrice(PowerUpButtonId.PickFromBottom) : 200;
                 if (_economyService != null && !_economyService.TrySpendCoins(price))
                 {
-                    PlayFailSound();
+                    PlayNotEnoughCoinsFeedback(_countPickFromBottomText);
                     return;
                 }
                 _inventory?.AddCount(PowerUpButtonId.PickFromBottom, 1);
@@ -223,7 +224,7 @@ namespace RestaurantLoop.Runtime.UI
                 int price = _settings != null ? _settings.GetGoldPrice(PowerUpButtonId.ExtraTray) : 300;
                 if (_economyService != null && !_economyService.TrySpendCoins(price))
                 {
-                    PlayFailSound();
+                    PlayNotEnoughCoinsFeedback(_countExtraTrayText);
                     return;
                 }
                 _inventory?.AddCount(PowerUpButtonId.ExtraTray, 1);
@@ -246,11 +247,25 @@ namespace RestaurantLoop.Runtime.UI
             }
         }
 
-        private void PlayFailSound()
+        private void PlayNotEnoughCoinsFeedback(TMP_Text text)
         {
-            if (_audioService != null && _audioLibrary != null && _audioLibrary.FailSfx != null)
+            if (_audioService != null && _audioLibrary != null)
             {
-                _audioService.PlaySfx(_audioLibrary.FailSfx);
+                var sfx = _audioLibrary.NotEnoughCoinsSfx != null ? _audioLibrary.NotEnoughCoinsSfx : _audioLibrary.FailSfx;
+                if (sfx != null) _audioService.PlaySfx(sfx);
+            }
+
+            if (text != null)
+            {
+                DG.Tweening.DOTween.Kill(text);
+                DG.Tweening.DOTween.Kill(text.transform);
+
+                Color originalColor = _settings != null ? _settings.BadgeTextColor : Color.white;
+                text.color = new Color(1f, 0.25f, 0.25f, 1f); // Red warning
+                text.transform.DOPunchPosition(new Vector3(10f, 0f, 0f), 0.45f, 20, 1f, false)
+                    .SetUpdate(true);
+                text.DOColor(originalColor, 0.45f)
+                    .SetUpdate(true);
             }
         }
 

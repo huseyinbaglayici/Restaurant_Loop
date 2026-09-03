@@ -1,3 +1,4 @@
+using DG.Tweening;
 using RestaurantLoop.Audio;
 using RestaurantLoop.Lives;
 using RestaurantLoop.Runtime.Conveyor;
@@ -19,6 +20,7 @@ namespace RestaurantLoop.Runtime.UI
         [SerializeField] private UnityEngine.UI.Button _buttonTryAgain;
         [SerializeField] private UnityEngine.UI.Button _buttonExit;
         [SerializeField] private TMP_Text _keepPlayingLevelText;
+        [SerializeField] private TMP_Text _keepPlayingCostText;
         [SerializeField] private TMP_Text _failedLevelText;
         [SerializeField] private TMP_Text _failedRibbonLevelText;
         [SerializeField] private TMP_Text _coinRewardText;
@@ -159,10 +161,7 @@ namespace RestaurantLoop.Runtime.UI
                 if (!_economyService.TrySpendCoins(KeepPlayingCost))
                 {
                     Debug.LogWarning("[LevelFailUIController] Not enough coins (needs 300) to keep playing.");
-                    if (_audioService != null && _audioLibrary != null && _audioLibrary.FailSfx != null)
-                    {
-                        _audioService.PlaySfx(_audioLibrary.FailSfx);
-                    }
+                    PlayNotEnoughCoinsFeedback();
                     return;
                 }
             }
@@ -223,6 +222,34 @@ namespace RestaurantLoop.Runtime.UI
             }
 
             _signalBus.Fire<LevelEndedSignal>();
+        }
+
+        private void PlayNotEnoughCoinsFeedback()
+        {
+            if (_audioService != null && _audioLibrary != null)
+            {
+                var sfx = _audioLibrary.NotEnoughCoinsSfx != null ? _audioLibrary.NotEnoughCoinsSfx : _audioLibrary.FailSfx;
+                if (sfx != null) _audioService.PlaySfx(sfx);
+            }
+
+            var targetText = _keepPlayingCostText;
+            if (targetText == null && _buttonPlayOn != null)
+            {
+                targetText = _buttonPlayOn.GetComponentInChildren<TMP_Text>();
+            }
+
+            if (targetText != null)
+            {
+                DG.Tweening.DOTween.Kill(targetText);
+                DG.Tweening.DOTween.Kill(targetText.transform);
+
+                Color originalColor = targetText.color;
+                targetText.color = new Color(1f, 0.25f, 0.25f, 1f); // Red warning
+                targetText.transform.DOPunchPosition(new Vector3(10f, 0f, 0f), 0.45f, 20, 1f, false)
+                    .SetUpdate(true);
+                targetText.DOColor(originalColor, 0.45f)
+                    .SetUpdate(true);
+            }
         }
     }
 }

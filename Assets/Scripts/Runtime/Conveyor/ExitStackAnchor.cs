@@ -19,6 +19,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly FoodItemController.Pool _foodPool;
         private readonly ExitSlotPrefabSettings _exitSlotPrefabSettings;
         private readonly FoodFlightService _flightService;
+        private readonly ThemeSettings _themeSettings;
         private readonly List<ExitSlotController> _spawnedFloors = new();
         private readonly List<GameObject> _extraRackVisuals = new();
 
@@ -47,7 +48,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             ExitSlotController.Pool exitSlotPool,
             FoodItemController.Pool foodPool,
             ExitSlotPrefabSettings exitSlotPrefabSettings,
-            [Inject(Optional = true)] FoodFlightService flightService = null)
+            [Inject(Optional = true)] FoodFlightService flightService = null,
+            [Inject(Optional = true)] ThemeSettings themeSettings = null)
         {
             _level = level;
             _prefabSettings = prefabSettings;
@@ -56,6 +58,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _foodPool = foodPool;
             _exitSlotPrefabSettings = exitSlotPrefabSettings;
             _flightService = flightService;
+            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
 
             SlotPositions = ComputeSlotPositions();
         }
@@ -108,9 +111,16 @@ namespace RestaurantLoop.Runtime.Conveyor
         private void SpawnRack(Vector3 firstSlot, Vector3 lastSlot)
         {
             var center = (firstSlot + lastSlot) * 0.5f;
+            var theme = _themeSettings != null && _level != null ? _themeSettings.GetTheme(_level.Theme) : null;
 
             var rack = _exitSlotPool.Spawn(center);
             rack.transform.rotation = Quaternion.Euler(_tuning.ExtraRackVisualRotation);
+
+            if (theme != null && theme.RackPrefab != null)
+            {
+                rack.ApplyThemeVisual(theme.RackPrefab);
+            }
+
             _spawnedFloors.Add(rack);
         }
 
@@ -243,17 +253,22 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             // The base rack is one fixed-length piece that doesn't cover the extra slot —
             // drop the dedicated Foodrack_extra visual over it so the new dock point reads as furniture too.
-            if (_exitSlotPrefabSettings.ExtraRackPrefab != null)
+            var theme = _themeSettings != null && _level != null ? _themeSettings.GetTheme(_level.Theme) : null;
+            var extraRackPrefab = (theme != null && theme.ExtraRackPrefab != null) 
+                ? theme.ExtraRackPrefab 
+                : _exitSlotPrefabSettings.ExtraRackPrefab;
+
+            if (extraRackPrefab != null)
             {
                 var visual = UnityEngine.Object.Instantiate(
-                    _exitSlotPrefabSettings.ExtraRackPrefab,
+                    extraRackPrefab,
                     newSlotPosition + _tuning.ExtraRackVisualOffset,
                     Quaternion.Euler(_tuning.ExtraRackVisualRotation));
                 _extraRackVisuals.Add(visual);
             }
             else
             {
-                Debug.LogWarning("[ExitStackAnchor] ExitSlotPrefabSettings.ExtraRackPrefab is unassigned — " +
+                Debug.LogWarning("[ExitStackAnchor] ExtraRackPrefab is unassigned — " +
                                   "Extra Tray power-up won't show its decorative rack visual.");
             }
 

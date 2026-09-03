@@ -51,7 +51,7 @@ namespace Editor.LevelEditor
 
             var themeSettings = Resources.Load<ThemeSettings>("ThemeSettings");
             var themeEntry = themeSettings != null ? themeSettings.GetTheme(data.Theme) : null;
-            var envPrefab = data.Environment != null ? data.Environment : themeEntry?.EnvironmentPrefab;
+            var envPrefab = themeEntry?.EnvironmentPrefab;
 
             if (envPrefab != null) ApplyEnvironmentPreset(envPrefab);
 

@@ -52,7 +52,11 @@ namespace RestaurantLoop.Installers
             Container.BindInterfacesTo<ConveyorEntryInput>().AsSingle();
             Container.BindInterfacesAndSelfTo<ConveyorAutoClearService>().AsSingle();
 
-            Container.BindInstance(ResolveTrayDispenserRoot()).AsCached();
+            var dispenserRoot = ResolveTrayDispenserRoot();
+            if (dispenserRoot != null)
+            {
+                Container.BindInstance(dispenserRoot).WithId("TrayDispenserRoot").AsCached();
+            }
             Container.BindInterfacesAndSelfTo<TrayDispenserAnchor>().AsSingle();
 
             // visual layer ticks after the logical one, flights last so they consume this frame's commands
@@ -100,10 +104,9 @@ namespace RestaurantLoop.Installers
                 .NonLazy();
         }
 
-        // The Inspector reference is a plain scene object drag-reference — a stray delete/undo in the
-        // Editor can silently clear it (Unity's undo doesn't always restore cross-object references).
-        // Falls back to finding the dispenser by name so a broken reference doesn't take the whole tray
-        // feature down; still logs loudly so the Inspector field gets re-wired properly.
+        // The Inspector reference is a plain scene object drag-reference.
+        // If unassigned, falls back to finding 'tepsi_dagitici' in the scene.
+        // If neither exists, returns null without crashing since ThemeSettings can instantiate it dynamically.
         private Transform ResolveTrayDispenserRoot()
         {
             if (_trayDispenserRoot != null) return _trayDispenserRoot;
@@ -111,16 +114,9 @@ namespace RestaurantLoop.Installers
             var found = GameObject.Find("tepsi_dagitici");
             if (found != null)
             {
-                Debug.LogWarning(
-                    "[ConveyorInstaller] _trayDispenserRoot wasn't assigned in the Inspector — found " +
-                    "'tepsi_dagitici' by name instead. Re-assign the field on the ConveyorInstaller " +
-                    "component so this stops depending on the fallback.");
                 return found.transform;
             }
 
-            Debug.LogError(
-                "[ConveyorInstaller] _trayDispenserRoot isn't assigned and no 'tepsi_dagitici' GameObject " +
-                "was found in the scene — trays won't work this level.");
             return null;
         }
     }

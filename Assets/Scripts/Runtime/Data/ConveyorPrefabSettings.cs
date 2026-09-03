@@ -7,6 +7,5 @@ namespace RestaurantLoop.Runtime.Data
         public GameObject ConveyorStraightPrefab;
         public GameObject ConveyorCornerPrefab;
         public float CellWorldSize = 2f;
-        public GameObject[] EnvironmentPresets;
     }
 }

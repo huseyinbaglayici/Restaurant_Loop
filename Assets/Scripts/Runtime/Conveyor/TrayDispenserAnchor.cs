@@ -41,7 +41,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ConveyorTuning _tuning;
-        private readonly Transform _dispenserRoot;
+        private Transform _dispenserRoot;
+        private readonly ThemeSettings _themeSettings;
 
         private Quaternion _baseRotation = Quaternion.identity;
         private bool _baseRotationCaptured;
@@ -50,6 +51,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly List<TraySlotPose> _slotPoses = new();
         private readonly List<TrayController> _slotOccupant = new();
         private readonly List<SlotState> _slotState = new();
+
+        private readonly DiContainer _container;
 
         private int _idleCount;
 
@@ -60,16 +63,21 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorLevelDataSO level,
             ConveyorPrefabSettings prefabSettings,
             ConveyorTuning tuning,
-            Transform dispenserRoot)
+            [Inject(Optional = true, Id = "TrayDispenserRoot")] Transform dispenserRoot,
+            DiContainer container,
+            [Inject(Optional = true)] ThemeSettings themeSettings = null)
         {
             _level = level;
             _prefabSettings = prefabSettings;
             _tuning = tuning;
             _dispenserRoot = dispenserRoot;
+            _container = container;
+            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
         }
 
         public void Initialize()
         {
+            SetupThemeDispenserInstance();
             CaptureBaseRotationOnce();
             PositionOnGateCell();
 
@@ -85,6 +93,34 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _slotPoses.Add(new TraySlotPose(tray.InitialLocalPosition, tray.InitialLocalRotation, tray.InitialLocalScale));
 
             ResetAll();
+        }
+
+        private void SetupThemeDispenserInstance()
+        {
+            if (_themeSettings == null || _level == null) return;
+            var theme = _themeSettings.GetTheme(_level.Theme);
+            if (theme == null || theme.TrayDispenserPrefab == null) return;
+
+            // If a custom TrayDispenserPrefab is provided for this theme, instantiate it and hide the scene default
+            if (_dispenserRoot != null)
+            {
+                _dispenserRoot.gameObject.SetActive(false);
+            }
+
+            GameObject spawned;
+            if (_container != null)
+            {
+                spawned = _container.InstantiatePrefab(theme.TrayDispenserPrefab);
+            }
+            else
+            {
+                spawned = Object.Instantiate(theme.TrayDispenserPrefab);
+            }
+
+            spawned.name = $"{theme.TrayDispenserPrefab.name}_{_level.Theme}";
+            spawned.SetActive(true);
+            _dispenserRoot = spawned.transform;
+            _baseRotationCaptured = false;
         }
 
         public void ResetAll()
