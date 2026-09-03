@@ -42,8 +42,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 260cbe544e3cb7b448818602f484c38c, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Texture: {fileID: 2800000, guid: 4bdddf529a89c7c479bcbcaf1f811301, type: 3}
+        m_Scale: {x: 1, y: 5}
         m_Offset: {x: 0, y: 0}
     - _VATPositions:
         m_Texture: {fileID: 0}
@@ -54,7 +54,7 @@ Material:
     - _AOFloor: 0.45
     - _AOStrength: 0.25
     - _AlphaClipToggle: 0
-    - _Brightness: 1
+    - _Brightness: 2
     - _CreaseShadow: 0.3
     - _Cull: 2
     - _CurvatureScale: 0.6
@@ -69,7 +69,7 @@ Material:
     - _LightThreshold: 0.95
     - _ReceiveShadowStrength: 0.35
     - _Roundness: 0.3
-    - _Saturation: 0.95
+    - _Saturation: 0.85
     - _ShadowBrightness: 0.62
     - _ShadowThreshold: 0.12
     - _ToonStepSoftness: 0.55
@@ -79,7 +79,7 @@ Material:
     - _VATToggle: 0
     - _VertexColorToggle: 0
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0.3647059, g: 0.95686275, b: 0.9882353, a: 1}
     - _BottomGradientColor: {r: 0.92, g: 0.89, b: 0.91, a: 1}
     - _CreaseColor: {r: 0.62, g: 0.54999995, b: 0.58, a: 1}
     - _EdgeLightColor: {r: 1, g: 0.96999997, b: 0.92, a: 1}
