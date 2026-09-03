@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LevelId: 4
   Difficulty: 0
+  Theme: 0
+  Environment: {fileID: 0}
   GridWidth: 7
   GridHeight: 10
   ConveyorCells:
@@ -101,18 +103,6 @@ MonoBehaviour:
     Shape: 1
     Rotation: 0
     IsGate: 0
-  - Coord: {x: 0, y: 9}
-    Shape: 1
-    Rotation: 180
-    IsGate: 0
-  - Coord: {x: 6, y: 9}
-    Shape: 1
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 0, y: 8}
-    Shape: 0
-    Rotation: 270
-    IsGate: 0
   - Coord: {x: 1, y: 9}
     Shape: 0
     Rotation: 180
@@ -132,6 +122,18 @@ MonoBehaviour:
   - Coord: {x: 5, y: 9}
     Shape: 0
     Rotation: 180
+    IsGate: 0
+  - Coord: {x: 0, y: 9}
+    Shape: 1
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 6, y: 9}
+    Shape: 1
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 0, y: 8}
+    Shape: 0
+    Rotation: 270
     IsGate: 0
   - Coord: {x: 6, y: 8}
     Shape: 0
@@ -304,7 +306,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 5}
     Order:
-      Type: 1
+      Type: 5
       Amount: 1
       LinkId: 0
     IsHidden: 0
@@ -315,7 +317,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 4}
     Order:
-      Type: 1
+      Type: 5
       Amount: 1
       LinkId: 0
     IsHidden: 0
@@ -326,7 +328,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 3}
     Order:
-      Type: 1
+      Type: 5
       Amount: 1
       LinkId: 0
     IsHidden: 0
@@ -337,7 +339,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 5, y: 5}
     Order:
-      Type: 1
+      Type: 5
       Amount: 1
       LinkId: 0
     IsHidden: 0
@@ -348,7 +350,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 5, y: 4}
     Order:
-      Type: 1
+      Type: 5
       Amount: 1
       LinkId: 0
     IsHidden: 0
@@ -359,7 +361,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 5, y: 3}
     Order:
-      Type: 1
+      Type: 5
       Amount: 1
       LinkId: 0
     IsHidden: 0
@@ -370,7 +372,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 3, y: 1}
     Order:
-      Type: 1
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -381,7 +383,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 3, y: 7}
     Order:
-      Type: 1
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -557,66 +559,52 @@ MonoBehaviour:
       LinkId: 0
   Queues:
   - Entries:
-    - Type: 0
-      Amount: 4
-      LinkId: 0
-    - Type: 0
+    - Type: 3
       Amount: 3
       LinkId: 0
     - Type: 3
-      Amount: 5
+      Amount: 3
       LinkId: 0
-    - Type: 3
+    - Type: 5
       Amount: 3
       LinkId: 0
     - Type: 2
-      Amount: 3
+      Amount: 5
+      LinkId: 0
+    - Type: 3
+      Amount: 5
       LinkId: 0
   - Entries:
-    - Type: 1
+    - Type: 3
+      Amount: 5
+      LinkId: 0
+    - Type: 0
       Amount: 3
       LinkId: 0
-    - Type: 3
+    - Type: 2
+      Amount: 3
+      LinkId: 0
+    - Type: 5
+      Amount: 4
+      LinkId: 0
+    - Type: 2
+      Amount: 4
+      LinkId: 0
+  - Entries:
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 5
       Amount: 3
       LinkId: 0
     - Type: 0
       Amount: 5
       LinkId: 0
-    - Type: 1
-      Amount: 3
-      LinkId: 0
-    - Type: 1
-      Amount: 4
-      LinkId: 0
-  - Entries:
     - Type: 2
       Amount: 5
-      LinkId: 0
-    - Type: 2
-      Amount: 5
-      LinkId: 0
-    - Type: 2
-      Amount: 4
       LinkId: 0
     - Type: 2
       Amount: 3
       LinkId: 0
-    - Type: 3
-      Amount: 5
-      LinkId: 0
-  IsTutorial: 1
-  TutorialSteps:
-  - Text: You can shuffle the queue now!
-    Trigger: 0
-    HoverKind: 0
-    PowerUpButton: 0
-    QueueLaneIndex: 0
-    QueueRowIndex: 0
-    ConveyorCell: {x: 0, y: 0}
-  - Text: Press here and try it.
-    Trigger: 0
-    HoverKind: 1
-    PowerUpButton: 0
-    QueueLaneIndex: 0
-    QueueRowIndex: 0
-    ConveyorCell: {x: 0, y: 0}
+  IsTutorial: 0
+  TutorialSteps: []

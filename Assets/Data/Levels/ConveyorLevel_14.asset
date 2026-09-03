@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LevelId: 14
   Difficulty: 0
+  Theme: 0
   Environment: {fileID: 723497061726727076, guid: f49e09aeb79d57542bee99742c7c0883,
     type: 3}
   GridWidth: 10
@@ -435,7 +436,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 2}
     Order:
-      Type: 1
+      Type: 0
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -446,7 +447,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 3}
     Order:
-      Type: 1
+      Type: 0
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -457,7 +458,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 4}
     Order:
-      Type: 1
+      Type: 0
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -468,7 +469,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 5}
     Order:
-      Type: 1
+      Type: 0
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -479,7 +480,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 2, y: 5}
     Order:
-      Type: 1
+      Type: 0
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -490,7 +491,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 3, y: 5}
     Order:
-      Type: 1
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -501,7 +502,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 4, y: 5}
     Order:
-      Type: 1
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -512,7 +513,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 5, y: 5}
     Order:
-      Type: 1
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -523,7 +524,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 6, y: 5}
     Order:
-      Type: 1
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -589,7 +590,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 5, y: 4}
     Order:
-      Type: 1
+      Type: 2
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -600,7 +601,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 4, y: 4}
     Order:
-      Type: 1
+      Type: 2
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -611,7 +612,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 3, y: 4}
     Order:
-      Type: 1
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -622,7 +623,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 2, y: 4}
     Order:
-      Type: 1
+      Type: 0
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -633,7 +634,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 2, y: 3}
     Order:
-      Type: 1
+      Type: 0
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -644,7 +645,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 2, y: 2}
     Order:
-      Type: 1
+      Type: 0
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -820,67 +821,103 @@ MonoBehaviour:
       LinkId: 0
   Queues:
   - Entries:
-    - Type: 3
+    - Type: 0
       Amount: 4
       LinkId: 0
-    - Type: 0
-      Amount: 3
-      LinkId: 2
-    - Type: 1
-      Amount: 3
-      LinkId: 2
-    - Type: 0
+    - Type: 5
       Amount: 4
       LinkId: 1
     - Type: 0
       Amount: 3
       LinkId: 0
     - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 0
       Amount: 3
       LinkId: 0
     - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 0
+      Amount: 5
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 3
       Amount: 3
       LinkId: 0
   - Entries:
     - Type: 0
-      Amount: 4
-      LinkId: 0
-    - Type: 0
       Amount: 3
-      LinkId: 0
-    - Type: 1
-      Amount: 4
-      LinkId: 0
-    - Type: 3
-      Amount: 4
       LinkId: 1
+    - Type: 3
+      Amount: 4
+      LinkId: 3
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 5
+      Amount: 3
+      LinkId: 2
     - Type: 0
       Amount: 4
       LinkId: 0
-    - Type: 1
-      Amount: 4
-      LinkId: 0
-    - Type: 1
+    - Type: 3
+      Amount: 5
+      LinkId: 4
+    - Type: 0
       Amount: 3
       LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 5
+    - Type: 0
+      Amount: 4
+      LinkId: 0
+    - Type: 3
+      Amount: 3
+      LinkId: 7
+    - Type: 2
+      Amount: 4
+      LinkId: 6
   - Entries:
-    - Type: 1
-      Amount: 4
-      LinkId: 0
     - Type: 0
-      Amount: 5
-      LinkId: 0
+      Amount: 3
+      LinkId: 3
     - Type: 0
-      Amount: 5
-      LinkId: 0
-    - Type: 3
       Amount: 3
       LinkId: 0
     - Type: 0
-      Amount: 5
-      LinkId: 0
-    - Type: 3
+      Amount: 4
+      LinkId: 2
+    - Type: 0
       Amount: 4
       LinkId: 0
+    - Type: 0
+      Amount: 5
+      LinkId: 4
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 5
+      Amount: 3
+      LinkId: 5
+    - Type: 0
+      Amount: 3
+      LinkId: 0
+    - Type: 0
+      Amount: 3
+      LinkId: 7
+    - Type: 0
+      Amount: 4
+      LinkId: 6
   IsTutorial: 0
   TutorialSteps: []

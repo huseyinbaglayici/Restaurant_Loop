@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LevelId: 23
   Difficulty: 0
+  Theme: 0
   Environment: {fileID: 723497061726727076, guid: f49e09aeb79d57542bee99742c7c0883,
     type: 3}
   GridWidth: 10
@@ -600,7 +601,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 2, y: 1}
     Order:
-      Type: 0
+      Type: 6
       Amount: 3
       LinkId: 0
     IsHidden: 0
@@ -611,7 +612,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 3, y: 1}
     Order:
-      Type: 0
+      Type: 6
       Amount: 3
       LinkId: 0
     IsHidden: 0
@@ -622,7 +623,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 4, y: 1}
     Order:
-      Type: 0
+      Type: 6
       Amount: 3
       LinkId: 0
     IsHidden: 0
@@ -633,7 +634,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 5, y: 1}
     Order:
-      Type: 0
+      Type: 6
       Amount: 3
       LinkId: 0
     IsHidden: 0
@@ -644,7 +645,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 6, y: 1}
     Order:
-      Type: 0
+      Type: 6
       Amount: 3
       LinkId: 0
     IsHidden: 0
@@ -655,7 +656,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 7, y: 1}
     Order:
-      Type: 0
+      Type: 6
       Amount: 3
       LinkId: 0
     IsHidden: 0
@@ -672,10 +673,10 @@ MonoBehaviour:
     - Type: 2
       Amount: 3
       LinkId: 0
-    - Type: 0
+    - Type: 6
       Amount: 4
       LinkId: 2
-    - Type: 0
+    - Type: 6
       Amount: 3
       LinkId: 0
     - Type: 2
@@ -712,7 +713,7 @@ MonoBehaviour:
     - Type: 2
       Amount: 4
       LinkId: 2
-    - Type: 0
+    - Type: 6
       Amount: 4
       LinkId: 0
     - Type: 2
@@ -740,13 +741,13 @@ MonoBehaviour:
     - Type: 2
       Amount: 5
       LinkId: 1
-    - Type: 0
+    - Type: 6
       Amount: 3
       LinkId: 0
     - Type: 2
       Amount: 4
       LinkId: 0
-    - Type: 0
+    - Type: 6
       Amount: 4
       LinkId: 3
     - Type: 0

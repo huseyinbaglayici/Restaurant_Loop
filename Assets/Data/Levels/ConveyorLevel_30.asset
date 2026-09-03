@@ -279,7 +279,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 8, y: 1}
     Order:
-      Type: 2
+      Type: 6
       Amount: 5
       LinkId: 0
     IsHidden: 0
@@ -290,7 +290,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 1}
     Order:
-      Type: 2
+      Type: 6
       Amount: 5
       LinkId: 0
     IsHidden: 0
@@ -771,7 +771,7 @@ MonoBehaviour:
     - Type: 0
       Amount: 4
       LinkId: 9
-    - Type: 2
+    - Type: 6
       Amount: 3
       LinkId: 0
     - Type: 4
@@ -877,7 +877,7 @@ MonoBehaviour:
     - Type: 1
       Amount: 3
       LinkId: 13
-    - Type: 2
+    - Type: 6
       Amount: 4
       LinkId: 0
     - Type: 1
@@ -947,7 +947,7 @@ MonoBehaviour:
     - Type: 4
       Amount: 4
       LinkId: 0
-    - Type: 2
+    - Type: 6
       Amount: 3
       LinkId: 0
     - Type: 0

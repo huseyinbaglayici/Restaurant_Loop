@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LevelId: 5
   Difficulty: 0
+  Theme: 0
+  Environment: {fileID: 0}
   GridWidth: 7
   GridHeight: 9
   ConveyorCells:
@@ -273,7 +275,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 4}
     Order:
-      Type: 2
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -284,7 +286,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 5}
     Order:
-      Type: 2
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -295,7 +297,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 1, y: 6}
     Order:
-      Type: 2
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -306,7 +308,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 2, y: 6}
     Order:
-      Type: 2
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -317,7 +319,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 4, y: 6}
     Order:
-      Type: 2
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -328,7 +330,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 3, y: 6}
     Order:
-      Type: 2
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -339,7 +341,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 5, y: 6}
     Order:
-      Type: 2
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -350,7 +352,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 5, y: 5}
     Order:
-      Type: 2
+      Type: 5
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -433,7 +435,7 @@ MonoBehaviour:
     - Type: 2
       Amount: 3
       LinkId: 0
-    - Type: 2
+    - Type: 5
       Amount: 4
       LinkId: 0
     - Type: 4
@@ -459,16 +461,16 @@ MonoBehaviour:
       Amount: 5
       LinkId: 0
   - Entries:
-    - Type: 2
+    - Type: 5
       Amount: 5
       LinkId: 0
     - Type: 2
       Amount: 5
       LinkId: 0
-    - Type: 2
+    - Type: 5
       Amount: 4
       LinkId: 0
-    - Type: 2
+    - Type: 5
       Amount: 3
       LinkId: 0
     - Type: 2

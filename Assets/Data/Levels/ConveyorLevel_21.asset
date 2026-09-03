@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LevelId: 21
   Difficulty: 0
+  Theme: 0
   Environment: {fileID: 723497061726727076, guid: f49e09aeb79d57542bee99742c7c0883,
     type: 3}
   GridWidth: 10
@@ -526,7 +527,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 4, y: 5}
     Order:
-      Type: 0
+      Type: 2
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -537,7 +538,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 5, y: 5}
     Order:
-      Type: 0
+      Type: 2
       Amount: 2
       LinkId: 0
     IsHidden: 0
@@ -686,7 +687,7 @@ MonoBehaviour:
     IsHidden: 1
     HasSecondOrder: 1
     SecondOrder:
-      Type: 0
+      Type: 5
       Amount: 5
       LinkId: 0
   - Coord: {x: 6, y: 6}
@@ -697,7 +698,7 @@ MonoBehaviour:
     IsHidden: 1
     HasSecondOrder: 1
     SecondOrder:
-      Type: 0
+      Type: 5
       Amount: 5
       LinkId: 0
   Queues:
@@ -769,7 +770,7 @@ MonoBehaviour:
     - Type: 4
       Amount: 3
       LinkId: 6
-    - Type: 0
+    - Type: 5
       Amount: 3
       LinkId: 7
     - Type: 1
@@ -781,7 +782,7 @@ MonoBehaviour:
     - Type: 4
       Amount: 5
       LinkId: 8
-    - Type: 0
+    - Type: 5
       Amount: 4
       LinkId: 11
     - Type: 3
@@ -812,7 +813,7 @@ MonoBehaviour:
     - Type: 2
       Amount: 5
       LinkId: 7
-    - Type: 0
+    - Type: 5
       Amount: 3
       LinkId: 0
     - Type: 3
@@ -824,7 +825,7 @@ MonoBehaviour:
     - Type: 3
       Amount: 5
       LinkId: 11
-    - Type: 0
+    - Type: 2
       Amount: 4
       LinkId: 10
   IsTutorial: 0

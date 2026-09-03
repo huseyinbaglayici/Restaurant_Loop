@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LevelId: 18
   Difficulty: 0
+  Theme: 0
   Environment: {fileID: 723497061726727076, guid: f49e09aeb79d57542bee99742c7c0883,
     type: 3}
   GridWidth: 10
@@ -71,26 +72,6 @@ MonoBehaviour:
     Shape: 0
     Rotation: 90
     IsGate: 0
-  - Coord: {x: 9, y: 2}
-    Shape: 0
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 9, y: 3}
-    Shape: 0
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 9, y: 4}
-    Shape: 0
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 9, y: 5}
-    Shape: 0
-    Rotation: 90
-    IsGate: 0
-  - Coord: {x: 9, y: 6}
-    Shape: 0
-    Rotation: 90
-    IsGate: 0
   - Coord: {x: 9, y: 7}
     Shape: 0
     Rotation: 90
@@ -139,28 +120,80 @@ MonoBehaviour:
     Shape: 0
     Rotation: 270
     IsGate: 0
-  - Coord: {x: 0, y: 6}
-    Shape: 0
-    Rotation: 270
-    IsGate: 0
-  - Coord: {x: 0, y: 5}
-    Shape: 0
-    Rotation: 270
-    IsGate: 0
-  - Coord: {x: 0, y: 4}
-    Shape: 0
-    Rotation: 270
-    IsGate: 0
-  - Coord: {x: 0, y: 3}
-    Shape: 0
-    Rotation: 270
-    IsGate: 0
-  - Coord: {x: 0, y: 2}
-    Shape: 0
-    Rotation: 270
-    IsGate: 0
   - Coord: {x: 0, y: 1}
     Shape: 0
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 9, y: 2}
+    Shape: 1
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 8, y: 2}
+    Shape: 1
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 7, y: 3}
+    Shape: 1
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 8, y: 3}
+    Shape: 1
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 7, y: 4}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 7, y: 5}
+    Shape: 1
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 8, y: 5}
+    Shape: 1
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 8, y: 6}
+    Shape: 1
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 9, y: 6}
+    Shape: 1
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 0, y: 2}
+    Shape: 1
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 1, y: 2}
+    Shape: 1
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 1, y: 3}
+    Shape: 1
+    Rotation: 180
+    IsGate: 0
+  - Coord: {x: 2, y: 3}
+    Shape: 1
+    Rotation: 0
+    IsGate: 0
+  - Coord: {x: 2, y: 4}
+    Shape: 0
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 2, y: 5}
+    Shape: 1
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 1, y: 5}
+    Shape: 1
+    Rotation: 270
+    IsGate: 0
+  - Coord: {x: 1, y: 6}
+    Shape: 1
+    Rotation: 90
+    IsGate: 0
+  - Coord: {x: 0, y: 6}
+    Shape: 1
     Rotation: 270
     IsGate: 0
   ConveyorEntities: []
@@ -177,9 +210,13 @@ MonoBehaviour:
     - {x: 9, y: 0}
     - {x: 9, y: 1}
     - {x: 9, y: 2}
-    - {x: 9, y: 3}
-    - {x: 9, y: 4}
-    - {x: 9, y: 5}
+    - {x: 8, y: 2}
+    - {x: 8, y: 3}
+    - {x: 7, y: 3}
+    - {x: 7, y: 4}
+    - {x: 7, y: 5}
+    - {x: 8, y: 5}
+    - {x: 8, y: 6}
     - {x: 9, y: 6}
     - {x: 9, y: 7}
     - {x: 9, y: 8}
@@ -196,9 +233,13 @@ MonoBehaviour:
     - {x: 0, y: 8}
     - {x: 0, y: 7}
     - {x: 0, y: 6}
-    - {x: 0, y: 5}
-    - {x: 0, y: 4}
-    - {x: 0, y: 3}
+    - {x: 1, y: 6}
+    - {x: 1, y: 5}
+    - {x: 2, y: 5}
+    - {x: 2, y: 4}
+    - {x: 2, y: 3}
+    - {x: 1, y: 3}
+    - {x: 1, y: 2}
     - {x: 0, y: 2}
     - {x: 0, y: 1}
   Customers:

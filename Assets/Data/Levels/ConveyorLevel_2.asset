@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LevelId: 2
   Difficulty: 0
+  Theme: 0
   Environment: {fileID: 0}
   GridWidth: 7
   GridHeight: 10
@@ -393,7 +394,7 @@ MonoBehaviour:
       LinkId: 0
   - Coord: {x: 3, y: 4}
     Order:
-      Type: 2
+      Type: 5
       Amount: 3
       LinkId: 0
     IsHidden: 0
@@ -605,7 +606,7 @@ MonoBehaviour:
     - Type: 0
       Amount: 5
       LinkId: 0
-    - Type: 2
+    - Type: 5
       Amount: 3
       LinkId: 0
     - Type: 0
