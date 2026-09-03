@@ -14,6 +14,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorTuning _tuning;
         private readonly QueueAnchor _queueAnchor;
         private readonly Camera _camera;
+        private readonly ThemeSettings _themeSettings;
         public Camera Camera => _camera;
         private readonly Vector3 _offsetFromQueueCenter;
         private readonly float _initialOrthoSize;
@@ -24,13 +25,20 @@ namespace RestaurantLoop.Runtime.Conveyor
         private bool _isFocusedOnQueue;
 
         public float CameraZoomFactor { get; private set; } = 1f;
+        public float HeightZoomFactor { get; private set; } = 1f;
 
-        public CameraController(ConveyorLevelDataSO level, ConveyorTuning tuning, QueueAnchor queueAnchor, Camera camera)
+        public CameraController(
+            ConveyorLevelDataSO level,
+            ConveyorTuning tuning,
+            QueueAnchor queueAnchor,
+            Camera camera,
+            [Inject(Optional = true)] ThemeSettings themeSettings = null)
         {
             _level = level;
             _tuning = tuning;
             _queueAnchor = queueAnchor;
             _camera = camera;
+            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
             _initialOrthoSize = camera.orthographicSize;
             _offsetFromQueueCenter = camera.transform.position - ComputeQueueCenter();
         }
@@ -47,24 +55,49 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Initialize()
         {
-            if (_tuning.EnableDynamicCameraScale && _camera.orthographic && _tuning.ReferenceGridHeight > 0)
+            if (_tuning.EnableDynamicCameraScale && _camera.orthographic && _tuning.ReferenceGridWidth > 0 && _tuning.ReferenceGridHeight > 0)
             {
-                int maxDimension = Mathf.Max(_level.GridWidth, _level.GridHeight);
-                int refDimension = Mathf.Max(_tuning.ReferenceGridWidth, _tuning.ReferenceGridHeight);
-                if (maxDimension > refDimension)
+                float widthRatio = (float)_level.GridWidth / _tuning.ReferenceGridWidth;
+                float heightRatio = (float)_level.GridHeight / _tuning.ReferenceGridHeight;
+                float maxRatio = Mathf.Max(widthRatio, heightRatio);
+
+                float sensitivity = _tuning.CameraZoomSensitivity > 0f ? _tuning.CameraZoomSensitivity : 0.85f;
+
+                if (maxRatio > 1f)
                 {
-                    float rawRatio = (float)maxDimension / refDimension;
-                    float sensitivity = _tuning.CameraZoomSensitivity > 0f ? _tuning.CameraZoomSensitivity : 0.85f;
-                    float scaleFactor = 1f + (rawRatio - 1f) * sensitivity;
+                    float scaleFactor = 1f + (maxRatio - 1f) * sensitivity;
                     _camera.orthographicSize = _initialOrthoSize * scaleFactor;
                     CameraZoomFactor = scaleFactor;
+                }
+
+                if (heightRatio > 1f)
+                {
+                    HeightZoomFactor = 1f + (heightRatio - 1f) * sensitivity;
                 }
             }
 
             var queueCenter = ComputeQueueCenter();
-            // Camera position: keep X aligned with queue/world origin, adjust Y/Z with offset
             var targetPos = queueCenter + _offsetFromQueueCenter;
             targetPos.x = queueCenter.x;
+
+            // Apply camera Y and Z zoom shift if camera has zoomed out
+            if (CameraZoomFactor > 1f)
+            {
+                float zoomDiff = CameraZoomFactor - 1f;
+                var theme = _themeSettings != null ? _themeSettings.GetTheme(_level.Theme) : null;
+
+                float yMult = theme != null && theme.CameraZoomYShiftMultiplier != 0f
+                    ? theme.CameraZoomYShiftMultiplier
+                    : _tuning.CameraZoomYShiftMultiplier;
+
+                float zMult = theme != null && theme.CameraZoomZShiftMultiplier != 0f
+                    ? theme.CameraZoomZShiftMultiplier
+                    : _tuning.CameraZoomZShiftMultiplier;
+
+                targetPos.y += zoomDiff * yMult;
+                targetPos.z += zoomDiff * zMult;
+            }
+
             _camera.transform.position = targetPos;
 
             _defaultPosition = targetPos;

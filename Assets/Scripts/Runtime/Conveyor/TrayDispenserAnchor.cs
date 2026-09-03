@@ -42,6 +42,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ConveyorTuning _tuning;
         private readonly Transform _dispenserRoot;
+        private readonly ThemeSettings _themeSettings;
 
         private Quaternion _baseRotation = Quaternion.identity;
         private bool _baseRotationCaptured;
@@ -60,18 +61,21 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorLevelDataSO level,
             ConveyorPrefabSettings prefabSettings,
             ConveyorTuning tuning,
-            Transform dispenserRoot)
+            Transform dispenserRoot,
+            [Inject(Optional = true)] ThemeSettings themeSettings = null)
         {
             _level = level;
             _prefabSettings = prefabSettings;
             _tuning = tuning;
             _dispenserRoot = dispenserRoot;
+            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
         }
 
         public void Initialize()
         {
             CaptureBaseRotationOnce();
             PositionOnGateCell();
+            ApplyThemeMaterial();
 
             _traysHighToLow.Clear();
             if (_dispenserRoot != null)
@@ -85,6 +89,19 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _slotPoses.Add(new TraySlotPose(tray.InitialLocalPosition, tray.InitialLocalRotation, tray.InitialLocalScale));
 
             ResetAll();
+        }
+
+        private void ApplyThemeMaterial()
+        {
+            if (_dispenserRoot == null || _themeSettings == null || _level == null) return;
+            var theme = _themeSettings.GetTheme(_level.Theme);
+            if (theme == null || theme.TrayDispenserMaterial == null) return;
+
+            var renderers = _dispenserRoot.GetComponentsInChildren<MeshRenderer>(true);
+            foreach (var r in renderers)
+            {
+                r.sharedMaterial = theme.TrayDispenserMaterial;
+            }
         }
 
         public void ResetAll()

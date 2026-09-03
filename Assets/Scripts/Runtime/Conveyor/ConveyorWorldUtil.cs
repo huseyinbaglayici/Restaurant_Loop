@@ -11,21 +11,9 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             if (level.ConveyorCells.Count == 0) return tuning.WorldOrigin;
 
-            int minX = int.MaxValue, maxX = int.MinValue;
-            int minY = int.MaxValue, maxY = int.MinValue;
-
-            foreach (var cell in level.ConveyorCells)
-            {
-                if (cell.Coord.x < minX) minX = cell.Coord.x;
-                if (cell.Coord.x > maxX) maxX = cell.Coord.x;
-                if (cell.Coord.y < minY) minY = cell.Coord.y;
-                if (cell.Coord.y > maxY) maxY = cell.Coord.y;
-            }
-
             float deltaX = ((level.GridWidth - 1) * 0.5f - (tuning.ReferenceGridWidth - 1) * 0.5f) * cellSize;
-            float deltaZ = ((level.GridHeight - 1) * 0.5f - (tuning.ReferenceGridHeight - 1) * 0.5f) * cellSize;
-
-            return new Vector3(tuning.WorldOrigin.x - deltaX, tuning.WorldOrigin.y, tuning.WorldOrigin.z - deltaZ);
+            // The conveyor bottom and exit rack remain fixed along Z, expanding upwards towards the environment
+            return new Vector3(tuning.WorldOrigin.x - deltaX, tuning.WorldOrigin.y, tuning.WorldOrigin.z);
         }
 
         public static Vector3 ToWorldPosition(Vector2Int coord, float cellSize, float groundY, Vector3 origin) =>

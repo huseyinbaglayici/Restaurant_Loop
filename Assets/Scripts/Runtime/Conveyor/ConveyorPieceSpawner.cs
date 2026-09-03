@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
+using UnityEngine;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
@@ -13,6 +14,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorPieceController.Pool _cornerPool;
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ConveyorTuning _tuning;
+        private readonly ThemeSettings _themeSettings;
 
         private readonly List<ConveyorPieceController> _spawnedStraight = new();
         private readonly List<ConveyorPieceController> _spawnedCorner = new();
@@ -24,19 +26,22 @@ namespace RestaurantLoop.Runtime.Conveyor
             [Inject(Id = ConveyorTileShape.Corner)]
             ConveyorPieceController.Pool cornerPool,
             ConveyorPrefabSettings prefabSettings,
-            ConveyorTuning tuning)
+            ConveyorTuning tuning,
+            [Inject(Optional = true)] ThemeSettings themeSettings = null)
         {
             _level = level;
             _straightPool = straightPool;
             _cornerPool = cornerPool;
             _prefabSettings = prefabSettings;
             _tuning = tuning;
+            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
         }
 
         public void Initialize()
         {
             float cellSize = _prefabSettings.CellWorldSize;
             var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
+            var theme = _themeSettings != null ? _themeSettings.GetTheme(_level.Theme) : null;
 
             foreach (var cell in _level.ConveyorCells)
             {
@@ -47,9 +52,45 @@ namespace RestaurantLoop.Runtime.Conveyor
                 var worldYRotation = ConveyorWorldUtil.ToWorldYRotation(cell.Shape, cell.Rotation);
 
                 if (cell.Shape == ConveyorTileShape.Straight)
-                    _spawnedStraight.Add(_straightPool.Spawn(position, worldYRotation));
+                {
+                    var piece = _straightPool.Spawn(position, worldYRotation);
+                    if (theme != null && theme.ConveyorStraightPrefab != null)
+                    {
+                        piece.ApplyThemeVisual(theme.ConveyorStraightPrefab);
+                    }
+                    else if (theme != null && theme.ConveyorMaterial != null)
+                    {
+                        ApplyMaterial(piece.gameObject, theme.ConveyorMaterial);
+                    }
+                    _spawnedStraight.Add(piece);
+                }
                 else
-                    _spawnedCorner.Add(_cornerPool.Spawn(position, worldYRotation));
+                {
+                    var piece = _cornerPool.Spawn(position, worldYRotation);
+                    if (theme != null && theme.ConveyorCornerPrefab != null)
+                    {
+                        piece.ApplyThemeVisual(theme.ConveyorCornerPrefab);
+                    }
+                    else
+                    {
+                        var mat = theme != null ? (theme.ConveyorCornerMaterial != null ? theme.ConveyorCornerMaterial : theme.ConveyorMaterial) : null;
+                        if (mat != null)
+                        {
+                            ApplyMaterial(piece.gameObject, mat);
+                        }
+                    }
+                    _spawnedCorner.Add(piece);
+                }
+            }
+        }
+
+        private void ApplyMaterial(GameObject obj, Material material)
+        {
+            if (obj == null || material == null) return;
+            var renderers = obj.GetComponentsInChildren<MeshRenderer>(true);
+            foreach (var r in renderers)
+            {
+                r.sharedMaterial = material;
             }
         }
 

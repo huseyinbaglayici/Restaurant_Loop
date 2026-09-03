@@ -36,6 +36,8 @@ namespace RestaurantLoop.Runtime.Data
         public AudioClip WinSfx;
         [Tooltip("Seviye kaybedildiğinde (Fail ekranı açıldığında) çalacak ses")]
         public AudioClip FailSfx;
+        [Tooltip("Yeterli para (coin) olmadığında çalacak ses (PowerUp satın alma, Keep Playing vb.)")]
+        public AudioClip NotEnoughCoinsSfx;
         [Range(0f, 1f)] public float SfxVolume = 0.2f;
         [Tooltip("Konveyör bant sesi ses seviyesi (Varsayılan olarak 2 katı: 0.4f)")]
         [Range(0f, 1f)] public float ConveyorVolume = 0.4f;

@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d96bbd148721efc48a7a5fb2f0b0d5f4, type: 3}
   m_Name: ConveyorPrefabSettings
   m_EditorClassIdentifier: 
-  ConveyorStraightPrefab: {fileID: 7417020118612242394, guid: 233e4caef76c44f4c8b6c0e1b6f8cd49,
+  ConveyorStraightPrefab: {fileID: 7417020118612242394, guid: 99eab2df5b789a742bce69d2e6d2bb11,
     type: 3}
-  ConveyorCornerPrefab: {fileID: 5871807015339100654, guid: d638eedabcab8db4b858a1e79550df86,
+  ConveyorCornerPrefab: {fileID: 5871807015339100654, guid: c48fe9e44ed740d4ca5efeaae76902a9,
     type: 3}
   CellWorldSize: 0.9
   EnvironmentPresets:
   - {fileID: 723497061726727076, guid: f49e09aeb79d57542bee99742c7c0883, type: 3}
-  - {fileID: 5017051981744081265, guid: 7488bc7c627dd7d49a53c86b8ca0a3cd, type: 3}
+  - {fileID: 4929085771407618199, guid: 485d186fcb555884badd011cdebb3520, type: 3}

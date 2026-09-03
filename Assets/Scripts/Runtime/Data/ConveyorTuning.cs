@@ -27,6 +27,12 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Extra damping/multiplier for camera zoom out (e.g. 0.8 = zoom out 20% less to reduce empty side space).")]
         public float CameraZoomSensitivity = 0.85f;
 
+        [Tooltip("Kamera zoom yaptıkça (uzaklaştıkça) kameranın Y pozisyonunun ötelenme çarpanı (Yukarı çıkması için). Örn: 2.0")]
+        public float CameraZoomYShiftMultiplier = 0f;
+
+        [Tooltip("Kamera zoom yaptıkça (uzaklaştıkça) kameranın Z pozisyonunun ötelenme çarpanı (Geriye/arkaya gitmesi için). Örn: 2.0")]
+        public float CameraZoomZShiftMultiplier = 0f;
+
         [Header("Pick From Bottom Camera Tuning")]
         [Tooltip("Pick from bottom aktifken kameranın kuyruğa ve stack'lere doğru kayacağı dünya ofseti (Z/Y).")]
         public Vector3 CameraPickFromBottomOffset = new Vector3(0f, -0.6f, -1.8f);

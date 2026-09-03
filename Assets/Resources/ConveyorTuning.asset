@@ -16,8 +16,10 @@ MonoBehaviour:
   EnableDynamicCameraScale: 1
   AutoCenterBeltGrid: 1
   ReferenceGridWidth: 7
-  ReferenceGridHeight: 7
+  ReferenceGridHeight: 9
   CameraZoomSensitivity: 0.75
+  CameraZoomYShiftMultiplier: 3
+  CameraZoomZShiftMultiplier: 3
   CameraPickFromBottomOffset: {x: 0, y: -0.6, z: -4}
   CameraPickFromBottomDuration: 0.35
   CameraPickFromBottomOrthoMultiplier: 0.95
@@ -32,11 +34,11 @@ MonoBehaviour:
   QueueZOffsetFromExitStack: 1.8
   QueueRowSpacing: 1.5
   QueueShiftSpeed: 4
-  TrayDispenserHeight: -3.9
+  TrayDispenserHeight: -4.5
   TrayBeltHeight: -3.6
   TrayDispenserOffset: {x: -0.7, y: 0, z: 0}
   ExitStackGroundHeight: -4.05
-  ExitStackZOffsetFromGrid: 1
+  ExitStackZOffsetFromGrid: 1.5
   ExitStackXOffset: 2.7
   ExitStackSlotSpacing: 0.97
   ExtraRackVisualOffset: {x: 0, y: 0, z: 0}

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: FoodPlacementSettings
   m_EditorClassIdentifier: 
   _globalQueueScale: 0.81
-  _globalFoodStackScale: 1
-  _globalConveyorScale: 1
+  _globalFoodStackScale: 0.8
+  _globalConveyorScale: 0.8
   _entries:
   - Type: 0
     Queue:
