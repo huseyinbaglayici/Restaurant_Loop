@@ -13,6 +13,8 @@ namespace RestaurantLoop.Runtime.UI
         [SerializeField] private TextMeshProUGUI _difficultyText;
         [Tooltip("Inspector'dan Main Menu arka plan Image objesini buraya bağlayabilirsiniz.")]
         [SerializeField] private UnityEngine.UI.Image _menuBackgroundImage;
+        [Tooltip("Inspector'dan Play/Seviye butonunun Image objesini buraya bağlayabilirsiniz (Zorluk seviyesine göre butonu değiştirir).")]
+        [SerializeField] private UnityEngine.UI.Image _playButtonImage;
 
         private CurrentLevelProvider _currentLevelProvider;
         private ThemeSettings _themeSettings;
@@ -102,17 +104,33 @@ namespace RestaurantLoop.Runtime.UI
                 }
             }
 
-            if (level == null || _difficultyText == null) return;
-
-            bool isHard = level.Difficulty is LevelDifficulty.Hard or LevelDifficulty.SuperHard;
-            _difficultyText.gameObject.SetActive(isHard || level.Difficulty == LevelDifficulty.Bonus);
-            _difficultyText.text = level.Difficulty switch
+            // Update Play Button Sprite based on Level Difficulty
+            if (_themeSettings != null)
             {
-                LevelDifficulty.Bonus => "Bonus",
-                LevelDifficulty.Hard => "Hard",
-                LevelDifficulty.SuperHard => "Super Hard",
-                _ => string.Empty
-            };
+                var targetDifficulty = level != null ? level.Difficulty : LevelDifficulty.None;
+                var buttonSprite = _themeSettings.GetPlayButtonSprite(targetDifficulty);
+                if (buttonSprite != null)
+                {
+                    if (_playButtonImage != null)
+                    {
+                        _playButtonImage.sprite = buttonSprite;
+                    }
+                    else
+                    {
+                        // Fallback: Check if SeviyeButton or child has an image
+                        var btnImage = GetComponentInChildren<UnityEngine.UI.Image>();
+                        if (btnImage != null && btnImage != _menuBackgroundImage)
+                        {
+                            btnImage.sprite = buttonSprite;
+                        }
+                    }
+                }
+            }
+
+            if (_difficultyText != null)
+            {
+                _difficultyText.gameObject.SetActive(false);
+            }
         }
     }
 }

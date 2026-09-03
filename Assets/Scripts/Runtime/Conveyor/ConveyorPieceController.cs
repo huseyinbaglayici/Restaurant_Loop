@@ -6,6 +6,7 @@ namespace RestaurantLoop.Runtime.Conveyor
     public class ConveyorPieceController : MonoBehaviour, IPoolable<Vector3, float>
     {
         private float _baseTiltX;
+        private float _baseEulerY;
         private float _baseTiltZ;
         private float _axisSign;
 
@@ -15,6 +16,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             var e = transform.localRotation.eulerAngles;
             _baseTiltX = e.x;
+            _baseEulerY = e.y;
             _baseTiltZ = e.z;
 
             _visuals = GetComponentsInChildren<IConveyorPieceVisual>(true);
@@ -22,7 +24,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void OnSpawned(Vector3 position, float worldYRotation)
         {
-            transform.SetPositionAndRotation(position, Quaternion.Euler(_baseTiltX, worldYRotation, _baseTiltZ));
+            transform.SetPositionAndRotation(position, Quaternion.Euler(_baseTiltX, _baseEulerY + worldYRotation, _baseTiltZ));
             // axis flip at 90/270
             _axisSign = Mathf.Cos(2f * worldYRotation * Mathf.Deg2Rad);
 

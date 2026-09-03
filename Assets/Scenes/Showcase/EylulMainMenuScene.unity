@@ -1138,6 +1138,7 @@ MonoBehaviour:
   _levelInfoText: {fileID: 1168802962}
   _difficultyText: {fileID: 242642204}
   _menuBackgroundImage: {fileID: 1555459827}
+  _playButtonImage: {fileID: 809869526}
 --- !u!114 &439184676
 MonoBehaviour:
   m_ObjectHideFlags: 0

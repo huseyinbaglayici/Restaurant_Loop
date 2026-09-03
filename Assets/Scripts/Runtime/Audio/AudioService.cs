@@ -151,10 +151,24 @@ namespace RestaurantLoop.Audio
 
             if (_currentLevelProvider?.Current != null && _themeSettings != null)
             {
-                var theme = _themeSettings.GetTheme(_currentLevelProvider.Current.Theme);
+                var level = _currentLevelProvider.Current;
+                var theme = _themeSettings.GetTheme(level.Theme);
                 if (theme != null)
                 {
-                    if (theme.GameplayMusic != null) gameplayMusic = theme.GameplayMusic;
+                    // Select music according to level difficulty
+                    if (level.Difficulty == LevelDifficulty.SuperHard && theme.SuperHardGameplayMusic != null)
+                    {
+                        gameplayMusic = theme.SuperHardGameplayMusic;
+                    }
+                    else if ((level.Difficulty == LevelDifficulty.Hard || level.Difficulty == LevelDifficulty.SuperHard) && theme.HardGameplayMusic != null)
+                    {
+                        gameplayMusic = theme.HardGameplayMusic;
+                    }
+                    else if (theme.GameplayMusic != null)
+                    {
+                        gameplayMusic = theme.GameplayMusic;
+                    }
+
                     if (theme.GameplayAmbience != null) ambience = theme.GameplayAmbience;
                 }
             }

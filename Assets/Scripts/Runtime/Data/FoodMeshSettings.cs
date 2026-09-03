@@ -83,6 +83,16 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Kamera zoom çarpanı.")]
         public float BubbleCameraScaleMultiplier = 1.0f;
 
+        [Header("Customer Order Bubble Pulsing Animation")]
+        [Tooltip("Sipariş baloncuğunda hafif nabız/büyüyüp küçülme (pulsing) animasyonu aktif olsun mu?")]
+        public bool EnableBubblePulsing = true;
+        [Tooltip("Pulsing scale çarpanı (Örn: 1.1f).")]
+        public float BubblePulseScale = 1.1f;
+        [Tooltip("Pulsing döngü süresi saniye cinsinden.")]
+        public float BubblePulseDuration = 0.7f;
+        [Tooltip("Pulsing renk parlama çarpanı (isteğe bağlı, beyaz/parlak).")]
+        public Color BubblePulseColor = new Color(1.12f, 1.12f, 1.12f, 1f);
+
         [Header("Fonts & Badges")]
         [Tooltip("Font asset used for stack amount numbers across 2D queue and 3D conveyor.")]
         public TMPro.TMP_FontAsset StackAmountFont;

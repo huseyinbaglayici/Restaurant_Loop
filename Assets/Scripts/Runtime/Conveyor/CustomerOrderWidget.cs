@@ -68,15 +68,21 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (_secondAmountText != null) _secondAmountText.transform.localScale = Vector3.one * (scale * 0.75f);
         }
 
+        private Tween _glowTween;
+        private Tween _glowColorTween;
+
         public void OnDespawned()
         {
             if (this == null || gameObject == null) return;
+
+            StopBubblePulsing();
 
             if (_foodImage != null)
             {
                 _foodImage.transform.DOKill(true);
                 if (_firstOrderHolder != null) _foodImage.transform.SetParent(_firstOrderHolder, false);
                 _foodImage.transform.localScale = Vector3.one;
+                _foodImage.color = new Color(1f, 1f, 1f, _foodImage.color.a);
             }
 
             if (_amountText != null)
@@ -108,6 +114,15 @@ namespace RestaurantLoop.Runtime.Conveyor
             _amountText.gameObject.SetActive(visible && !_isHidden);
             _secondFoodImage.gameObject.SetActive(visible && _hasSecondOrder && !_isHidden);
             _secondAmountText.gameObject.SetActive(visible && _hasSecondOrder && !_isHidden);
+
+            if (!visible)
+            {
+                StopBubblePulsing();
+            }
+            else if (!_isHidden)
+            {
+                StartBubblePulsing();
+            }
         }
 
         public void ApplyOrder(FoodStackData order, bool isHidden = false)
@@ -118,6 +133,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             if (isHidden)
             {
+                StopBubblePulsing();
+
                 if (_foodMeshSettings != null && _foodMeshSettings.HiddenOrderBubble != null)
                 {
                     _foodImage.sprite = _foodMeshSettings.HiddenOrderBubble;
@@ -150,6 +167,10 @@ namespace RestaurantLoop.Runtime.Conveyor
             {
                 PlayRevealAnimation();
             }
+            else
+            {
+                StartBubblePulsing();
+            }
         }
 
         public void PlayRevealAnimation()
@@ -157,7 +178,13 @@ namespace RestaurantLoop.Runtime.Conveyor
             float scale = GetBaseScale();
             _foodImage.transform.DOKill(true);
             _foodImage.transform.localScale = Vector3.one * (scale * 0.3f);
-            _foodImage.transform.DOScale(scale, 0.4f).SetEase(Ease.OutBack);
+            _foodImage.transform.DOScale(scale, 0.4f).SetEase(Ease.OutBack).OnComplete(() =>
+            {
+                if (!_isHidden)
+                {
+                    StartBubblePulsing();
+                }
+            });
 
             if (_amountText != null)
             {
@@ -177,7 +204,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             if (hasSecondOrder)
             {
-                // dimmed
+                // dimmed second order icon & text
                 SetAlpha(_secondFoodImage, _secondFoodDimAlpha);
                 SetAlpha(_secondAmountText, _secondAmountDimAlpha);
 
@@ -185,12 +212,67 @@ namespace RestaurantLoop.Runtime.Conveyor
 
                 if (_secondAmountText != null)
                     _secondAmountText.text = secondOrder.Amount.ToString();
+
+                if (!_isHidden)
+                {
+                    StartBubblePulsing();
+                }
             }
             else
             {
-                // promoted
                 SetAlpha(_secondFoodImage, 1f);
                 SetAlpha(_secondAmountText, 1f);
+
+                if (!_isHidden)
+                {
+                    StartBubblePulsing();
+                }
+            }
+        }
+
+        private void StartBubblePulsing()
+        {
+            if (_foodImage == null) return;
+            if (_foodMeshSettings != null && !_foodMeshSettings.EnableBubblePulsing) return;
+
+            StopBubblePulsing();
+
+            float baseScale = GetBaseScale();
+            float pulseScaleFactor = _foodMeshSettings != null ? _foodMeshSettings.BubblePulseScale : 1.1f;
+            float duration = _foodMeshSettings != null ? _foodMeshSettings.BubblePulseDuration : 0.7f;
+            Color pulseColor = _foodMeshSettings != null ? _foodMeshSettings.BubblePulseColor : new Color(1.12f, 1.12f, 1.12f, 1f);
+
+            _foodImage.transform.localScale = Vector3.one * baseScale;
+
+            // Smooth continuous pulsing (büyüyüp küçülme)
+            _glowTween = _foodImage.transform.DOScale(Vector3.one * (baseScale * pulseScaleFactor), duration)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo);
+
+            _glowColorTween = _foodImage.DOColor(pulseColor, duration)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo);
+        }
+
+        private void StopBubblePulsing()
+        {
+            if (_glowTween != null)
+            {
+                _glowTween.Kill();
+                _glowTween = null;
+            }
+
+            if (_glowColorTween != null)
+            {
+                _glowColorTween.Kill();
+                _glowColorTween = null;
+            }
+
+            if (_foodImage != null)
+            {
+                float baseScale = GetBaseScale();
+                _foodImage.transform.localScale = Vector3.one * baseScale;
+                _foodImage.color = new Color(1f, 1f, 1f, _foodImage.color.a);
             }
         }
 

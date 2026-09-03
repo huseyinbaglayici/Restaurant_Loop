@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: ConveyorLevel_30
   m_EditorClassIdentifier: 
   LevelId: 30
-  Difficulty: 0
+  Difficulty: 1
+  Theme: 0
   Environment: {fileID: 723497061726727076, guid: f49e09aeb79d57542bee99742c7c0883,
     type: 3}
   GridWidth: 10

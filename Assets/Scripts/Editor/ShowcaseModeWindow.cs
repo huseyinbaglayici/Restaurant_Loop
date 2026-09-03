@@ -155,10 +155,20 @@ namespace RestaurantLoop.Editor
                     int levelId = _playlist[i];
                     bool isCurrentPlaying = (i == _currentPlaylistIndex);
 
+                    var levelData = sortedLevels.FirstOrDefault(l => l.LevelId == levelId);
+                    string themeText = levelData != null ? $" ({levelData.Theme})" : "";
+                    string diffText = "";
+                    if (levelData != null)
+                    {
+                        if (levelData.Difficulty == LevelDifficulty.Hard) diffText = " [Zor]";
+                        else if (levelData.Difficulty == LevelDifficulty.SuperHard) diffText = " [Çok Zor]";
+                        else if (levelData.Difficulty == LevelDifficulty.Bonus) diffText = " [Bonus]";
+                    }
+
                     EditorGUILayout.BeginHorizontal(EditorStyles.textArea);
 
                     GUI.backgroundColor = isCurrentPlaying ? new Color(0.4f, 0.9f, 0.4f) : Color.white;
-                    string label = $"{i + 1}. Sıra: Level {levelId}" + (isCurrentPlaying ? "  [Oynanacak]" : "");
+                    string label = $"{i + 1}. Sıra: Level {levelId}{themeText}{diffText}" + (isCurrentPlaying ? "  [Oynanacak]" : "");
                     EditorGUILayout.LabelField(label, EditorStyles.boldLabel, GUILayout.ExpandWidth(true));
                     GUI.backgroundColor = Color.white;
 
@@ -205,7 +215,13 @@ namespace RestaurantLoop.Editor
             _dbScrollPos = EditorGUILayout.BeginScrollView(_dbScrollPos);
             foreach (var level in sortedLevels)
             {
-                string info = $"Level {level.LevelId}" + (level.IsTutorial ? " (Tutorial)" : "") + (level.Difficulty != LevelDifficulty.None ? $" [{level.Difficulty}]" : "");
+                string themeText = $" ({level.Theme})";
+                string diffText = "";
+                if (level.Difficulty == LevelDifficulty.Hard) diffText = " [Zor]";
+                else if (level.Difficulty == LevelDifficulty.SuperHard) diffText = " [Çok Zor]";
+                else if (level.Difficulty == LevelDifficulty.Bonus) diffText = " [Bonus]";
+
+                string info = $"Level {level.LevelId}{themeText}{diffText}" + (level.IsTutorial ? " (Tutorial)" : "");
 
                 EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button($"+ Listeye Ekle: {info}", GUILayout.Height(26)))

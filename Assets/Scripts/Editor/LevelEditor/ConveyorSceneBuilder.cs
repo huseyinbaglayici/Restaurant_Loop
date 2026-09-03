@@ -45,7 +45,7 @@ namespace Editor.LevelEditor
 
                 var baseEuler = instance.transform.localRotation.eulerAngles;
                 instance.transform.localRotation = Quaternion.Euler(baseEuler.x,
-                    ConveyorWorldUtil.ToWorldYRotation(cell.Shape, cell.Rotation), baseEuler.z);
+                    baseEuler.y + ConveyorWorldUtil.ToWorldYRotation(cell.Shape, cell.Rotation), baseEuler.z);
                 Undo.RegisterCreatedObjectUndo(instance, "Build Conveyor");
             }
 

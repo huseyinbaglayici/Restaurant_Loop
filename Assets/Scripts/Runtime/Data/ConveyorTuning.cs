@@ -156,5 +156,11 @@ namespace RestaurantLoop.Runtime.Data
 
         [Tooltip("Extra manual Z offset added on top of the calculated position.")]
         public float EnvironmentExtraZOffset = 0f;
+
+        [Tooltip("Camera zoom yaptıkça (uzaklaştıkça) environment'ın Y ekseninde (yukarı/derine) ötelenme katsayısı (Örn: 2.0f).")]
+        public float EnvironmentCameraYMultiplier = 0f;
+
+        [Tooltip("Camera zoom yaptıkça (uzaklaştıkça) environment'ın Z ekseninde geriye ötelenme katsayısı (Örn: 2.0f). 0 ise sabit kalır.")]
+        public float EnvironmentCameraZMultiplier = 0f;
     }
 }

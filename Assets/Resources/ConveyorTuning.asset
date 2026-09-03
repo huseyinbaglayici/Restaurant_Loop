@@ -56,3 +56,5 @@ MonoBehaviour:
   AutoAlignEnvironment: 1
   EnvironmentMinZGap: 2
   EnvironmentExtraZOffset: 0
+  EnvironmentCameraYMultiplier: 0
+  EnvironmentCameraZMultiplier: 0
