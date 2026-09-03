@@ -22,10 +22,10 @@ MonoBehaviour:
   - Theme: 0
     EnvironmentPrefab: {fileID: 2934624780439002064, guid: 449c03f72d92bb445a74bbc8573c9d08,
       type: 3}
-    EnvironmentOffset: {x: 530, y: 583, z: 458.5}
+    EnvironmentOffset: {x: 530, y: 583, z: 459.3}
     CameraZoomYShiftMultiplier: 1.5
-    CameraZoomZShiftMultiplier: 1.5
-    CameraZOffsetMultiplier: 12
+    CameraZoomZShiftMultiplier: 1.2
+    CameraZOffsetMultiplier: 6
     EnvironmentRotation: {x: 0, y: 0, z: 0}
     EnvironmentScale: {x: 1, y: 1, z: 1}
     ConveyorStraightPrefab: {fileID: 0}
@@ -46,10 +46,10 @@ MonoBehaviour:
   - Theme: 1
     EnvironmentPrefab: {fileID: 4929085771407618199, guid: 485d186fcb555884badd011cdebb3520,
       type: 3}
-    EnvironmentOffset: {x: 530, y: 578.25, z: 460.7}
+    EnvironmentOffset: {x: 530, y: 578.25, z: 462.1}
     CameraZoomYShiftMultiplier: 1.5
-    CameraZoomZShiftMultiplier: 1.5
-    CameraZOffsetMultiplier: 30
+    CameraZoomZShiftMultiplier: 1.2
+    CameraZOffsetMultiplier: 0
     EnvironmentRotation: {x: 0, y: 0, z: 0}
     EnvironmentScale: {x: 1, y: 1, z: 1}
     ConveyorStraightPrefab: {fileID: 7417020118612242394, guid: ca41ff8ba20f5434e96f3a77689d268c,

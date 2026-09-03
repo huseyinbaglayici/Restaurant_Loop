@@ -538,7 +538,7 @@ MonoBehaviour:
       LinkId: 0
     - Type: 3
       Amount: 4
-      LinkId: 3
+      LinkId: 0
   - Entries:
     - Type: 2
       Amount: 5

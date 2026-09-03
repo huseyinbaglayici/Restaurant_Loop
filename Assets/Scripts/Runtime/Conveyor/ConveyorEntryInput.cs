@@ -140,13 +140,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             int currentReservedOrOnBelt = _conveyorManager.ReservedItemCount;
             int netAvailableTrays = maxTrays - currentReservedOrOnBelt;
 
-            if (stack.LinkId != 0)
+            if (stack.LinkId != 0 && TryFindLinkedPartnerInQueue(stack.LinkId, bestLane, bestRow, out int partnerLane, out int partnerRow, out var partnerVisual))
             {
-                if (!TryFindLinkedPartnerInQueue(stack.LinkId, bestLane, bestRow, out int partnerLane, out int partnerRow, out var partnerVisual))
-                {
-                    return true;
-                }
-
                 // If not in pick-from-bottom mode, both must be accessible at the front:
                 bool pickFromBottom = _queueSpawner.PickFromBottomEnabled;
                 bool isBestFront = bestRow == 0 || pickFromBottom;

@@ -15,13 +15,36 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private Tween _rotateTween;
 
-        public Vector3 InitialLocalPosition => _initialLocalPosition;
-        public Quaternion InitialLocalRotation => _initialLocalRotation;
-        public Vector3 InitialLocalScale => _initialLocalScale;
+        public Vector3 InitialLocalPosition
+        {
+            get
+            {
+                CaptureInitialPoseOnce();
+                return _initialLocalPosition;
+            }
+        }
+
+        public Quaternion InitialLocalRotation
+        {
+            get
+            {
+                CaptureInitialPoseOnce();
+                return _initialLocalRotation;
+            }
+        }
+
+        public Vector3 InitialLocalScale
+        {
+            get
+            {
+                CaptureInitialPoseOnce();
+                return _initialLocalScale;
+            }
+        }
 
         private void Awake() => CaptureInitialPoseOnce();
 
-        private void CaptureInitialPoseOnce()
+        public void CaptureInitialPoseOnce()
         {
             if (_initialPoseCaptured) return;
 

@@ -82,6 +82,7 @@ namespace RestaurantLoop.Runtime.UI
         private void Start()
         {
             RegisterTutorialTargets();
+            EnsureCanvasShaderChannels();
 
             // Auto-resolve child visual references if unassigned in Inspector
             AutoResolveReferences();
@@ -527,6 +528,15 @@ namespace RestaurantLoop.Runtime.UI
         {
             gameObject.SetActive(true);
             RefreshAllSlots();
+        }
+
+        private void EnsureCanvasShaderChannels()
+        {
+            var canvas = GetComponentInParent<Canvas>();
+            if (canvas != null)
+            {
+                canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1 | AdditionalCanvasShaderChannels.Normal | AdditionalCanvasShaderChannels.Tangent;
+            }
         }
 
         private void FireActionPerformed(PowerUpButtonId id) =>

@@ -92,23 +92,29 @@ namespace RestaurantLoop.Runtime.Conveyor
             _environmentInstance.transform.localScale = Vector3.Scale(_tuning.EnvironmentBaseScale, themeScale);
             _environmentInstance.transform.localRotation = Quaternion.Euler(themeRot);
 
-            // Calculate extra Z offset from height expansion (only pushes Z if grid height increased)
+            // 1. Izgara yuksekligi arttiginda konveyorun fiziksel uzama boyu ile dengeli Z otelenmesi
+            float gridHeightDiff = _level.GridHeight - _tuning.ReferenceGridHeight;
+            float beltPhysicalExpansionZ = gridHeightDiff * (_prefabSettings.CellWorldSize * 0.65f);
+
+            // 2. Kamera zoom-out yaptiginda dengeli kadraj payi
             float cameraZoomPushZ = 0f;
-            if (_cameraController != null && _cameraController.HeightZoomFactor > 1f)
+            if (_cameraController != null && _cameraController.CameraZoomFactor > 1f)
             {
-                float zoomDiff = _cameraController.HeightZoomFactor - 1f;
+                float zoomDiff = _cameraController.CameraZoomFactor - 1f;
 
-                float zMult = themeEntry != null && themeEntry.CameraZOffsetMultiplier != 0f 
-                    ? themeEntry.CameraZOffsetMultiplier 
-                    : _tuning.EnvironmentCameraZMultiplier;
+                float zShiftMult = themeEntry != null && themeEntry.CameraZOffsetMultiplier != 0f
+                    ? themeEntry.CameraZOffsetMultiplier
+                    : (themeEntry != null && themeEntry.CameraZoomZShiftMultiplier != 0f 
+                        ? themeEntry.CameraZoomZShiftMultiplier 
+                        : 1.2f);
 
-                cameraZoomPushZ = zoomDiff * zMult;
+                cameraZoomPushZ = zoomDiff * zShiftMult;
             }
 
             var pos = _environmentInstance.transform.position;
             pos.x = _tuning.WorldOrigin.x + _tuning.EnvironmentBasePosition.x + themeOffset.x;
             pos.y = _tuning.EnvironmentBasePosition.y + themeOffset.y;
-            pos.z = _tuning.EnvironmentBasePosition.z + themeOffset.z + cameraZoomPushZ;
+            pos.z = _tuning.EnvironmentBasePosition.z + themeOffset.z + beltPhysicalExpansionZ + cameraZoomPushZ;
             _environmentInstance.transform.position = pos;
         }
     }

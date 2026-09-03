@@ -262,19 +262,33 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (_conveyorAmountBadge == null || !_conveyorAmountBadge.activeSelf) return;
 
             var cam = Camera.main;
-            if (cam != null)
+            if (cam == null)
             {
-                // Yemeğin dönüşünden etkilenmemesi için dünya ekseninde kameraya bakar
-                _conveyorAmountBadge.transform.rotation = cam.transform.rotation;
-
-                // Yemeğin yüksekliğine göre tepesinde ve hafif sağında duracak dünya ofseti
-                float extraOffset = _foodMeshSettings != null ? _foodMeshSettings.ConveyorBadgeHeightOffset : 0.8f;
-                float height = _usesFixedChildSlots
-                    ? (0.7f + extraOffset)
-                    : (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) + extraOffset);
-                Vector3 worldOffset = Vector3.up * height + cam.transform.right * 0.4f;
-                _conveyorAmountBadge.transform.position = transform.position + worldOffset;
+                var camCtrl = ResolveCameraController();
+                if (camCtrl != null && camCtrl.Camera != null) cam = camCtrl.Camera;
             }
+            if (cam == null) return;
+
+            // Yemeğin dönüşünden etkilenmemesi için dünya ekseninde kameraya bakar
+            _conveyorAmountBadge.transform.rotation = cam.transform.rotation;
+
+            float extraOffset = _foodMeshSettings != null ? _foodMeshSettings.ConveyorBadgeHeightOffset : 0.85f;
+            Vector3 topPosition = TopUnitWorldPosition;
+
+            float topUnitHalfHeight = 0.4f;
+            if (!_usesFixedChildSlots && _units.Count > 0 && _units[^1] != null && _unitSourcePrefab.Count > 0 && _unitSourcePrefab[^1] != null)
+            {
+                float scale = ResolveScale(Stack.Type, _unitIsOpened[^1] ? FoodVisualState.Opened : FoodVisualState.Closed);
+                float unitHeight = ResolveUnitHeight(_unitSourcePrefab[^1], _unitAppliedRotation[^1], _unitBaseScale[^1] * scale);
+                if (unitHeight > 0.0001f) topUnitHalfHeight = unitHeight * 0.5f;
+            }
+            else if (_usesFixedChildSlots)
+            {
+                topUnitHalfHeight = 0.6f;
+            }
+
+            Vector3 worldOffset = Vector3.up * (topUnitHalfHeight + extraOffset) + cam.transform.right * 0.35f;
+            _conveyorAmountBadge.transform.position = topPosition + worldOffset;
         }
 
         private TableSettings ResolveTableSettings()

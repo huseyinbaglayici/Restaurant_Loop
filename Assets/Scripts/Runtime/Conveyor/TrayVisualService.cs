@@ -79,6 +79,7 @@ namespace Runtime.Conveyor
         {
             FlushDueCommands();
             AdvanceRidingTrays();
+            TryAssignWaitingTrayless();
         }
 
         private void AdvanceRidingTrays()
@@ -130,7 +131,6 @@ namespace Runtime.Conveyor
                 return position;
             }
 
-
             float flightDuration =
                 _feel.TrayDispenserFlight.ResolveDuration(Vector3.Distance(tray.transform.position, TargetPosition()));
 
@@ -157,7 +157,6 @@ namespace Runtime.Conveyor
             }
         }
 
-
         private void HandleItemLeavingBelt(int id)
         {
             _traylessIds.Remove(id);
@@ -167,9 +166,7 @@ namespace Runtime.Conveyor
             _ridingIds.Remove(id);
             if (tray == null) return;
 
-
             _flightService.Cancel(tray.transform);
-
 
             if (_traylessIds.Count > 0)
             {
@@ -179,17 +176,28 @@ namespace Runtime.Conveyor
                 return;
             }
 
-            Defer(() =>
+            var slotPose = _trayAnchor.ReserveReturnSlot(tray);
+            tray.ReturnToInitialPose(
+                slotPose.Position,
+                slotPose.Rotation,
+                slotPose.Scale,
+                _feel.TrayDispenserFlight,
+                _flightService,
+                () =>
+                {
+                    _trayAnchor.ConfirmReturn(tray);
+                    TryAssignWaitingTrayless();
+                });
+        }
+
+        private void TryAssignWaitingTrayless()
+        {
+            while (_traylessIds.Count > 0 && _trayAnchor.TryAcquire(out var tray))
             {
-                var slotPose = _trayAnchor.ReserveReturnSlot(tray);
-                tray.ReturnToInitialPose(
-                    slotPose.Position,
-                    slotPose.Rotation,
-                    slotPose.Scale,
-                    _feel.TrayDispenserFlight,
-                    _flightService,
-                    () => _trayAnchor.ConfirmReturn(tray));
-            });
+                int id = _traylessIds[0];
+                _traylessIds.RemoveAt(0);
+                StartTrayEntry(id, tray);
+            }
         }
 
         private void OnBeltCleared()

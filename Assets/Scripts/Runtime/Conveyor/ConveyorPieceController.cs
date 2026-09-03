@@ -24,7 +24,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             _baseEulerY = e.y;
             _baseTiltZ = e.z;
 
-            _visuals = GetComponentsInChildren<IConveyorPieceVisual>(true);
             _originalRenderers = GetComponents<Renderer>();
 
             for (int i = 0; i < transform.childCount; i++)
@@ -74,6 +73,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                     if (child != null) child.SetActive(true);
                 }
             }
+
+            UpdateVisualsAxisSign();
         }
 
         public void OnSpawned(Vector3 position, float worldYRotation)
@@ -82,17 +83,26 @@ namespace RestaurantLoop.Runtime.Conveyor
             // axis flip at 90/270
             _axisSign = Mathf.Cos(2f * worldYRotation * Mathf.Deg2Rad);
 
-            for (int i = 0; i < _visuals.Length; i++)
-            {
-                _visuals[i].OnPieceSpawned(_axisSign);
-            }
-
             gameObject.SetActive(true);
+
+            UpdateVisualsAxisSign();
         }
 
         public void OnDespawned()
         {
             gameObject.SetActive(false);
+        }
+
+        private void UpdateVisualsAxisSign()
+        {
+            _visuals = GetComponentsInChildren<IConveyorPieceVisual>(false);
+            if (_visuals != null)
+            {
+                for (int i = 0; i < _visuals.Length; i++)
+                {
+                    _visuals[i].OnPieceSpawned(_axisSign);
+                }
+            }
         }
 
         public class Pool : MonoPoolableMemoryPool<Vector3, float, ConveyorPieceController>

@@ -134,8 +134,18 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _idleCount = _traysHighToLow.Count;
 
-            foreach (var tray in _traysHighToLow)
-                tray?.SnapToInitialPose();
+            for (int i = 0; i < _traysHighToLow.Count; i++)
+            {
+                var tray = _traysHighToLow[i];
+                if (tray == null) continue;
+                tray.SnapToInitialPose();
+                if (i < _slotPoses.Count)
+                {
+                    tray.transform.localPosition = _slotPoses[i].Position;
+                    tray.transform.localRotation = _slotPoses[i].Rotation;
+                    tray.transform.localScale = _slotPoses[i].Scale;
+                }
+            }
         }
 
         private void PositionOnGateCell()
@@ -219,7 +229,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (index < 0) return;
 
             _slotState[index] = SlotState.Idle;
-            _idleCount++;
+            _idleCount = _slotState.Count(s => s == SlotState.Idle);
         }
 
         public bool TryAddExtraTray()
