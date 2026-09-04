@@ -94,9 +94,55 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         // World position of the top unit — the one that renders Opened while this item is Opened. Consume
         // flights should spawn here, not at the item root (which sits at the bottom of the stack).
-        public Vector3 TopUnitWorldPosition => !_usesFixedChildSlots && _units.Count > 0 && _units[^1] != null
-            ? _units[^1].transform.position
-            : transform.position;
+        public Vector3 TopUnitWorldPosition
+        {
+            get
+            {
+                if (!_usesFixedChildSlots && _units.Count > 0)
+                {
+                    float highestY = float.MinValue;
+                    float centerX = transform.position.x;
+                    float centerZ = transform.position.z;
+                    bool found = false;
+
+                    for (int i = 0; i < _units.Count; i++)
+                    {
+                        if (_units[i] != null && _units[i].activeInHierarchy)
+                        {
+                            var r = _units[i].GetComponentInChildren<Renderer>();
+                            if (r != null)
+                            {
+                                highestY = Mathf.Max(highestY, r.bounds.max.y);
+                                found = true;
+                            }
+                        }
+                    }
+                    if (found)
+                    {
+                        return new Vector3(centerX, highestY, centerZ);
+                    }
+                }
+                else if (_usesFixedChildSlots && _fixedSlotInstance != null)
+                {
+                    var renderers = _fixedSlotInstance.GetComponentsInChildren<Renderer>();
+                    if (renderers != null && renderers.Length > 0)
+                    {
+                        float maxY = float.MinValue;
+                        bool found = false;
+                        for (int i = 0; i < renderers.Length; i++)
+                        {
+                            if (renderers[i] != null && renderers[i].gameObject.activeInHierarchy)
+                            {
+                                maxY = Mathf.Max(maxY, renderers[i].bounds.max.y);
+                                found = true;
+                            }
+                        }
+                        if (found) return new Vector3(transform.position.x, maxY, transform.position.z);
+                    }
+                }
+                return transform.position;
+            }
+        }
 
         public void OnSpawned(Vector3 position, FoodStackData stack, FoodVisualState visualState)
         {
@@ -170,9 +216,10 @@ namespace RestaurantLoop.Runtime.Conveyor
             rt.sizeDelta = new Vector2(3f, 3f);
 
             _queue2DAmountText = textObj.AddComponent<TextMeshPro>();
-            if (_foodMeshSettings != null && _foodMeshSettings.StackAmountFont != null)
+            var meshSettings = ResolveFoodMeshSettings();
+            if (meshSettings != null && meshSettings.StackAmountFont != null)
             {
-                _queue2DAmountText.font = _foodMeshSettings.StackAmountFont;
+                _queue2DAmountText.font = meshSettings.StackAmountFont;
             }
             _queue2DAmountText.alignment = TextAlignmentOptions.Center;
             _queue2DAmountText.fontSize = 6.5f;
@@ -204,19 +251,22 @@ namespace RestaurantLoop.Runtime.Conveyor
             rt.sizeDelta = new Vector2(2f, 2f);
 
             _conveyorAmountText = textObj.AddComponent<TextMeshPro>();
-            if (_foodMeshSettings != null && _foodMeshSettings.StackAmountFont != null)
+            var meshSettings = ResolveFoodMeshSettings();
+            if (meshSettings != null && meshSettings.StackAmountFont != null)
             {
-                _conveyorAmountText.font = _foodMeshSettings.StackAmountFont;
+                _conveyorAmountText.font = meshSettings.StackAmountFont;
             }
             _conveyorAmountText.alignment = TextAlignmentOptions.Center;
             _conveyorAmountText.fontSize = 5.5f;
             _conveyorAmountText.color = Color.white;
             _conveyorAmountText.fontStyle = FontStyles.Bold;
-            _conveyorAmountText.sortingOrder = 100;
+            _conveyorAmountText.sortingOrder = 2000;
+            _conveyorAmountText.isOverlay = true; // Always renders on top of 3D geometry
+
             var meshRenderer = textObj.GetComponent<MeshRenderer>();
             if (meshRenderer != null)
             {
-                meshRenderer.sortingOrder = 100;
+                meshRenderer.sortingOrder = 2000;
             }
         }
 
@@ -234,6 +284,11 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             EnsureConveyorAmountBadge();
             _conveyorAmountBadge.SetActive(true);
+            var meshSettings = ResolveFoodMeshSettings();
+            if (meshSettings != null && meshSettings.StackAmountFont != null && _conveyorAmountText.font != meshSettings.StackAmountFont)
+            {
+                _conveyorAmountText.font = meshSettings.StackAmountFont;
+            }
             _conveyorAmountText.text = Stack.Amount.ToString();
             AlignConveyorBadgeWithCamera();
 
@@ -252,6 +307,11 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             EnsureConveyorAmountBadge();
             _conveyorAmountBadge.SetActive(true);
+            var meshSettings = ResolveFoodMeshSettings();
+            if (meshSettings != null && meshSettings.StackAmountFont != null && _conveyorAmountText.font != meshSettings.StackAmountFont)
+            {
+                _conveyorAmountText.font = meshSettings.StackAmountFont;
+            }
             _conveyorAmountText.text = stack.Amount.ToString();
 
             AlignConveyorBadgeWithCamera();
@@ -272,23 +332,47 @@ namespace RestaurantLoop.Runtime.Conveyor
             // Yemeğin dönüşünden etkilenmemesi için dünya ekseninde kameraya bakar
             _conveyorAmountBadge.transform.rotation = cam.transform.rotation;
 
-            float extraOffset = _foodMeshSettings != null ? _foodMeshSettings.ConveyorBadgeHeightOffset : 0.85f;
+            // Parent scale compensation so text size stays consistent regardless of model scaling
+            Vector3 lossy = transform.lossyScale;
+            _conveyorAmountBadge.transform.localScale = new Vector3(
+                lossy.x > 0.001f ? 1f / lossy.x : 1f,
+                lossy.y > 0.001f ? 1f / lossy.y : 1f,
+                lossy.z > 0.001f ? 1f / lossy.z : 1f);
+
+            var meshSettings = ResolveFoodMeshSettings();
+            float extraOffset = meshSettings != null ? meshSettings.ConveyorBadgeHeightOffset : 0.85f;
             Vector3 topPosition = TopUnitWorldPosition;
 
-            float topUnitHalfHeight = 0.4f;
-            if (!_usesFixedChildSlots && _units.Count > 0 && _units[^1] != null && _unitSourcePrefab.Count > 0 && _unitSourcePrefab[^1] != null)
+            // TopUnitWorldPosition returns the highest rendered bounds Y.
+            // Add a clean vertical offset and slight right offset so it hovers above the stack.
+            Vector3 worldOffset = Vector3.up * (extraOffset + 0.35f) + cam.transform.right * 0.35f;
+
+            if (_location == FoodLocation.FoodStack)
             {
-                float scale = ResolveScale(Stack.Type, _unitIsOpened[^1] ? FoodVisualState.Opened : FoodVisualState.Closed);
-                float unitHeight = ResolveUnitHeight(_unitSourcePrefab[^1], _unitAppliedRotation[^1], _unitBaseScale[^1] * scale);
-                if (unitHeight > 0.0001f) topUnitHalfHeight = unitHeight * 0.5f;
-            }
-            else if (_usesFixedChildSlots)
-            {
-                topUnitHalfHeight = 0.6f;
+                // Exit stackteki textlerin Z pozisyonunu +1, Y pozisyonunu -2.2 ayarla
+                worldOffset.z += 1f;
+                worldOffset.y -= 2.2f;
             }
 
-            Vector3 worldOffset = Vector3.up * (topUnitHalfHeight + extraOffset) + cam.transform.right * 0.35f;
             _conveyorAmountBadge.transform.position = topPosition + worldOffset;
+        }
+
+        private FoodMeshSettings ResolveFoodMeshSettings()
+        {
+            if (_foodMeshSettings == null)
+            {
+                _foodMeshSettings = Resources.Load<FoodMeshSettings>("FoodMeshSettings");
+            }
+            return _foodMeshSettings;
+        }
+
+        private FoodPlacementSettings ResolvePlacementSettings()
+        {
+            if (_placement == null)
+            {
+                _placement = Resources.Load<FoodPlacementSettings>("FoodPlacementSettings");
+            }
+            return _placement;
         }
 
         private TableSettings ResolveTableSettings()
@@ -624,10 +708,14 @@ namespace RestaurantLoop.Runtime.Conveyor
             _appliedOpenedScale = ResolveScale(type, FoodVisualState.Opened);
             _appliedSpacing = spacing;
 
+            bool isDrink = type == FoodType.Drink;
+
             for (int i = 0; i < _units.Count; i++)
             {
                 float unitScale = ResolveScale(type, _unitIsOpened[i] ? FoodVisualState.Opened : FoodVisualState.Closed);
-                _units[i].transform.localPosition = new Vector3(0f, i * spacing, 0f);
+                // For Drink specifically, the bottom model is shifted so it renders in front/on top
+                float yOffset = isDrink ? (_units.Count - 1 - i) * spacing : i * spacing;
+                _units[i].transform.localPosition = new Vector3(0f, yOffset, 0f);
                 _units[i].transform.localScale = _unitBaseScale[i] * unitScale;
             }
         }
@@ -638,13 +726,14 @@ namespace RestaurantLoop.Runtime.Conveyor
         // doesn't jump around as the top unit's mesh changes.
         private float ResolveSpacing(FoodType type)
         {
-            if (_units.Count == 0 || _placement == null) return FallbackStackSpacing;
+            var placement = ResolvePlacementSettings();
+            if (_units.Count == 0 || placement == null) return FallbackStackSpacing;
 
             float scale = ResolveScale(type, _unitIsOpened[0] ? FoodVisualState.Opened : FoodVisualState.Closed);
             float unitHeight = ResolveUnitHeight(_unitSourcePrefab[0], _unitAppliedRotation[0], _unitBaseScale[0] * scale);
             if (unitHeight <= 0.0001f) return FallbackStackSpacing;
 
-            return unitHeight * _placement.ResolveStackSpacingFactor(type, _location);
+            return unitHeight * placement.ResolveStackSpacingFactor(type, _location);
         }
 
         // Height along world Y after the unit's fixed orientation and scale are applied — a prefab laid
@@ -652,10 +741,14 @@ namespace RestaurantLoop.Runtime.Conveyor
         private static float ResolveUnitHeight(GameObject prefab, Quaternion appliedRotation, Vector3 scale)
         {
             var bounds = CombinedLocalBounds(prefab);
-            if (!bounds.HasValue) return 0f;
+            if (!bounds.HasValue) return 0.25f;
 
             var size = appliedRotation * Vector3.Scale(bounds.Value.size, scale);
-            return Mathf.Abs(size.y);
+            float h = Mathf.Abs(size.y);
+            // 2D Sprite prefabları (PF_Burger vb.) uninstantiated halde bounds.size.y = 20.48 birim gelebilir.
+            // Bu durumda katman yüksekliğini gerçekçi bir kalınlık sınırında (0.22 - 0.28) tutuyoruz.
+            if (h > 0.6f) h = 0.25f;
+            return h > 0.0001f ? h : 0.25f;
         }
 
         // Encapsulates every child mesh's bounds in the prefab root's local space — covers composite
@@ -730,7 +823,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private float ResolveScale(FoodType type, FoodVisualState state)
         {
-            float baseScale = _placement == null ? 1f : _placement.ResolveScale(type, _location, state);
+            var placement = ResolvePlacementSettings();
+            float baseScale = placement == null ? 1f : placement.ResolveScale(type, _location, state);
             if (_location == FoodLocation.Queue && _tableSettings != null && _tableSettings.ScaleWithCamera && _cameraController != null)
             {
                 float zoom = _cameraController.CameraZoomFactor;

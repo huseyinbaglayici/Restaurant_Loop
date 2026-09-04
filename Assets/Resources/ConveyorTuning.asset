@@ -23,9 +23,9 @@ MonoBehaviour:
   CameraPickFromBottomOffset: {x: 0, y: -0.6, z: -4}
   CameraPickFromBottomDuration: 0.35
   CameraPickFromBottomOrthoMultiplier: 0.95
-  BeltFoodHeight: -4
+  BeltFoodHeight: -3.8
   QueueFoodHeight: -3.3
-  ExitStackFoodHeight: -3.5
+  ExitStackFoodHeight: -2.5
   BeltSpeed: 4
   BeltTrackHeight: -4.8
   MinEntrySpacing: 1.5
@@ -35,7 +35,7 @@ MonoBehaviour:
   QueueRowSpacing: 1.5
   QueueShiftSpeed: 4
   TrayDispenserHeight: -4.5
-  TrayBeltHeight: -4.7
+  TrayBeltHeight: -4.2
   TrayDispenserOffset: {x: -0.7, y: 0, z: 0}
   ExitStackGroundHeight: -4.05
   ExitStackZOffsetFromGrid: 1.5
@@ -48,7 +48,7 @@ MonoBehaviour:
   ClickRadiusPixels: 80
   LinkedPairBeltSpacing: 2
   LinkPrismWidth: 0
-  LinkPrismHeight: 0.3
+  LinkPrismHeight: 0.2
   LinkPrismYOffset: -0.3
   LinkLineWidth: 0.3
   LinkLineSag: 0.35

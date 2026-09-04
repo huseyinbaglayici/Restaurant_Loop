@@ -62,11 +62,18 @@ namespace RestaurantLoop.Runtime.Conveyor
             _cubeMesh = tempCube.GetComponent<MeshFilter>().sharedMesh;
             UnityEngine.Object.Destroy(tempCube);
 
-            var shader = Shader.Find("Universal Render Pipeline/Unlit")
-                         ?? Shader.Find("Unlit/Color")
-                         ?? Shader.Find("Sprites/Default");
-            _prismMaterial = new Material(shader);
-            _prismMaterial.renderQueue = 2000;
+            var loadedMat = Resources.Load<Material>("Materials/M_LinkPrism");
+            if (loadedMat != null)
+            {
+                _prismMaterial = new Material(loadedMat);
+            }
+            else
+            {
+                var shader = Shader.Find("Universal Render Pipeline/Unlit")
+                             ?? Shader.Find("Sprites/Default")
+                             ?? Shader.Find("Unlit/Color");
+                _prismMaterial = new Material(shader);
+            }
         }
 
         public void Tick()

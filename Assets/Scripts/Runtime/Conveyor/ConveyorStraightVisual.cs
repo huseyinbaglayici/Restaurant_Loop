@@ -35,7 +35,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void Update()
         {
-            _uvOffset.y += _axisSign * _scrollDirection * _scrollSpeed * Time.deltaTime;
+            float speedMult = ConveyorPieceController.GlobalSpeedMultiplier;
+            _uvOffset.y += _axisSign * _scrollDirection * _scrollSpeed * speedMult * Time.deltaTime;
 
             _renderer.GetPropertyBlock(_propertyBlock);
             _propertyBlock.SetVector(_stPropertyId, new Vector4(_tiling.x, _tiling.y, _uvOffset.x, _uvOffset.y));

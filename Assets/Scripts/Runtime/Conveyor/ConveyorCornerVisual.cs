@@ -32,6 +32,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         [Header("Animation")]
         [SerializeField] private float _scrollSpeed = 0.5f;
         [SerializeField] private float _scrollDirection = 1f;
+        [SerializeField] private float _speedMultiplier = 60f; // Calibrated to match straight conveyor linear speed
+        [SerializeField] private bool _followPieceAxis = false; // Prevents 90/270 degree corners from flipping in reverse
 
         private Mesh _mesh;
         private Vector2[] _baseUV;
@@ -216,7 +218,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             if (this == null || !_isInitialized || _mesh == null || _baseUV == null) return;
 
-            _uvAngle += _axisSign * _scrollDirection * _scrollSpeed * Time.deltaTime * 360f;
+            float speedMult = ConveyorPieceController.GlobalSpeedMultiplier;
+            float dir = _scrollDirection * _axisSign;
+            _uvAngle += dir * _scrollSpeed * _speedMultiplier * speedMult * Time.deltaTime;
             float rad = _uvAngle * Mathf.Deg2Rad;
             float cos = Mathf.Cos(rad);
             float sin = Mathf.Sin(rad);

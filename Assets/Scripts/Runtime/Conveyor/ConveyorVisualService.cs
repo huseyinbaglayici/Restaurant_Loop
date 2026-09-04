@@ -95,10 +95,12 @@ namespace RestaurantLoop.Runtime.Conveyor
             _beltVisuals.Clear();
             _audioService.StopConveyorLoop();
             DespawnOwnedVisuals();
+            ConveyorPieceController.GlobalSpeedMultiplier = 1f;
         }
 
         public void Tick()
         {
+            ConveyorPieceController.GlobalSpeedMultiplier = _conveyorManager.SpeedMultiplier;
             AdvanceBeltVisuals();
             UpdateConveyorLoopAudio();
         }

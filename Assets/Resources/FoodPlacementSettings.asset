@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: FoodPlacementSettings
   m_EditorClassIdentifier: 
   _globalQueueScale: 0.81
-  _globalFoodStackScale: 0.8
-  _globalConveyorScale: 0.8
+  _globalFoodStackScale: 1
+  _globalConveyorScale: 1
   _entries:
   - Type: 0
     Queue:
@@ -26,8 +26,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
-    ConveyorStackSpacing: 1
-    ExitStackSpacing: 0
+    ConveyorStackSpacing: 2
+    ExitStackSpacing: 2
     StackSpacingFactor: 1
   - Type: 1
     Queue:
@@ -40,7 +40,7 @@ MonoBehaviour:
       ClosedScale: 1
       OpenedScale: 1
     ConveyorStackSpacing: 1
-    ExitStackSpacing: 0
+    ExitStackSpacing: 1
     StackSpacingFactor: 1
   - Type: 2
     Queue:
@@ -65,9 +65,9 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
-    ConveyorStackSpacing: 1
-    ExitStackSpacing: 0
-    StackSpacingFactor: 0.3
+    ConveyorStackSpacing: 2
+    ExitStackSpacing: 2
+    StackSpacingFactor: 1
   - Type: 4
     Queue:
       ClosedScale: 1.18
@@ -78,8 +78,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
-    ConveyorStackSpacing: 1
-    ExitStackSpacing: 0
+    ConveyorStackSpacing: 2
+    ExitStackSpacing: 2
     StackSpacingFactor: 1
   - Type: 5
     Queue:
@@ -91,8 +91,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
-    ConveyorStackSpacing: 0.5
-    ExitStackSpacing: 0
+    ConveyorStackSpacing: 1
+    ExitStackSpacing: 1
     StackSpacingFactor: 1
   - Type: 6
     Queue:
@@ -104,8 +104,8 @@ MonoBehaviour:
     Conveyor:
       ClosedScale: 1
       OpenedScale: 1
-    ConveyorStackSpacing: 0.5
-    ExitStackSpacing: 0
+    ConveyorStackSpacing: 1
+    ExitStackSpacing: 1
     StackSpacingFactor: 1
   - Type: 7
     Queue:

@@ -42,6 +42,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             float cellSize = _prefabSettings.CellWorldSize;
             var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
             var theme = _themeSettings != null ? _themeSettings.GetTheme(_level.Theme) : null;
+            var orderedPath = _level.BakedPath != null ? _level.BakedPath.OrderedPath : null;
 
             foreach (var cell in _level.ConveyorCells)
             {
@@ -62,7 +63,26 @@ namespace RestaurantLoop.Runtime.Conveyor
                 }
                 else
                 {
+                    float flowSign = 1f;
+                    if (orderedPath != null && orderedPath.Count > 2)
+                    {
+                        int idx = orderedPath.IndexOf(cell.Coord);
+                        if (idx >= 0)
+                        {
+                            var prev = orderedPath[(idx - 1 + orderedPath.Count) % orderedPath.Count];
+                            var curr = orderedPath[idx];
+                            var next = orderedPath[(idx + 1) % orderedPath.Count];
+                            var inDir = curr - prev;
+                            var outDir = next - curr;
+
+                            // 2D cross product: > 0 means left turn (CCW), < 0 means right turn (CW)
+                            int cross = inDir.x * outDir.y - inDir.y * outDir.x;
+                            flowSign = cross > 0 ? 1f : -1f;
+                        }
+                    }
+
                     var piece = _cornerPool.Spawn(position, worldYRotation);
+                    piece.SetAxisSign(flowSign);
                     if (theme != null && theme.ConveyorCornerPrefab != null)
                     {
                         piece.ApplyThemeVisual(theme.ConveyorCornerPrefab);

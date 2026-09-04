@@ -15,7 +15,6 @@ MonoBehaviour:
   LevelId: 4
   Difficulty: 0
   Theme: 0
-  Environment: {fileID: 0}
   GridWidth: 7
   GridHeight: 10
   ConveyorCells:
@@ -606,5 +605,19 @@ MonoBehaviour:
     - Type: 2
       Amount: 3
       LinkId: 0
-  IsTutorial: 0
-  TutorialSteps: []
+  IsTutorial: 1
+  TutorialSteps:
+  - Text: You can shuffle the queue now!
+    Trigger: 0
+    HoverKind: 0
+    PowerUpButton: 0
+    QueueLaneIndex: 0
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}
+  - Text: Press here and try it.
+    Trigger: 0
+    HoverKind: 1
+    PowerUpButton: 0
+    QueueLaneIndex: 0
+    QueueRowIndex: 0
+    ConveyorCell: {x: 0, y: 0}

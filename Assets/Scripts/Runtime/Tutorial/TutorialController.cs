@@ -197,10 +197,22 @@ namespace RestaurantLoop.Runtime.Tutorial
             }
             else if (step.HoverKind == TutorialHoverTargetKind.QueueLane && settings != null)
             {
-                // QUEUE TUTORIAL STEP: Use custom QueueFingerOffset from PowerUpSettings
+                // QUEUE TUTORIAL STEP: Use custom QueueFingerOffset from PowerUpSettings if set, otherwise fallback to NormalTutorialFingerOffset
                 if (settings.QueueFingerOffset != Vector2.zero)
                 {
                     fingerOffset = settings.QueueFingerOffset;
+                }
+                else if (settings.NormalTutorialFingerOffset != Vector2.zero)
+                {
+                    fingerOffset = settings.NormalTutorialFingerOffset;
+                }
+            }
+            else if (!isPowerUpRelated && settings != null)
+            {
+                // NORMAL GAMEPLAY TUTORIAL STEP (non-powerup):
+                if (settings.NormalTutorialFingerOffset != Vector2.zero)
+                {
+                    fingerOffset = settings.NormalTutorialFingerOffset;
                 }
             }
 

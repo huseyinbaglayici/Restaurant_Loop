@@ -72,6 +72,10 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Base pixel size of the gold icon")]
         [SerializeField] private Vector2 _goldIconSize = new Vector2(34f, 34f);
 
+        [Header("Tutorial Layout (Normal Gameplay Tutorial)")]
+        [Tooltip("Offset for the finger pointer during normal gameplay tutorial screens (non-powerup)")]
+        [SerializeField] private Vector2 _normalTutorialFingerOffset = new Vector2(50f, -50f);
+
         [Header("Tutorial Layout (Power-Up Tutorial Only)")]
         [Tooltip("Anchored position for the tutorial explanation bubble when a power-up tutorial is active")]
         [SerializeField] private Vector2 _powerUpTutorialPanelPos = new Vector2(0f, -480f);
@@ -104,6 +108,7 @@ namespace RestaurantLoop.Runtime.Data
         public Vector2 GoldIconOffset => _goldIconOffset;
         public float GoldIconScale => _goldIconScale > 0 ? _goldIconScale : 1f;
         public Vector2 GoldIconSize => _goldIconSize * GoldIconScale;
+        public Vector2 NormalTutorialFingerOffset => _normalTutorialFingerOffset;
         public Vector2 PowerUpTutorialPanelPos => _powerUpTutorialPanelPos;
         public Vector2 PowerUpFingerOffset => _powerUpFingerOffset;
         public Vector2 PowerUpBlockerOffset => _powerUpBlockerOffset;

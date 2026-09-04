@@ -6,6 +6,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 {
     public class ConveyorPieceController : MonoBehaviour, IPoolable<Vector3, float>
     {
+        public static float GlobalSpeedMultiplier { get; set; } = 1f;
+
         private float _baseTiltX;
         private float _baseEulerY;
         private float _baseTiltZ;
@@ -74,6 +76,12 @@ namespace RestaurantLoop.Runtime.Conveyor
                 }
             }
 
+            UpdateVisualsAxisSign();
+        }
+
+        public void SetAxisSign(float sign)
+        {
+            _axisSign = Mathf.Abs(sign) > 0.001f ? Mathf.Sign(sign) : 1f;
             UpdateVisualsAxisSign();
         }
 

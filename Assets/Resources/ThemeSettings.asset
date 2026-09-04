@@ -52,9 +52,9 @@ MonoBehaviour:
     CameraZOffsetMultiplier: 0
     EnvironmentRotation: {x: 0, y: 0, z: 0}
     EnvironmentScale: {x: 1, y: 1, z: 1}
-    ConveyorStraightPrefab: {fileID: 2959437325694914641, guid: 6f3ad2bd8d500ca449023401d954fb1e,
+    ConveyorStraightPrefab: {fileID: 7417020118612242394, guid: 22adb63d70aa3f248b27d0a302b912da,
       type: 3}
-    ConveyorCornerPrefab: {fileID: 8599811323013358822, guid: 54dcb9faecdf9f64982f4b3bb643db03,
+    ConveyorCornerPrefab: {fileID: 5871807015339100654, guid: a92b76c33354a6b4d82aa1f563ba2eca,
       type: 3}
     RackPrefab: {fileID: 1533583416666820535, guid: c5b62e21600f5f745b90f07eb7915d21,
       type: 3}
