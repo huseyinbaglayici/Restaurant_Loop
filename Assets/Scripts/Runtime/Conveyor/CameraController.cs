@@ -15,6 +15,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly QueueAnchor _queueAnchor;
         private readonly Camera _camera;
         private readonly ThemeSettings _themeSettings;
+        private readonly ConveyorPrefabSettings _prefabSettings;
         public Camera Camera => _camera;
         private readonly Vector3 _offsetFromQueueCenter;
         private readonly float _initialOrthoSize;
@@ -24,21 +25,30 @@ namespace RestaurantLoop.Runtime.Conveyor
         private Tween _orthoTween;
         private bool _isFocusedOnQueue;
 
+        // Layouts are authored for 9:16 portrait; narrower (taller) screens widen the ortho size so the
+        // board keeps its full width and the extra height goes behind the HUD bars.
+        public const float ReferenceAspect = 9f / 16f;
+
         public float CameraZoomFactor { get; private set; } = 1f;
         public float HeightZoomFactor { get; private set; } = 1f;
+
+        public static float AspectWidthFactor(Camera camera) =>
+            camera != null && camera.aspect > 0f && camera.aspect < ReferenceAspect ? ReferenceAspect / camera.aspect : 1f;
 
         public CameraController(
             ConveyorLevelDataSO level,
             ConveyorTuning tuning,
             QueueAnchor queueAnchor,
             Camera camera,
-            ThemeSettings themeSettings)
+            ThemeSettings themeSettings,
+            ConveyorPrefabSettings prefabSettings)
         {
             _level = level;
             _tuning = tuning;
             _queueAnchor = queueAnchor;
             _camera = camera;
             _themeSettings = themeSettings;
+            _prefabSettings = prefabSettings;
             _initialOrthoSize = camera.orthographicSize;
             _offsetFromQueueCenter = camera.transform.position - ComputeQueueCenter();
         }
@@ -99,9 +109,83 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             _camera.transform.position = targetPos;
+            if (_camera.orthographic)
+            {
+                _camera.orthographicSize *= AspectWidthFactor(_camera);
+                FitBoardBetweenHud();
+            }
 
-            _defaultPosition = targetPos;
+            _defaultPosition = _camera.transform.position;
             _defaultOrthoSize = _camera.orthographicSize;
+        }
+
+        // Keeps the belt and the first queue rows inside the band between the top HUD and the bottom
+        // power-up bar: zooms out only if the board is taller than the band, then slides the camera.
+        private void FitBoardBetweenHud()
+        {
+            if (!TryGetBoardViewportRange(out float minY, out float maxY, out float minX, out float maxX)) return;
+
+            float bandMin = _tuning.CameraHudBottomFraction;
+            float bandMax = 1f - _tuning.CameraHudTopFraction;
+            float band = bandMax - bandMin;
+            if (band <= 0f) return;
+
+            float scale = Mathf.Max(1f, (maxY - minY) / band, (maxX - minX) / 0.96f);
+            if (scale > 1f)
+            {
+                _camera.orthographicSize *= scale;
+                minY = 0.5f + (minY - 0.5f) / scale;
+                maxY = 0.5f + (maxY - 0.5f) / scale;
+            }
+
+            float shift = 0f;
+            if (minY < bandMin) shift = bandMin - minY;
+            else if (maxY > bandMax) shift = bandMax - maxY;
+            if (Mathf.Approximately(shift, 0f)) return;
+
+            // Moving the camera down its own up axis slides the content up the viewport.
+            _camera.transform.position -= _camera.transform.up * (shift * 2f * _camera.orthographicSize);
+        }
+
+        private bool TryGetBoardViewportRange(out float minY, out float maxY, out float minX, out float maxX)
+        {
+            float yMin = float.MaxValue, yMax = float.MinValue, xMin = float.MaxValue, xMax = float.MinValue;
+            bool any = false;
+
+            float cellSize = _prefabSettings.CellWorldSize;
+            var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
+            foreach (var cell in _level.ConveyorCells)
+            {
+                var world = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize, 0f, beltOrigin);
+                Include(world + new Vector3(-cellSize, 0f, -cellSize) * 0.5f);
+                Include(world + new Vector3(cellSize, 0f, cellSize) * 0.5f);
+                any = true;
+            }
+
+            var lanes = _queueAnchor.LanePositions;
+            for (int lane = 0; lane < lanes.Length && lane < _level.Queues.Count; lane++)
+            {
+                int rows = Mathf.Min(_level.Queues[lane].Entries.Count, Mathf.Max(1, _tuning.CameraVisibleQueueRows));
+                float spacing = _tuning.QueueRowSpacing;
+                Include(lanes[lane] + new Vector3(-spacing * 0.5f, 0f, spacing * 0.5f));
+                Include(lanes[lane] + new Vector3(spacing * 0.5f, 0f, -(rows - 0.5f) * spacing));
+                any = true;
+            }
+
+            minY = yMin;
+            maxY = yMax;
+            minX = xMin;
+            maxX = xMax;
+            return any;
+
+            void Include(Vector3 world)
+            {
+                var v = _camera.WorldToViewportPoint(world);
+                yMin = Mathf.Min(yMin, v.y);
+                yMax = Mathf.Max(yMax, v.y);
+                xMin = Mathf.Min(xMin, v.x);
+                xMax = Mathf.Max(xMax, v.x);
+            }
         }
 
         public void FocusOnQueue(bool enabled)

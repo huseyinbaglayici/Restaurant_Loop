@@ -33,6 +33,16 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Kamera zoom yaptıkça (uzaklaştıkça) kameranın Z pozisyonunun ötelenme çarpanı (Geriye/arkaya gitmesi için). Örn: 2.0")]
         public float CameraZoomZShiftMultiplier = 0f;
 
+        [Header("Camera HUD Framing")]
+        [Tooltip("Viewport fraction covered by the top HUD bar; the board is kept below it.")]
+        [Range(0f, 0.4f)] public float CameraHudTopFraction = 0.09f;
+
+        [Tooltip("Viewport fraction covered by the bottom power-up bar; the board is kept above it.")]
+        [Range(0f, 0.4f)] public float CameraHudBottomFraction = 0.15f;
+
+        [Tooltip("Queue rows (from the front) that must stay visible above the bottom bar; deeper rows may tuck behind it.")]
+        public int CameraVisibleQueueRows = 4;
+
         [Header("Pick From Bottom Camera Tuning")]
         [Tooltip("Pick from bottom aktifken kameranın kuyruğa ve stack'lere doğru kayacağı dünya ofseti (Z/Y).")]
         public Vector3 CameraPickFromBottomOffset = new Vector3(0f, -0.6f, -1.8f);

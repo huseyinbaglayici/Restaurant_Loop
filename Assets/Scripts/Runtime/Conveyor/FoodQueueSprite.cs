@@ -142,11 +142,12 @@ namespace RestaurantLoop.Runtime.Conveyor
                     var cam = Camera.main;
                     if (cam != null && cam.orthographic)
                     {
-                        // Standard base ortho size is around 8.5
+                        // Standard base ortho size is around 8.5; the aspect widening is not a zoom-out.
                         float baseOrtho = 8.5f;
-                        if (cam.orthographicSize > baseOrtho)
+                        float orthoSize = cam.orthographicSize / CameraController.AspectWidthFactor(cam);
+                        if (orthoSize > baseOrtho)
                         {
-                            zoom = cam.orthographicSize / baseOrtho;
+                            zoom = orthoSize / baseOrtho;
                         }
                     }
                 }
