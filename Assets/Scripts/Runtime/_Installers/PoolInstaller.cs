@@ -6,8 +6,15 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Installers
 {
+    // Prewarmed, ProjectContext-scoped pools plus the prefab settings they are built from.
     public class PoolInstaller : MonoInstaller
     {
+        [SerializeField] private ConveyorPrefabSettings _conveyorPrefabSettings;
+        [SerializeField] private FoodItemPrefabSettings _foodItemPrefabSettings;
+        [SerializeField] private ExitSlotPrefabSettings _exitSlotPrefabSettings;
+        [SerializeField] private CustomerPrefabSettings _customerPrefabSettings;
+        [SerializeField] private CustomerVisualVariantSettings _customerVisualVariantSettings;
+
         [SerializeField] private int _conveyorPieceInitialSize = 30;
         [SerializeField] private int _foodItemInitialSize = 20;
         [SerializeField] private int _customerInitialSize = 10;
@@ -15,89 +22,73 @@ namespace RestaurantLoop.Runtime.Installers
 
         public override void InstallBindings()
         {
-            var settings = Resources.Load<ConveyorPrefabSettings>("ConveyorPrefabSettings");
-            if (settings == null)
-            {
-                Debug.LogError("[PoolInstaller] ConveyorPrefabSettings.asset not found under a Resources folder — " +
-                               "open RestaurantLoop/Level Editor Settings once to create it, assign the prefabs, " +
-                               "then make sure it's saved under Assets/Resources.");
-                return;
-            }
+            Container.BindInstance(_conveyorPrefabSettings).AsSingle();
+            Container.BindInstance(_foodItemPrefabSettings).AsSingle();
+            Container.BindInstance(_exitSlotPrefabSettings).AsSingle();
+            Container.BindInstance(_customerPrefabSettings).AsSingle();
 
-            Container.BindInstance(settings).AsSingle();
-
-            BindConveyorPiecePool(ConveyorTileShape.Straight, settings.ConveyorStraightPrefab);
-            BindConveyorPiecePool(ConveyorTileShape.Corner, settings.ConveyorCornerPrefab);
-
+            BindConveyorPiecePool(ConveyorTileShape.Straight, _conveyorPrefabSettings.ConveyorStraightPrefab);
+            BindConveyorPiecePool(ConveyorTileShape.Corner, _conveyorPrefabSettings.ConveyorCornerPrefab);
             BindFoodItemPool();
             BindExitSlotPool();
-            BindTuning();
-            BindFeelSettings();
-            BindPlacementSettings();
-            BindTableSettings();
-            BindThemeSettings();
             BindCustomerPool();
-        }
-
-        // ProjectContext-scoped so customers survive GameplayScene unload/reload instead of being
-        // torn down and reprewarmed every level (see CustomerController — it no longer depends on
-        // anything scene-scoped, which is what makes this safe; CustomerOrderWidget.Pool stays in
-        // ConveyorInstaller since its Canvas refs are genuinely scene-local).
-        private void BindCustomerPool()
-        {
-            var customerSettings = Resources.Load<CustomerPrefabSettings>("CustomerPrefabSettings");
-            if (customerSettings == null || customerSettings.CustomerPrefab == null)
-            {
-                Debug.LogError(
-                    "[PoolInstaller] CustomerPrefabSettings.asset missing or has no CustomerPrefab assigned " +
-                    "under Assets/Resources — customer pool not bound.");
-                return;
-            }
-
-            Container.BindInstance(customerSettings).AsSingle();
-            Container.BindInstance(_customerInitialSize).WithId("CustomerPoolSize").AsCached();
-
-            var animationSet = Resources.Load<CustomerAnimationSet>("CustomerAnimationSet");
-            if (animationSet == null)
-            {
-                Debug.LogError(
-                    "[PoolInstaller] CustomerAnimationSet.asset not found under Assets/Resources — " +
-                    "create it via RestaurantLoop/Customer Animation Set, customer pool not bound.");
-                return;
-            }
-
-            Container.BindInstance(animationSet).AsSingle();
-
-            Container.BindMemoryPool<CustomerController, CustomerController.Pool>()
-                .WithInitialSize(_customerInitialSize)
-                .FromComponentInNewPrefab(customerSettings.CustomerPrefab)
-                .UnderTransformGroup("Customers")
-                .NonLazy();
-
             BindCustomerVisualPools();
         }
 
-        // One small pool per variant instead of every occupant slot pre-instantiating all 6 — sized
-        // for concurrent on-screen customers, not per-slot (see PF_Customer_Occupant history).
+        private void BindConveyorPiecePool(ConveyorTileShape shape, GameObject prefab)
+        {
+            Container.BindMemoryPool<ConveyorPieceController, ConveyorPieceController.Pool>()
+                .WithId(shape)
+                .WithInitialSize(_conveyorPieceInitialSize)
+                .FromComponentInNewPrefab(prefab)
+                .UnderTransformGroup("ConveyorPieces")
+                .NonLazy();
+        }
+
+        private void BindFoodItemPool()
+        {
+            Container.BindMemoryPool<FoodItemController, FoodItemController.Pool>()
+                .WithInitialSize(_foodItemInitialSize)
+                .FromComponentInNewPrefab(_foodItemPrefabSettings.FoodItemPrefab)
+                .UnderTransformGroup("FoodItems")
+                .NonLazy();
+        }
+
+        // ExitStackAnchor spawns one rack piece total (spans every slot) — pool only ever needs one instance.
+        private void BindExitSlotPool()
+        {
+            Container.BindMemoryPool<ExitSlotController, ExitSlotController.Pool>()
+                .WithInitialSize(1)
+                .FromComponentInNewPrefab(_exitSlotPrefabSettings.ExitSlotPrefab)
+                .UnderTransformGroup("ExitSlots")
+                .NonLazy();
+        }
+
+        // ProjectContext-scoped so customers survive GameplayScene unload/reload instead of being
+        // torn down and reprewarmed every level (CustomerOrderWidget.Pool stays in ConveyorInstaller
+        // since its Canvas refs are genuinely scene-local).
+        private void BindCustomerPool()
+        {
+            Container.BindInstance(_customerInitialSize).WithId("CustomerPoolSize").AsCached();
+
+            Container.BindMemoryPool<CustomerController, CustomerController.Pool>()
+                .WithInitialSize(_customerInitialSize)
+                .FromComponentInNewPrefab(_customerPrefabSettings.CustomerPrefab)
+                .UnderTransformGroup("Customers")
+                .NonLazy();
+        }
+
+        // One small pool per variant instead of every occupant slot pre-instantiating all variants —
+        // sized for concurrent on-screen customers, not per-slot.
         private void BindCustomerVisualPools()
         {
-            var visualSettings = Resources.Load<CustomerVisualVariantSettings>("CustomerVisualVariantSettings");
-            if (visualSettings == null || visualSettings.Variants == null || visualSettings.Variants.Length == 0)
-            {
-                Debug.LogError(
-                    "[PoolInstaller] CustomerVisualVariantSettings.asset missing or empty under " +
-                    "Assets/Resources — customer visuals not bound.");
-                return;
-            }
-
             var boundVariants = new List<CustomerVariant>();
 
-            foreach (var entry in visualSettings.Variants)
+            foreach (var entry in _customerVisualVariantSettings.Variants)
             {
                 if (entry.Prefab == null)
                 {
-                    Debug.LogError($"[PoolInstaller] No prefab assigned for variant {entry.Variant} " +
-                                   "in CustomerVisualVariantSettings.");
+                    Debug.LogError($"[PoolInstaller] No prefab assigned for variant {entry.Variant} in CustomerVisualVariantSettings.");
                     continue;
                 }
 
@@ -112,121 +103,6 @@ namespace RestaurantLoop.Runtime.Installers
             }
 
             Container.Bind<IReadOnlyList<CustomerVariant>>().FromInstance(boundVariants.ToArray()).AsCached();
-        }
-
-        private void BindTableSettings()
-        {
-            var tableSettings = Resources.Load<TableSettings>("TableSettings");
-            if (tableSettings != null) Container.BindInstance(tableSettings).AsSingle();
-        }
-
-        private void BindThemeSettings()
-        {
-            var themeSettings = Resources.Load<ThemeSettings>("ThemeSettings");
-            if (themeSettings != null) Container.BindInstance(themeSettings).AsSingle();
-        }
-
-        private void BindFeelSettings()
-        {
-            var feel = Resources.Load<ConveyorFeelSettings>("ConveyorFeelSettings");
-            if (feel == null)
-            {
-                Debug.LogError("[PoolInstaller] ConveyorFeelSettings.asset not found under Assets/Resources — " +
-                               "create it via RestaurantLoop/Conveyor Feel Settings, the conveyor visual layer needs it.");
-                return;
-            }
-
-            Container.BindInstance(feel).AsSingle();
-        }
-
-        private void BindPlacementSettings()
-        {
-            var placement = Resources.Load<FoodPlacementSettings>("FoodPlacementSettings");
-            if (placement == null)
-            {
-                Debug.LogError("[PoolInstaller] FoodPlacementSettings.asset not found under Assets/Resources — " +
-                                "create it via RestaurantLoop/Food Placement Settings, food scale/spacing needs it.");
-                return;
-            }
-
-            Container.BindInstance(placement).AsSingle();
-        }
-
-        private void BindTuning()
-        {
-            var tuning = Resources.Load<ConveyorTuning>("ConveyorTuning");
-            if (tuning == null)
-            {
-                Debug.LogError("[PoolInstaller] ConveyorTuning.asset not found under Assets/Resources — " +
-                               "queue/exit-stack/belt/input runtime classes need this bound.");
-                return;
-            }
-
-            Container.BindInstance(tuning).AsSingle();
-        }
-
-        // prewarmed
-        private void BindConveyorPiecePool(ConveyorTileShape shape, GameObject prefab)
-        {
-            if (prefab == null)
-            {
-                Debug.LogError(
-                    $"[PoolInstaller] No prefab assigned for {shape} — set it in RestaurantLoop/Level Editor Settings.");
-                return;
-            }
-
-            Container.BindMemoryPool<ConveyorPieceController, ConveyorPieceController.Pool>()
-                .WithId(shape)
-                .WithInitialSize(_conveyorPieceInitialSize)
-                .FromComponentInNewPrefab(prefab)
-                .UnderTransformGroup("ConveyorPieces")
-                .NonLazy();
-        }
-
-        // prewarmed
-        private void BindFoodItemPool()
-        {
-            var foodSettings = Resources.Load<FoodItemPrefabSettings>("FoodItemPrefabSettings");
-            if (foodSettings == null || foodSettings.FoodItemPrefab == null)
-            {
-                Debug.LogError(
-                    "[PoolInstaller] FoodItemPrefabSettings.asset missing or has no FoodItemPrefab assigned " +
-                    "under Assets/Resources — food item pool not bound.");
-                return;
-            }
-
-            Container.BindInstance(foodSettings).AsSingle();
-
-            // optional
-            var meshSettings = Resources.Load<FoodMeshSettings>("FoodMeshSettings");
-            if (meshSettings != null) Container.BindInstance(meshSettings).AsSingle();
-
-            Container.BindMemoryPool<FoodItemController, FoodItemController.Pool>()
-                .WithInitialSize(_foodItemInitialSize)
-                .FromComponentInNewPrefab(foodSettings.FoodItemPrefab)
-                .UnderTransformGroup("FoodItems")
-                .NonLazy();
-        }
-
-        // ExitStackAnchor spawns one rack piece total (spans every slot) — pool only ever needs one instance.
-        private void BindExitSlotPool()
-        {
-            var exitSlotSettings = Resources.Load<ExitSlotPrefabSettings>("ExitSlotPrefabSettings");
-            if (exitSlotSettings == null || exitSlotSettings.ExitSlotPrefab == null)
-            {
-                Debug.LogError(
-                    "[PoolInstaller] ExitSlotPrefabSettings.asset missing or has no ExitSlotPrefab assigned " +
-                    "under Assets/Resources — exit slot pool not bound.");
-                return;
-            }
-
-            Container.BindInstance(exitSlotSettings).AsSingle();
-
-            Container.BindMemoryPool<ExitSlotController, ExitSlotController.Pool>()
-                .WithInitialSize(1)
-                .FromComponentInNewPrefab(exitSlotSettings.ExitSlotPrefab)
-                .UnderTransformGroup("ExitSlots")
-                .NonLazy();
         }
     }
 }

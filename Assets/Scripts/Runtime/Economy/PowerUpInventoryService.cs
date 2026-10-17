@@ -7,7 +7,7 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Economy
 {
-    public class PowerUpInventoryService : IPowerUpInventoryService, IInitializable
+    public class PowerUpInventoryService : IInitializable
     {
         private readonly PowerUpSettings _settings;
         private readonly CurrentLevelProvider _currentLevelProvider;
@@ -18,8 +18,8 @@ namespace RestaurantLoop.Runtime.Economy
         public event Action OnInventoryChanged;
 
         public PowerUpInventoryService(
-            [Inject(Optional = true)] PowerUpSettings settings = null,
-            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null)
+            PowerUpSettings settings,
+            CurrentLevelProvider currentLevelProvider)
         {
             _settings = settings;
             _currentLevelProvider = currentLevelProvider;

@@ -19,9 +19,9 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         [SerializeField] private GameObject _unitPrefab;
 
-        [Inject(Optional = true)] private FoodMeshSettings _foodMeshSettings;
-        [Inject(Optional = true)] private FoodPlacementSettings _placement;
-        [Inject(Optional = true)] private TableSettings _tableSettings;
+        [Inject] private FoodMeshSettings _foodMeshSettings;
+        [Inject] private FoodPlacementSettings _placement;
+        [Inject] private TableSettings _tableSettings;
         [Inject(Optional = true)] private CameraController _cameraController;
 
         // Stacked-units mode (most food types): one GameObject per visible unit. Only the top unit
@@ -216,7 +216,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             rt.sizeDelta = new Vector2(3f, 3f);
 
             _queue2DAmountText = textObj.AddComponent<TextMeshPro>();
-            var meshSettings = ResolveFoodMeshSettings();
+            var meshSettings = _foodMeshSettings;
             if (meshSettings != null && meshSettings.StackAmountFont != null)
             {
                 _queue2DAmountText.font = meshSettings.StackAmountFont;
@@ -251,7 +251,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             rt.sizeDelta = new Vector2(2f, 2f);
 
             _conveyorAmountText = textObj.AddComponent<TextMeshPro>();
-            var meshSettings = ResolveFoodMeshSettings();
+            var meshSettings = _foodMeshSettings;
             if (meshSettings != null && meshSettings.StackAmountFont != null)
             {
                 _conveyorAmountText.font = meshSettings.StackAmountFont;
@@ -284,7 +284,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             EnsureConveyorAmountBadge();
             _conveyorAmountBadge.SetActive(true);
-            var meshSettings = ResolveFoodMeshSettings();
+            var meshSettings = _foodMeshSettings;
             if (meshSettings != null && meshSettings.StackAmountFont != null && _conveyorAmountText.font != meshSettings.StackAmountFont)
             {
                 _conveyorAmountText.font = meshSettings.StackAmountFont;
@@ -307,7 +307,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             EnsureConveyorAmountBadge();
             _conveyorAmountBadge.SetActive(true);
-            var meshSettings = ResolveFoodMeshSettings();
+            var meshSettings = _foodMeshSettings;
             if (meshSettings != null && meshSettings.StackAmountFont != null && _conveyorAmountText.font != meshSettings.StackAmountFont)
             {
                 _conveyorAmountText.font = meshSettings.StackAmountFont;
@@ -324,7 +324,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             var cam = Camera.main;
             if (cam == null)
             {
-                var camCtrl = ResolveCameraController();
+                var camCtrl = _cameraController;
                 if (camCtrl != null && camCtrl.Camera != null) cam = camCtrl.Camera;
             }
             if (cam == null) return;
@@ -339,7 +339,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 lossy.y > 0.001f ? 1f / lossy.y : 1f,
                 lossy.z > 0.001f ? 1f / lossy.z : 1f);
 
-            var meshSettings = ResolveFoodMeshSettings();
+            var meshSettings = _foodMeshSettings;
             float extraOffset = meshSettings != null ? meshSettings.ConveyorBadgeHeightOffset : 0.85f;
             Vector3 topPosition = TopUnitWorldPosition;
 
@@ -357,49 +357,9 @@ namespace RestaurantLoop.Runtime.Conveyor
             _conveyorAmountBadge.transform.position = topPosition + worldOffset;
         }
 
-        private FoodMeshSettings ResolveFoodMeshSettings()
-        {
-            if (_foodMeshSettings == null)
-            {
-                _foodMeshSettings = Resources.Load<FoodMeshSettings>("FoodMeshSettings");
-            }
-            return _foodMeshSettings;
-        }
-
-        private FoodPlacementSettings ResolvePlacementSettings()
-        {
-            if (_placement == null)
-            {
-                _placement = Resources.Load<FoodPlacementSettings>("FoodPlacementSettings");
-            }
-            return _placement;
-        }
-
-        private TableSettings ResolveTableSettings()
-        {
-            if (_tableSettings == null)
-            {
-                _tableSettings = Resources.Load<TableSettings>("TableSettings");
-            }
-            return _tableSettings;
-        }
-
-        private CameraController ResolveCameraController()
-        {
-            if (_cameraController == null && ProjectContext.HasInstance)
-            {
-                try
-                {
-                    _cameraController = ProjectContext.Instance.Container.TryResolve<CameraController>();
-                }
-                catch { }
-            }
-            return _cameraController;
-        }
-
         private float GetQueue2DScaleMultiplier()
         {
-            var tableSettings = ResolveTableSettings();
+            var tableSettings = _tableSettings;
             if (tableSettings == null) return 1f;
 
             float baseIconScale = tableSettings.Queue2DIconScale;
@@ -408,7 +368,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             if (tableSettings.ScaleWithCamera)
             {
-                var camCtrl = ResolveCameraController();
+                var camCtrl = _cameraController;
                 float zoom = camCtrl != null ? camCtrl.CameraZoomFactor : 1f;
 
                 // Fallback to Main Camera orthographic ratio if CameraController wasn't resolved yet
@@ -459,7 +419,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _queue2DAmountText.text = stack.Amount > 0 ? stack.Amount.ToString() : "";
             }
 
-            var tableSettings = ResolveTableSettings();
+            var tableSettings = _tableSettings;
             _queue2DHolder.transform.localScale = Vector3.one * GetQueue2DScaleMultiplier();
             _queue2DHolder.transform.localPosition = tableSettings != null ? tableSettings.Queue2DOffset : new Vector3(0f, 0.5f, 0f);
 
@@ -726,7 +686,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         // doesn't jump around as the top unit's mesh changes.
         private float ResolveSpacing(FoodType type)
         {
-            var placement = ResolvePlacementSettings();
+            var placement = _placement;
             if (_units.Count == 0 || placement == null) return FallbackStackSpacing;
 
             float scale = ResolveScale(type, _unitIsOpened[0] ? FoodVisualState.Opened : FoodVisualState.Closed);
@@ -823,7 +783,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private float ResolveScale(FoodType type, FoodVisualState state)
         {
-            var placement = ResolvePlacementSettings();
+            var placement = _placement;
             float baseScale = placement == null ? 1f : placement.ResolveScale(type, _location, state);
             if (_location == FoodLocation.Queue && _tableSettings != null && _tableSettings.ScaleWithCamera && _cameraController != null)
             {

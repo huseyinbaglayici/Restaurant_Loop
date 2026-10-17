@@ -13,13 +13,13 @@ namespace RestaurantLoop.Runtime.UI
         [SerializeField] private TextMeshProUGUI _heartAmountText;
         [SerializeField] private TextMeshProUGUI _remainingTimeText;
 
-        private IEconomyService _economyService;
-        private ILivesService _livesService;
+        private EconomyService _economyService;
+        private LivesService _livesService;
 
         [Inject]
         public void Construct(
-            [Inject(Optional = true)] IEconomyService economyService = null,
-            [Inject(Optional = true)] ILivesService livesService = null)
+            EconomyService economyService,
+            LivesService livesService)
         {
             _economyService = economyService;
             _livesService = livesService;

@@ -13,11 +13,11 @@ namespace RestaurantLoop.Runtime.UI
         [SerializeField] private Slider _musicSlider;
         [SerializeField] private Slider _sfxSlider;
 
-        private IAudioService _audioService;
+        private AudioService _audioService;
         private bool _isUpdatingInternally;
 
         [Inject]
-        public void Construct([Inject(Optional = true)] IAudioService audioService)
+        public void Construct(AudioService audioService)
         {
             _audioService = audioService;
             if (_audioService != null)

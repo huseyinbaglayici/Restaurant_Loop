@@ -6,7 +6,7 @@ using RestaurantLoop.Runtime.Data;
 
 namespace RestaurantLoop.Runtime.SceneFlow
 {
-    public class SceneLoader : ISceneLoader, IInitializable
+    public class SceneLoader : IInitializable
     {
         private readonly SignalBus _signalBus;
         private readonly CurrentLevelProvider _currentLevelProvider;

@@ -47,8 +47,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             ExitSlotController.Pool exitSlotPool,
             FoodItemController.Pool foodPool,
             ExitSlotPrefabSettings exitSlotPrefabSettings,
-            [Inject(Optional = true)] FoodFlightService flightService = null,
-            [Inject(Optional = true)] ThemeSettings themeSettings = null)
+            [Inject(Optional = true)] FoodFlightService flightService,
+            ThemeSettings themeSettings)
         {
             _level = level;
             _prefabSettings = prefabSettings;
@@ -57,7 +57,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _foodPool = foodPool;
             _exitSlotPrefabSettings = exitSlotPrefabSettings;
             _flightService = flightService;
-            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
+            _themeSettings = themeSettings;
 
             SlotPositions = ComputeSlotPositions();
         }

@@ -13,8 +13,7 @@ GameObject:
   - component: {fileID: 1408291036224853765}
   - component: {fileID: 5183398573767760411}
   - component: {fileID: 8609402890513038085}
-  - component: {fileID: 313012758828144874}
-  - component: {fileID: 59631848804654976}
+  - component: {fileID: 8143360330732207325}
   m_Layer: 0
   m_Name: ProjectContext
   m_TagString: Untagged
@@ -52,10 +51,9 @@ MonoBehaviour:
   _scriptableObjectInstallers: []
   _monoInstallers:
   - {fileID: 1408291036224853765}
+  - {fileID: 8143360330732207325}
   - {fileID: 5183398573767760411}
   - {fileID: 8609402890513038085}
-  - {fileID: 313012758828144874}
-  - {fileID: 59631848804654976}
   _installerPrefabs: []
   _parentNewObjectsUnderContext: 1
   _editorReflectionBakingCoverageMode: 0
@@ -106,10 +104,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8331d1c80c6d6b46b284e6d6287d978, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _conveyorPrefabSettings: {fileID: 11400000, guid: fb047b9e2f747b24d9871e2aead459d8,
+    type: 2}
+  _foodItemPrefabSettings: {fileID: 11400000, guid: 3100ecec66a2ae84a8d61f739ffecf91,
+    type: 2}
+  _exitSlotPrefabSettings: {fileID: 11400000, guid: 7f3ecbef700c9d14fa0a220b852c6596,
+    type: 2}
+  _customerPrefabSettings: {fileID: 11400000, guid: b5451ecf16d53aa4cb3a9a5aeb0fd1c7,
+    type: 2}
+  _customerVisualVariantSettings: {fileID: 11400000, guid: 9d84562a5785bf64bbc777534a5d7d6b,
+    type: 2}
   _conveyorPieceInitialSize: 30
   _foodItemInitialSize: 20
   _customerInitialSize: 10
---- !u!114 &313012758828144874
+  _customerVisualInitialSizePerVariant: 3
+--- !u!114 &8143360330732207325
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -118,18 +127,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 7228657870600930043}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd6f7db05ce225845b9237c74e65abca, type: 3}
+  m_Script: {fileID: 11500000, guid: 909c4b0efad67864b947c397d572fab6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &59631848804654976
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7228657870600930043}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec342002af1c88d49b2804d578130c56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  _levelDatabase: {fileID: 11400000, guid: ae30d7e8b5a65f348bebc8b428fec885, type: 2}
+  _themeSettings: {fileID: 11400000, guid: 95703553192b7104e826aafa64d49ece, type: 2}
+  _conveyorTuning: {fileID: 11400000, guid: a8047f1243782d74ebe9dc3f3fb42096, type: 2}
+  _conveyorFeelSettings: {fileID: 11400000, guid: 69c4c2036d3f4c01a522dfa52da43b75,
+    type: 2}
+  _foodPlacementSettings: {fileID: 11400000, guid: 4924d823f91178f48b849267a18d715b,
+    type: 2}
+  _foodMeshSettings: {fileID: 11400000, guid: fec2bfb6a5ed7f548a6bf70e45fe7ea0, type: 2}
+  _tableSettings: {fileID: 11400000, guid: 31c299d89be5b12429c513be28df2b46, type: 2}
+  _powerUpSettings: {fileID: 11400000, guid: 5d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a, type: 2}
+  _audioLibrary: {fileID: 11400000, guid: 0d1f23cf894e1c54bb6a3d73368ea21e, type: 2}
+  _customerAnimationSet: {fileID: 11400000, guid: feefc5a1c8867e84694e14e21d782b5f,
+    type: 2}

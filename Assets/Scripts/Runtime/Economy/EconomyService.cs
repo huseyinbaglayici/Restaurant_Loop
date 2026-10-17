@@ -4,7 +4,7 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Economy
 {
-    public class EconomyService : IEconomyService, IInitializable
+    public class EconomyService : IInitializable
     {
         public const string CoinsSaveKey = "Player_Coins";
         public const int DefaultStartingCoins = 150;

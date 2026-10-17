@@ -65,14 +65,14 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorTuning tuning,
             [Inject(Optional = true, Id = "TrayDispenserRoot")] Transform dispenserRoot,
             DiContainer container,
-            [Inject(Optional = true)] ThemeSettings themeSettings = null)
+            ThemeSettings themeSettings)
         {
             _level = level;
             _prefabSettings = prefabSettings;
             _tuning = tuning;
             _dispenserRoot = dispenserRoot;
             _container = container;
-            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
+            _themeSettings = themeSettings;
         }
 
         public void Initialize()

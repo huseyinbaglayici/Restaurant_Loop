@@ -4,7 +4,7 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Save
 {
-    public class SaveManager : ISaveManager, IInitializable
+    public class SaveManager : IInitializable
     {
         private readonly SignalBus _signalBus;
         private readonly CurrentLevelProvider _currentLevelProvider;

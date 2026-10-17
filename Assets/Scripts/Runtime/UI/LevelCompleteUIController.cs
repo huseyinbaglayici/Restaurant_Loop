@@ -68,13 +68,13 @@ namespace RestaurantLoop.Runtime.UI
         private ExitStackAnchor _exitStackAnchor;
         private FoodItemController.Pool _foodPool;
         private SignalBus _signalBus;
-        private ISaveManager _saveManager;
+        private SaveManager _saveManager;
         private CurrentLevelProvider _currentLevelProvider;
         private LevelDatabase _levelDatabase;
-        private IAudioService _audioService;
+        private AudioService _audioService;
         private AudioLibrary _audioLibrary;
-        private IEconomyService _economyService;
-        private IPowerUpInventoryService _powerUpInventory;
+        private EconomyService _economyService;
+        private PowerUpInventoryService _powerUpInventory;
 
         private Vector2 _logoTargetPosition;
         private Sequence _celebrationSequence;
@@ -90,13 +90,13 @@ namespace RestaurantLoop.Runtime.UI
             ExitStackAnchor exitStackAnchor,
             FoodItemController.Pool foodPool,
             SignalBus signalBus,
-            ISaveManager saveManager,
+            SaveManager saveManager,
             CurrentLevelProvider currentLevelProvider,
             LevelDatabase levelDatabase,
-            [Inject(Optional = true)] IAudioService audioService = null,
-            [Inject(Optional = true)] AudioLibrary audioLibrary = null,
-            [Inject(Optional = true)] IEconomyService economyService = null,
-            [Inject(Optional = true)] IPowerUpInventoryService powerUpInventory = null)
+            AudioService audioService,
+            AudioLibrary audioLibrary,
+            EconomyService economyService,
+            PowerUpInventoryService powerUpInventory)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;

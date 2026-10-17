@@ -34,7 +34,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly RuntimeCustomerState _customerState;
         private readonly CustomerConsumeService _consumeService;
         private readonly ExitStackAnchor _exitStackAnchor;
-        private readonly IAudioService _audioService;
+        private readonly AudioService _audioService;
         private readonly AudioLibrary _audioLibrary;
 
         // Belt items currently drawn by this service, keyed by the logical item id.
@@ -54,7 +54,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             RuntimeCustomerState customerState,
             CustomerConsumeService consumeService,
             [Inject(Optional = true)] ExitStackAnchor exitStackAnchor,
-            IAudioService audioService,
+            AudioService audioService,
             AudioLibrary audioLibrary)
         {
             _signalBus = signalBus;

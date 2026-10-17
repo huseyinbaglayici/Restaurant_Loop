@@ -31,13 +31,13 @@ namespace RestaurantLoop.Runtime.UI
         private FoodItemController.Pool _foodPool;
         private SignalBus _signalBus;
         private PowerUpService _powerUpService;
-        private IAudioService _audioService;
+        private AudioService _audioService;
         private AudioLibrary _audioLibrary;
-        private ILivesService _livesService;
+        private LivesService _livesService;
         private CurrentLevelProvider _currentLevelProvider;
         private ConveyorAutoClearService _autoClearService;
-        private RestaurantLoop.Runtime.Economy.IPowerUpInventoryService _powerUpInventory;
-        private RestaurantLoop.Runtime.Economy.IEconomyService _economyService;
+        private RestaurantLoop.Runtime.Economy.PowerUpInventoryService _powerUpInventory;
+        private RestaurantLoop.Runtime.Economy.EconomyService _economyService;
 
         [Inject]
         public void Construct(
@@ -47,13 +47,13 @@ namespace RestaurantLoop.Runtime.UI
             FoodItemController.Pool foodPool,
             SignalBus signalBus,
             PowerUpService powerUpService,
-            [Inject(Optional = true)] IAudioService audioService = null,
-            [Inject(Optional = true)] AudioLibrary audioLibrary = null,
-            [Inject(Optional = true)] ILivesService livesService = null,
-            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
-            [Inject(Optional = true)] ConveyorAutoClearService autoClearService = null,
-            [Inject(Optional = true)] RestaurantLoop.Runtime.Economy.IPowerUpInventoryService powerUpInventory = null,
-            [Inject(Optional = true)] RestaurantLoop.Runtime.Economy.IEconomyService economyService = null)
+            AudioService audioService,
+            AudioLibrary audioLibrary,
+            LivesService livesService,
+            CurrentLevelProvider currentLevelProvider,
+            [Inject(Optional = true)] ConveyorAutoClearService autoClearService,
+            RestaurantLoop.Runtime.Economy.PowerUpInventoryService powerUpInventory,
+            RestaurantLoop.Runtime.Economy.EconomyService economyService)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;

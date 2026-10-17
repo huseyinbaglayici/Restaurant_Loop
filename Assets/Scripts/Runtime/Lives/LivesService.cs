@@ -4,7 +4,7 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Lives
 {
-    public class LivesService : ILivesService, IInitializable, ITickable
+    public class LivesService : IInitializable, ITickable
     {
         public const string LivesSaveKey = "Player_Lives";
         public const string LastRegenTimeSaveKey = "Player_LastRegenTime";

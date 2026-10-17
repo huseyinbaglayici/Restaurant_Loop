@@ -21,12 +21,12 @@ namespace RestaurantLoop.Runtime.UI
         [Inject]
         public void Construct(
             SignalBus signalBus,
-            [Inject(Optional = true)] SceneFlow.CurrentLevelProvider currentLevelProvider = null,
-            [Inject(Optional = true)] RestaurantLoop.Runtime.Data.ThemeSettings themeSettings = null)
+            SceneFlow.CurrentLevelProvider currentLevelProvider,
+            RestaurantLoop.Runtime.Data.ThemeSettings themeSettings)
         {
             _signalBus = signalBus;
             _currentLevelProvider = currentLevelProvider;
-            _themeSettings = themeSettings ?? Resources.Load<RestaurantLoop.Runtime.Data.ThemeSettings>("ThemeSettings");
+            _themeSettings = themeSettings;
 
             _signalBus.Subscribe<GameplaySceneReadySignal>(HideMenu);
             _signalBus.Subscribe<MenuReadySignal>(ShowMenu);

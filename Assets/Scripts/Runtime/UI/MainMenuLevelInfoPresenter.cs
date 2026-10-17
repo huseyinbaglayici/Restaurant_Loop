@@ -22,18 +22,17 @@ namespace RestaurantLoop.Runtime.UI
 
         [Inject]
         public void Construct(
-            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
-            [Inject(Optional = true)] ThemeSettings themeSettings = null,
-            [Inject(Optional = true)] SignalBus signalBus = null)
+            CurrentLevelProvider currentLevelProvider,
+            ThemeSettings themeSettings,
+            SignalBus signalBus)
         {
             _currentLevelProvider = currentLevelProvider;
-            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
+            _themeSettings = themeSettings;
             _signalBus = signalBus;
         }
 
         private void Awake()
         {
-            if (_themeSettings == null) _themeSettings = Resources.Load<ThemeSettings>("ThemeSettings");
         }
 
         private void OnEnable()
@@ -70,7 +69,6 @@ namespace RestaurantLoop.Runtime.UI
 
         public void UpdateView()
         {
-            if (_themeSettings == null) _themeSettings = Resources.Load<ThemeSettings>("ThemeSettings");
 
             ConveyorLevelDataSO level = _currentLevelProvider?.Current;
             if (level == null && _currentLevelProvider != null)

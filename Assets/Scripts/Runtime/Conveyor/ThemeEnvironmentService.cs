@@ -18,13 +18,13 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorTuning tuning,
             ConveyorLevelDataSO level,
             ConveyorPrefabSettings prefabSettings,
-            [Inject(Optional = true)] ThemeSettings themeSettings = null,
+            ThemeSettings themeSettings,
             [Inject(Optional = true)] CameraController cameraController = null)
         {
             _tuning = tuning;
             _level = level;
             _prefabSettings = prefabSettings;
-            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
+            _themeSettings = themeSettings;
             _cameraController = cameraController;
         }
 

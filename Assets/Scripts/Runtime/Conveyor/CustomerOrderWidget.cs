@@ -27,7 +27,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         [Inject(Id = "OrderIconsGroup")] private Transform _iconsGroup;
         [Inject(Id = "OrderTextsGroup")] private Transform _textsGroup;
 
-        [Inject(Optional = true)] private FoodMeshSettings _foodMeshSettings;
+        [Inject] private FoodMeshSettings _foodMeshSettings;
         [Inject(Optional = true)] private CameraController _cameraController;
 
         private float _secondFoodDimAlpha = 1f;

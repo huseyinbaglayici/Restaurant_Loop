@@ -21,13 +21,13 @@ namespace RestaurantLoop.Runtime.UI
         [Header("Audio Settings")]
         [SerializeField] private AudioClip clickSound;
 
-        private IAudioService _audioService;
+        private AudioService _audioService;
         private Vector3 _originalScale;
         private Vector3 _targetScale;
         private Coroutine _activeScaleRoutine;
 
         [Inject]
-        public void Construct(IAudioService audioService)
+        public void Construct(AudioService audioService)
         {
             _audioService = audioService;
         }

@@ -8,7 +8,7 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Audio
 {
-    public class AudioService : IAudioService, IInitializable
+    public class AudioService : IInitializable
     {
         private const string PrefsMusicKey = "Audio_MusicVolume";
         private const string PrefsSfxKey = "Audio_SfxVolume";
@@ -31,13 +31,13 @@ namespace RestaurantLoop.Runtime.Audio
         public AudioService(
             SignalBus signalBus,
             AudioLibrary settings,
-            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
-            [Inject(Optional = true)] ThemeSettings themeSettings = null)
+            CurrentLevelProvider currentLevelProvider,
+            ThemeSettings themeSettings)
         {
             _signalBus = signalBus;
             _settings = settings;
             _currentLevelProvider = currentLevelProvider;
-            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
+            _themeSettings = themeSettings;
 
             // PlayerPrefs'ten önceden kaydedilmiş değerleri yükle (ilk açılışta full 1.0 varsayılanı)
             float savedMusic = PlayerPrefs.GetFloat(PrefsMusicKey, 1f);

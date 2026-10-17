@@ -13,7 +13,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private GameObject _tableInstance;
 
         public TableController(
-            [Inject(Optional = true)] TableSettings settings,
+            TableSettings settings,
             CameraController cameraController,
             QueueAnchor queueAnchor,
             ExitStackAnchor exitStackAnchor)

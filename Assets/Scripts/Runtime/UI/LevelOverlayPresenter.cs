@@ -14,7 +14,7 @@ namespace RestaurantLoop.Runtime.UI
         private readonly CurrentLevelProvider _currentLevelProvider;
         private readonly TextMeshProUGUI _levelText;
         private readonly TextMeshProUGUI _moneyText;
-        private readonly IEconomyService _economyService;
+        private readonly EconomyService _economyService;
         private readonly CustomerConsumeService _consumeService;
         private readonly SignalBus _signalBus;
 
@@ -23,10 +23,10 @@ namespace RestaurantLoop.Runtime.UI
         public LevelOverlayPresenter(
             CurrentLevelProvider currentLevelProvider,
             TextMeshProUGUI levelText,
-            [Inject(Id = "GameplayMoneyText", Optional = true)] TextMeshProUGUI moneyText = null,
-            [Inject(Optional = true)] IEconomyService economyService = null,
-            [Inject(Optional = true)] CustomerConsumeService consumeService = null,
-            [Inject(Optional = true)] SignalBus signalBus = null)
+            [Inject(Id = "GameplayMoneyText", Optional = true)] TextMeshProUGUI moneyText,
+            EconomyService economyService,
+            [Inject(Optional = true)] CustomerConsumeService consumeService,
+            SignalBus signalBus)
         {
             _currentLevelProvider = currentLevelProvider;
             _levelText = levelText;

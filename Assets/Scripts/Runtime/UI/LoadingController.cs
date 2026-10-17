@@ -35,12 +35,12 @@ namespace RestaurantLoop.Runtime.UI
         [Inject]
         public void Construct(
             SignalBus signalBus,
-            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
-            [Inject(Optional = true)] ThemeSettings themeSettings = null)
+            CurrentLevelProvider currentLevelProvider,
+            ThemeSettings themeSettings)
         {
             _signalBus = signalBus;
             _currentLevelProvider = currentLevelProvider;
-            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
+            _themeSettings = themeSettings;
 
             // Note: MainMenuReadySignal is NOT one of the hide triggers — on cold boot that signal
             // chains straight into loading GameplayScene (see SceneLoader), and this screen should

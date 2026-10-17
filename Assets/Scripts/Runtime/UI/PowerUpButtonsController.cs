@@ -38,11 +38,11 @@ namespace RestaurantLoop.Runtime.UI
         private SignalBus _signalBus;
         private CustomerConsumeService _consumeService;
         private TutorialTargetRegistry _registry;
-        private IPowerUpInventoryService _inventory;
+        private PowerUpInventoryService _inventory;
         private CurrentLevelProvider _currentLevelProvider;
         private PowerUpSettings _settings;
-        private RestaurantLoop.Runtime.Economy.IEconomyService _economyService;
-        private IAudioService _audioService;
+        private RestaurantLoop.Runtime.Economy.EconomyService _economyService;
+        private AudioService _audioService;
         private AudioLibrary _audioLibrary;
 
         [Inject]
@@ -50,14 +50,14 @@ namespace RestaurantLoop.Runtime.UI
             PowerUpService powerUpService,
             TutorialInputGate gate,
             SignalBus signalBus,
-            [Inject(Optional = true)] TutorialTargetRegistry registry = null,
-            [Inject(Optional = true)] IPowerUpInventoryService inventory = null,
-            [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
-            [Inject(Optional = true)] CustomerConsumeService consumeService = null,
-            [Inject(Optional = true)] PowerUpSettings settings = null,
-            [Inject(Optional = true)] RestaurantLoop.Runtime.Economy.IEconomyService economyService = null,
-            [Inject(Optional = true)] IAudioService audioService = null,
-            [Inject(Optional = true)] AudioLibrary audioLibrary = null)
+            [Inject(Optional = true)] TutorialTargetRegistry registry,
+            PowerUpInventoryService inventory,
+            CurrentLevelProvider currentLevelProvider,
+            [Inject(Optional = true)] CustomerConsumeService consumeService,
+            PowerUpSettings settings,
+            RestaurantLoop.Runtime.Economy.EconomyService economyService,
+            AudioService audioService,
+            AudioLibrary audioLibrary)
         {
             _powerUpService = powerUpService;
             _gate = gate;
@@ -66,7 +66,7 @@ namespace RestaurantLoop.Runtime.UI
             _inventory = inventory;
             _currentLevelProvider = currentLevelProvider;
             _consumeService = consumeService;
-            _settings = settings ?? Resources.Load<PowerUpSettings>("PowerUpSettings");
+            _settings = settings;
             _economyService = economyService;
             _audioService = audioService;
             _audioLibrary = audioLibrary;

@@ -21,7 +21,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly CameraController _cameraController;
         private readonly Camera _camera;
         private readonly FoodFlightService _flightService;
-        private readonly IAudioService _audioService;
+        private readonly AudioService _audioService;
         private readonly AudioLibrary _audioLibrary;
         private readonly TutorialInputGate _gate;
         private readonly SignalBus _signalBus;
@@ -36,11 +36,11 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorManager conveyorManager,
             [Inject(Optional = true)] TrayDispenserAnchor trayAnchor,
             ConveyorTuning tuning,
-            [Inject(Optional = true)] TableSettings tableSettings,
+            TableSettings tableSettings,
             [Inject(Optional = true)] CameraController cameraController,
             [Inject(Optional = true)] Camera camera,
             [Inject(Optional = true)] FoodFlightService flightService,
-            IAudioService audioService,
+            AudioService audioService,
             AudioLibrary audioLibrary,
             TutorialInputGate gate,
             SignalBus signalBus)

@@ -17,7 +17,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorLevelDataSO level,
             ConveyorTuning tuning,
             ExitStackAnchor exitStackAnchor,
-            [Inject(Optional = true)] TableSettings tableSettings = null)
+            TableSettings tableSettings)
         {
             _level = level;
             _tuning = tuning;

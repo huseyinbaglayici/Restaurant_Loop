@@ -32,13 +32,13 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorTuning tuning,
             QueueAnchor queueAnchor,
             Camera camera,
-            [Inject(Optional = true)] ThemeSettings themeSettings = null)
+            ThemeSettings themeSettings)
         {
             _level = level;
             _tuning = tuning;
             _queueAnchor = queueAnchor;
             _camera = camera;
-            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
+            _themeSettings = themeSettings;
             _initialOrthoSize = camera.orthographicSize;
             _offsetFromQueueCenter = camera.transform.position - ComputeQueueCenter();
         }

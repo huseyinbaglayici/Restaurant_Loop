@@ -27,7 +27,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public CustomerSpawner(ConveyorLevelDataSO level, ConveyorPrefabSettings prefabSettings, ConveyorTuning tuning,
             CustomerController.Pool customerPool, CustomerOrderWidget.Pool orderWidgetPool,
-            [Inject(Optional = true)] FoodMeshSettings foodMeshSettings = null)
+            FoodMeshSettings foodMeshSettings)
         {
             _level = level;
             _prefabSettings = prefabSettings;

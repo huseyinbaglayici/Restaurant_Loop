@@ -34,8 +34,8 @@ namespace RestaurantLoop.Runtime.Tutorial
         public TutorialController(ConveyorLevelDataSO level, SignalBus signalBus, QueueSpawner queueSpawner,
             ExitStackAnchor exitStackAnchor, TutorialTargetRegistry registry, TutorialView view, Camera camera,
             ConveyorPrefabSettings prefabSettings, ConveyorTuning tuning,
-            [Inject(Optional = true)] CustomerConsumeService consumeService = null,
-            [Inject(Optional = true)] PowerUpSettings powerUpSettings = null)
+            [Inject(Optional = true)] CustomerConsumeService consumeService,
+            PowerUpSettings powerUpSettings)
         {
             _level = level;
             _signalBus = signalBus;
@@ -148,7 +148,7 @@ namespace RestaurantLoop.Runtime.Tutorial
             _isStepActive = true;
             bool tapToAdvance = step.HoverKind is TutorialHoverTargetKind.None or TutorialHoverTargetKind.ConveyorCell;
 
-            var settings = _powerUpSettings ?? Resources.Load<PowerUpSettings>("PowerUpSettings");
+            var settings = _powerUpSettings;
             Vector2? customPanelPos = null;
             Vector2? fingerOffset = null;
             Vector2? blockerOffset = null;

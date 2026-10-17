@@ -10,10 +10,10 @@ namespace RestaurantLoop.Runtime.UI
         [SerializeField] private UnityEngine.UI.Button _button;
 
         private SignalBus _signalBus;
-        private ILivesService _livesService;
+        private LivesService _livesService;
 
         [Inject]
-        public void Construct(SignalBus signalBus, [Inject(Optional = true)] ILivesService livesService = null)
+        public void Construct(SignalBus signalBus, LivesService livesService)
         {
             _signalBus = signalBus;
             _livesService = livesService;

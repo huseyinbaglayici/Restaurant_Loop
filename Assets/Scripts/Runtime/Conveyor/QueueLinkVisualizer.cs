@@ -43,8 +43,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             QueueAnchor queueAnchor,
             ConveyorManager conveyorManager,
             ConveyorTuning tuning,
-            [Inject(Optional = true)] ExitStackAnchor exitStackAnchor = null,
-            [Inject(Optional = true)] FoodMeshSettings foodMeshSettings = null)
+            [Inject(Optional = true)] ExitStackAnchor exitStackAnchor,
+            FoodMeshSettings foodMeshSettings)
         {
             _queueSpawner = queueSpawner;
             _queueAnchor = queueAnchor;

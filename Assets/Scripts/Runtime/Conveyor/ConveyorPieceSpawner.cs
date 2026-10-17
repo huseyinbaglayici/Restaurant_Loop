@@ -26,14 +26,14 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorPieceController.Pool cornerPool,
             ConveyorPrefabSettings prefabSettings,
             ConveyorTuning tuning,
-            [Inject(Optional = true)] ThemeSettings themeSettings = null)
+            ThemeSettings themeSettings)
         {
             _level = level;
             _straightPool = straightPool;
             _cornerPool = cornerPool;
             _prefabSettings = prefabSettings;
             _tuning = tuning;
-            _themeSettings = themeSettings ?? Resources.Load<ThemeSettings>("ThemeSettings");
+            _themeSettings = themeSettings;
         }
 
         public void Initialize()
