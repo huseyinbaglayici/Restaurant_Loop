@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
@@ -7,27 +6,27 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
+    // The exit stack's slot model: slot positions for the level, which food occupies which slot, and the
+    // Extra Tray slot. The rack furniture underneath lives in ExitRackVisuals.
     public class ExitStackAnchor : IInitializable, IDisposable
     {
         public const int BaseSlotCount = 5;
+        public const int MaxExtraSlots = 1;
 
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ConveyorTuning _tuning;
-        private readonly ExitSlotController.Pool _exitSlotPool;
         private readonly FoodItemController.Pool _foodPool;
-        private readonly ExitSlotPrefabSettings _exitSlotPrefabSettings;
         private readonly FoodFlightService _flightService;
-        private readonly ThemeSettings _themeSettings;
-        private readonly List<ExitSlotController> _spawnedFloors = new();
-        private readonly List<GameObject> _extraRackVisuals = new();
+        private readonly ExitRackVisuals _rackVisuals;
 
-        // null = empty. Index matches SlotPositions. Grows by one every time the Extra Tray power-up is used.
+        // null = empty. Index matches SlotPositions.
         private FoodItemController[] _occupants = new FoodItemController[BaseSlotCount];
 
         public Vector3[] SlotPositions { get; private set; }
         public int SlotCount => SlotPositions.Length;
         public int ExtraSlotsAdded { get; private set; }
+        public bool CanAddExtraSlot => SlotPositions != null && SlotPositions.Length > 0 && ExtraSlotsAdded < MaxExtraSlots;
 
         public int OccupiedCount
         {
@@ -53,82 +52,23 @@ namespace RestaurantLoop.Runtime.Conveyor
             _level = level;
             _prefabSettings = prefabSettings;
             _tuning = tuning;
-            _exitSlotPool = exitSlotPool;
             _foodPool = foodPool;
-            _exitSlotPrefabSettings = exitSlotPrefabSettings;
             _flightService = flightService;
-            _themeSettings = themeSettings;
+            _rackVisuals = new ExitRackVisuals(level, tuning, exitSlotPool, exitSlotPrefabSettings, themeSettings);
 
             SlotPositions = ComputeSlotPositions();
-        }
-
-        private Vector3[] ComputeSlotPositions()
-        {
-            if (_level.ConveyorCells.Count == 0)
-            {
-                Debug.LogError("[ExitStackAnchor] Level has no conveyor cells — can't position exit stack.");
-                return Array.Empty<Vector3>();
-            }
-
-            int minY = int.MaxValue;
-            foreach (var cell in _level.ConveyorCells)
-            {
-                if (cell.Coord.y < minY) minY = cell.Coord.y;
-            }
-
-            float cellSize = _prefabSettings.CellWorldSize;
-            float slotSpacing = _tuning.ExitStackSlotSpacing > 0f ? _tuning.ExitStackSlotSpacing : cellSize;
-            
-            var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
-
-            // Center exactly at WorldOrigin.x + ExitStackXOffset
-            float centerX = _tuning.WorldOrigin.x + _tuning.ExitStackXOffset;
-            float startX = centerX - slotSpacing * (BaseSlotCount - 1) * 0.5f;
-
-            float nearestRowEdgeZ = minY * cellSize - cellSize * 0.5f + beltOrigin.z;
-            float z = nearestRowEdgeZ - _tuning.ExitStackZOffsetFromGrid;
-
-            var positions = new Vector3[BaseSlotCount];
-            for (int i = 0; i < BaseSlotCount; i++)
-            {
-                float x = startX + slotSpacing * i;
-                positions[i] = new Vector3(x, _tuning.ExitStackGroundHeight + _tuning.WorldOrigin.y, z);
-            }
-
-            return positions;
         }
 
         public void Initialize()
         {
             if (SlotPositions.Length == 0) return; // ComputeSlotPositions already logged why
 
-            SpawnRack(SlotPositions[0], SlotPositions[^1]);
-        }
-
-        // One rack piece spans every slot from firstSlot to lastSlot — food items still dock individually
-        // on top of it, only the visual floor underneath is now a single object instead of one per slot.
-        private void SpawnRack(Vector3 firstSlot, Vector3 lastSlot)
-        {
-            var center = (firstSlot + lastSlot) * 0.5f;
-            var theme = _themeSettings != null && _level != null ? _themeSettings.GetTheme(_level.Theme) : null;
-
-            var rack = _exitSlotPool.Spawn(center);
-            rack.transform.rotation = Quaternion.Euler(_tuning.ExtraRackVisualRotation);
-
-            // Always applied: the pooled rack outlives the scene, null restores the base look.
-            rack.ApplyThemeVisual(theme != null ? theme.RackPrefab : null);
-
-            _spawnedFloors.Add(rack);
+            _rackVisuals.SpawnBaseRack(SlotPositions[0], SlotPositions[^1]);
         }
 
         public void Dispose()
         {
-            foreach (var floor in _spawnedFloors) _exitSlotPool.Despawn(floor);
-            _spawnedFloors.Clear();
-
-            foreach (var visual in _extraRackVisuals)
-                if (visual != null) UnityEngine.Object.Destroy(visual);
-            _extraRackVisuals.Clear();
+            _rackVisuals.Clear();
 
             for (int i = 0; i < _occupants.Length; i++)
             {
@@ -138,8 +78,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        // Slot ownership is taken immediately; moving the visual into the slot is the visual layer's job
-        // (ConveyorVisualService flies it there on FoodDockedSignal).
+        // Slot ownership is taken immediately; ConveyorVisualService flies the visual there on FoodDockedSignal.
         public bool TryDock(FoodItemController visual, out int slotIndex)
         {
             for (int i = 0; i < _occupants.Length; i++)
@@ -155,7 +94,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             return false;
         }
 
-        // Where the food visual rests in a slot — the slot floor prefab keeps SlotPositions itself.
+        // Where the food visual rests in a slot (slot positions themselves are at floor height).
         public Vector3 GetFoodPosition(int slotIndex)
         {
             if (slotIndex < 0 || slotIndex >= SlotPositions.Length) return Vector3.zero;
@@ -175,7 +114,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             return Vector3.zero;
         }
 
-        // peek-only
         public bool TryGetOccupant(int slotIndex, out FoodItemController visual)
         {
             if (slotIndex < 0 || slotIndex >= _occupants.Length || _occupants[slotIndex] == null)
@@ -225,11 +163,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        public const int MaxExtraSlots = 1;
-        public bool CanAddExtraSlot => SlotPositions != null && SlotPositions.Length > 0 && ExtraSlotsAdded < MaxExtraSlots;
-
-        // Extra Tray power-up: appends one slot, following the same spacing as the last two.
-        // Limited to MaxExtraSlots (1 extra slot max).
+        // Extra Tray power-up: appends one slot with the same spacing as the last two.
         public bool TryAddExtraSlot()
         {
             if (SlotPositions.Length == 0 || ExtraSlotsAdded >= MaxExtraSlots) return false;
@@ -248,33 +182,46 @@ namespace RestaurantLoop.Runtime.Conveyor
             _occupants.CopyTo(newOccupants, 0);
             _occupants = newOccupants;
 
-            // The base rack is one fixed-length piece that doesn't cover the extra slot —
-            // drop the dedicated Foodrack_extra visual over it so the new dock point reads as furniture too.
-            var theme = _themeSettings != null && _level != null ? _themeSettings.GetTheme(_level.Theme) : null;
-            var extraRackPrefab = (theme != null && theme.ExtraRackPrefab != null) 
-                ? theme.ExtraRackPrefab 
-                : _exitSlotPrefabSettings.ExtraRackPrefab;
-
-            if (extraRackPrefab != null)
-            {
-                var visual = UnityEngine.Object.Instantiate(
-                    extraRackPrefab,
-                    newSlotPosition + _tuning.ExtraRackVisualOffset,
-                    Quaternion.Euler(_tuning.ExtraRackVisualRotation));
-                _extraRackVisuals.Add(visual);
-
-                var rackScale = visual.transform.localScale;
-                visual.transform.localScale = Vector3.zero;
-                visual.transform.DOScale(rackScale, 0.45f).SetEase(Ease.OutBack, 2.2f).SetTarget(visual.transform);
-            }
-            else
-            {
-                Debug.LogWarning("[ExitStackAnchor] ExtraRackPrefab is unassigned — " +
-                                  "Extra Tray power-up won't show its decorative rack visual.");
-            }
+            _rackVisuals.SpawnExtraRack(newSlotPosition);
 
             ExtraSlotsAdded++;
             return true;
+        }
+
+        private Vector3[] ComputeSlotPositions()
+        {
+            if (_level.ConveyorCells.Count == 0)
+            {
+                Debug.LogError("[ExitStackAnchor] Level has no conveyor cells — can't position exit stack.");
+                return Array.Empty<Vector3>();
+            }
+
+            int minY = int.MaxValue;
+            foreach (var cell in _level.ConveyorCells)
+            {
+                if (cell.Coord.y < minY) minY = cell.Coord.y;
+            }
+
+            float cellSize = _prefabSettings.CellWorldSize;
+            float slotSpacing = _tuning.ExitStackSlotSpacing > 0f ? _tuning.ExitStackSlotSpacing : cellSize;
+
+            var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
+
+            float centerX = _tuning.WorldOrigin.x + _tuning.ExitStackXOffset;
+            float startX = centerX - slotSpacing * (BaseSlotCount - 1) * 0.5f;
+
+            // Just in front of the belt's nearest row.
+            float nearestRowEdgeZ = minY * cellSize - cellSize * 0.5f + beltOrigin.z;
+            float z = nearestRowEdgeZ - _tuning.ExitStackZOffsetFromGrid;
+
+            var positions = new Vector3[BaseSlotCount];
+            for (int i = 0; i < BaseSlotCount; i++)
+            {
+                float x = startX + slotSpacing * i;
+                positions[i] = new Vector3(x, _tuning.ExitStackGroundHeight + _tuning.WorldOrigin.y, z);
+            }
+
+            return positions;
         }
     }
 }

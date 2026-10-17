@@ -14,27 +14,27 @@ namespace RestaurantLoop.Runtime.Data
 
         [Header("SFX")]
         public AudioClip DefaultClickSfx;
-        [Tooltip("Stack'teki veya raftaki objelere basınca çalacak ses")]
+        [Tooltip("Tapping a food in the queue or the exit stack.")]
         public AudioClip FoodClickSfx;
-        [Tooltip("Yemek objesi banda giderken çalacak ses")]
+        [Tooltip("A food is sent to the belt.")]
         public AudioClip FoodSendSfx;
-        [Tooltip("Customer yemeği yediğinde çalacak ses")]
+        [Tooltip("A customer eats a food.")]
         public AudioClip CustomerEatSfx;
-        [Tooltip("Bir yemek grubu (stack) tamamen bitip tükendiğinde çalacak ses")]
+        [Tooltip("A food stack is fully used up.")]
         public AudioClip FoodGroupCompletedSfx;
-        [Tooltip("Bant üzerinde en az bir yemek varken sürekli (loop) çalacak bant çalışma sesi")]
+        [Tooltip("Belt loop, plays while at least one food is on the belt.")]
         public AudioClip ConveyorLoopSfx;
-        [Tooltip("Gizli bir müşteri açığa çıktığında / siparişi belirdiğinde çalacak ses")]
+        [Tooltip("A hidden customer reveals its order.")]
         public AudioClip CustomerRevealSfx;
-        [Tooltip("Yemek banttan çıkıp rafa düştüğünde çalacak ses")]
+        [Tooltip("A food leaves the belt and lands on the exit rack.")]
         public AudioClip FoodDropToRackSfx;
-        [Tooltip("Kutlama paneli açılıp logo ve konfetiler patlarken çalacak ses")]
+        [Tooltip("Win celebration (logo and confetti).")]
         public AudioClip CelebrationSfx;
-        [Tooltip("Seviye kazanıldığında (Win ekranı açıldığında) çalacak ses")]
+        [Tooltip("Level Complete panel opens.")]
         public AudioClip WinSfx;
-        [Tooltip("Seviye kaybedildiğinde (Fail ekranı açıldığında) çalacak ses")]
+        [Tooltip("Level fail panel opens.")]
         public AudioClip FailSfx;
-        [Tooltip("Yeterli para (coin) olmadığında çalacak ses (PowerUp satın alma, Keep Playing vb.)")]
+        [Tooltip("Not enough coins (power-up purchase, Keep Playing).")]
         public AudioClip NotEnoughCoinsSfx;
         [Tooltip("Shuffle power-up whoosh")]
         public AudioClip ShuffleSfx;

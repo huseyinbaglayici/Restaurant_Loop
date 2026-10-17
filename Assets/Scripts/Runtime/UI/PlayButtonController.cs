@@ -31,11 +31,7 @@ namespace RestaurantLoop.Runtime.UI
 
         private void OnPlayClicked()
         {
-            if (_livesService != null && !_livesService.HasLives)
-            {
-                Debug.LogWarning("[PlayButtonController] Cannot start level — no lives remaining!");
-                return;
-            }
+            if (_livesService != null && !_livesService.HasLives) return;
 
             _signalBus.Fire(new PlayRequestedSignal());
         }

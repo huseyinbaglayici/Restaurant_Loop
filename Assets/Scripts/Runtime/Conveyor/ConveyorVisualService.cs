@@ -8,13 +8,8 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // The visual half of the conveyor. The logical half (ConveyorManager / CustomerConsumeService) owns
-    // "what is where on the grid" and decides consumes/docks; this class reacts to those decisions the
-    // instant they fire — entry, travel, dock and consume all run on the same immediate signal-driven
-    // path, so the visual is never more than a frame away from what the logical layer just decided.
-    //
-    // Nothing here may change gameplay state — it only moves, spawns and despawns visuals, and pokes the
-    // customer visuals (order UI refresh, serve reaction) at the moment the food actually lands.
+    // Visual half of the conveyor: reacts the same frame to the logical layer's signals (entry, travel,
+    // dock, loop, consume) and only moves, spawns and despawns visuals. Never changes gameplay state.
     public class ConveyorVisualService : IInitializable, ITickable, IDisposable
     {
         private class BeltVisual
@@ -24,35 +19,18 @@ namespace RestaurantLoop.Runtime.Conveyor
             public bool IsEnteringBelt;
         }
 
-        private class ConsumeFlight
-        {
-            public Transform Transform;
-            public Func<Vector3> Target;
-            public Action Arrive;
-        }
-
         private readonly SignalBus _signalBus;
         private readonly ConveyorManager _conveyorManager;
-        private readonly ConveyorTuning _tuning;
         private readonly ConveyorFeelSettings _feel;
         private readonly FoodFlightService _flightService;
         private readonly FoodItemController.Pool _foodPool;
-        private readonly CustomerSpawner _customerSpawner;
-        private readonly RuntimeCustomerState _customerState;
-        private readonly CustomerConsumeService _consumeService;
         private readonly ExitStackAnchor _exitStackAnchor;
+        private readonly CustomerServeVisuals _serveVisuals;
         private readonly AudioService _audioService;
         private readonly AudioLibrary _audioLibrary;
 
-        // Belt items currently drawn by this service, keyed by the logical item id.
+        // Keyed by the logical item id.
         private readonly Dictionary<int, BeltVisual> _beltVisuals = new();
-
-        // Visuals the logical layer handed over (in flight to a customer) — this service despawns them.
-        private readonly HashSet<FoodItemController> _ownedVisuals = new();
-
-        // Food -> customer flights still in the air. The logical layer already counted these serves, so a
-        // belt clear lands them instantly instead of dropping them (see OnBeltCleared).
-        private readonly List<ConsumeFlight> _consumeFlights = new();
 
         // ConveyorAudio keeps the belt loop playing while this is true.
         public bool HasBeltVisuals => _beltVisuals.Count > 0;
@@ -60,27 +38,21 @@ namespace RestaurantLoop.Runtime.Conveyor
         public ConveyorVisualService(
             SignalBus signalBus,
             ConveyorManager conveyorManager,
-            ConveyorTuning tuning,
             ConveyorFeelSettings feel,
             FoodFlightService flightService,
             FoodItemController.Pool foodPool,
-            CustomerSpawner customerSpawner,
-            RuntimeCustomerState customerState,
-            CustomerConsumeService consumeService,
             ExitStackAnchor exitStackAnchor,
+            CustomerServeVisuals serveVisuals,
             AudioService audioService,
             AudioLibrary audioLibrary)
         {
             _signalBus = signalBus;
             _conveyorManager = conveyorManager;
-            _tuning = tuning;
             _feel = feel;
             _flightService = flightService;
             _foodPool = foodPool;
-            _customerSpawner = customerSpawner;
-            _customerState = customerState;
-            _consumeService = consumeService;
             _exitStackAnchor = exitStackAnchor;
+            _serveVisuals = serveVisuals;
             _audioService = audioService;
             _audioLibrary = audioLibrary;
         }
@@ -106,8 +78,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _flightService.CancelAll();
             _beltVisuals.Clear();
-            _consumeFlights.Clear();
-            DespawnOwnedVisuals();
+            _serveVisuals.ForgetFlights();
+            _serveVisuals.DespawnOwnedVisuals();
             ConveyorPieceController.GlobalSpeedMultiplier = 1f;
         }
 
@@ -128,10 +100,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 int id = kvp.Key;
                 var beltVisual = kvp.Value;
 
-                // While flying in from the queue the flight owns the transform and targets the fixed
-                // entry point (Progress held at its start value) — advancing Progress here too would
-                // drag that point forward under the flight, landing the item a belt-speed's worth of
-                // cells past the true entry instead of on it.
+                // The entry flight owns the transform until it lands.
                 if (beltVisual.IsEnteringBelt) continue;
                 if (beltVisual.Visual == null) continue;
 
@@ -144,10 +113,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        // Item was detached from its queue/exit-stack slot but the belt entry hasn't cleared MinEntrySpacing
-        // yet — flies it up to hover above the entry instead of leaving it mid-air where it was picked from.
-        // Not added to _beltVisuals: it isn't logically on the belt yet, so belt travel and the tray-follow
-        // signal (which keys off the item actually entering) both correctly ignore it until that happens.
+        // The entry is busy: fly the picked item up to hover above it. Not a belt visual yet, so belt travel
+        // and the tray follow ignore it until it actually enters.
         private void OnFoodQueuedForEntry(FoodQueuedForEntrySignal signal)
         {
             var visual = signal.Visual;
@@ -187,20 +154,14 @@ namespace RestaurantLoop.Runtime.Conveyor
             visual.SetVisualState(FoodVisualState.Opened);
             visual.SetLocation(FoodLocation.Conveyor);
 
-            // Targets the entry cell itself, not a moving belt slot — AdvanceBeltVisuals holds
-            // beltVisual.Progress at its start value for as long as IsEnteringBelt is set, so the item
-            // actually lands on the entry cell instead of wherever the belt reached by the time the
-            // flight finished.
+            // Progress is frozen at its entry value on both layers until this lands, so the flight targets
+            // the entry cell itself and there's nothing to catch up on afterwards.
             _flightService.Launch(
                 visual.transform,
                 () => _conveyorManager.SampleWorldPosition(beltVisual.Progress),
                 _feel.QueueToBelt,
                 () =>
                 {
-                    // ConveyorManager holds this same item's logical Progress at its entry value for as
-                    // long as its id is in _entryFlightsInProgress (cleared by the signal fired below) —
-                    // so beltVisual.Progress (frozen here at that same entry value the whole flight) is
-                    // already exactly right the instant this fires. Nothing to catch up on either side.
                     beltVisual.IsEnteringBelt = false;
                     _signalBus.Fire(new FoodBeltEntryLandedSignal { ItemId = id, Visual = visual, Progress = beltVisual.Progress });
                 });
@@ -231,250 +192,55 @@ namespace RestaurantLoop.Runtime.Conveyor
             });
         }
 
-        // No flight here — the FoodEnteredBeltSignal ConveyorManager fires right after this (same reused
-        // visual, new item id) drives the transform from here on. Without dropping this dictionary entry
-        // first, both belt-visual handles would fight over the same transform's position every frame.
+        // The FoodEnteredBeltSignal fired right after this (same visual, new id) takes over the transform;
+        // the old entry must go first or both would drive it.
         private void OnFoodLooped(FoodLoopedSignal signal) => _beltVisuals.Remove(signal.ItemId);
 
         private void OnFoodConsumed(FoodConsumedSignal signal)
         {
-            int id = signal.ItemId;
-            var sourceVisual = signal.Visual;
-            var takenStack = signal.TakenStack;
-            bool fullyConsumed = signal.ItemFullyConsumed;
-            var coord = signal.CustomerCoord;
-            var serveResult = signal.ServeResult;
-            bool levelWon = signal.LevelWon;
+            if (signal.Visual == null) return;
 
-            // Fires and reacts the same frame the logical layer decides — the item's belt visual is
-            // wherever AdvanceBeltVisuals put it this frame, which is exactly where the flight should
-            // launch from, so there's nothing to wait on here.
-            if (sourceVisual == null) return;
+            if (signal.ItemFullyConsumed && signal.PartnerVisual != null)
+                DespawnLinkedPartner(signal.PartnerVisual, signal.PartnerItemId);
 
-            if (fullyConsumed && signal.PartnerVisual != null)
+            // A fully consumed item is no longer on the belt; its visual is the serve flyer now.
+            if (signal.ItemFullyConsumed) _beltVisuals.Remove(signal.ItemId);
+
+            _serveVisuals.Serve(signal);
+        }
+
+        private void DespawnLinkedPartner(FoodItemController partnerVisual, int? partnerItemId)
+        {
+            int removeKey = -1;
+            foreach (var kvp in _beltVisuals)
             {
-                int removeKey = -1;
-                foreach (var kvp in _beltVisuals)
+                if (kvp.Value != null && kvp.Value.Visual == partnerVisual)
                 {
-                    if (kvp.Value != null && kvp.Value.Visual == signal.PartnerVisual)
-                    {
-                        removeKey = kvp.Key;
-                        break;
-                    }
+                    removeKey = kvp.Key;
+                    break;
                 }
-                if (removeKey != -1) _beltVisuals.Remove(removeKey);
-                if (signal.PartnerItemId.HasValue) _beltVisuals.Remove(signal.PartnerItemId.Value);
-
-                _flightService.Cancel(signal.PartnerVisual.transform);
-                _foodPool.Despawn(signal.PartnerVisual);
             }
+            if (removeKey != -1) _beltVisuals.Remove(removeKey);
+            if (partnerItemId.HasValue) _beltVisuals.Remove(partnerItemId.Value);
 
-            if (sourceVisual.UsesFixedChildSlots)
-            {
-                LaunchFixedSlotConsumeFlight(id, sourceVisual, fullyConsumed, coord, takenStack, serveResult, levelWon);
-                return;
-            }
-
-            var flyer = ResolveConsumeFlyer(id, sourceVisual, takenStack, fullyConsumed);
-            if (flyer == null) return;
-
-            flyer.SetAmountBadgeVisible(false);
-            _ownedVisuals.Add(flyer);
-
-            LaunchConsumeFlight(
-                flyer.transform,
-                () => ResolveCustomerHandoffPosition(coord, flyer.transform.position),
-                () => OnConsumeFlightArrived(flyer, flyer.transform.position, coord, takenStack, serveResult, levelWon, fullyConsumed));
-        }
-
-        private void LaunchConsumeFlight(Transform target, Func<Vector3> targetPosition, Action onArrive)
-        {
-            var flight = new ConsumeFlight { Transform = target, Target = targetPosition };
-            flight.Arrive = () =>
-            {
-                if (!_consumeFlights.Remove(flight)) return; // already landed via OnBeltCleared
-                onArrive();
-            };
-
-            _consumeFlights.Add(flight);
-            _flightService.Launch(target, targetPosition, _feel.ConsumeToCustomer, flight.Arrive);
-        }
-
-        // Beverage rack (icecek_stack): fixed base + several pre-placed single-drink children. Rather than
-        // flying a duplicate of the whole rack per consume, detach just the one drink that was actually
-        // taken and fly that; the rack (and whatever drinks remain on it) stays exactly where ApplyStack
-        // already left it.
-        private void LaunchFixedSlotConsumeFlight(
-            int id,
-            FoodItemController sourceVisual,
-            bool fullyConsumed,
-            Vector2Int coord,
-            FoodStackData takenStack,
-            RuntimeCustomerState.ConsumeResult serveResult,
-            bool levelWon)
-        {
-            var child = sourceVisual.TakeFixedSlotChild();
-
-            if (fullyConsumed)
-            {
-                _beltVisuals.Remove(id);
-                _flightService.Cancel(sourceVisual.transform);
-                _foodPool.Despawn(sourceVisual);
-            }
-
-            if (child == null)
-            {
-                OnConsumeFlightArrived(null, sourceVisual != null ? sourceVisual.transform.position : Vector3.zero,
-                    coord, takenStack, serveResult, levelWon, fullyConsumed);
-                return;
-            }
-
-            LaunchConsumeFlight(
-                child,
-                () => ResolveCustomerHandoffPosition(coord, child.position),
-                () =>
-                {
-                    var worldPosition = child.position;
-                    UnityEngine.Object.Destroy(child.gameObject);
-                    OnConsumeFlightArrived(null, worldPosition, coord, takenStack, serveResult, levelWon, fullyConsumed);
-                });
-        }
-
-        // Full take: the logical layer already dropped the item, so its own visual becomes the flyer.
-        // Partial take: the belt item stays, so a detached visual carries just the taken amount.
-        private FoodItemController ResolveConsumeFlyer(
-            int id, FoodItemController sourceVisual, FoodStackData takenStack, bool fullyConsumed)
-        {
-            if (sourceVisual == null) return null;
-
-            if (fullyConsumed)
-            {
-                _beltVisuals.Remove(id);
-                _flightService.Cancel(sourceVisual.transform);
-                return sourceVisual;
-            }
-
-            var flyer = _foodPool.Spawn(sourceVisual.TopUnitWorldPosition, takenStack, FoodVisualState.Opened);
-            flyer.SetLocation(sourceVisual.Location);
-            return flyer;
-        }
-
-        private void OnConsumeFlightArrived(
-            FoodItemController flyer,
-            Vector3 worldPosition,
-            Vector2Int coord,
-            FoodStackData takenStack,
-            RuntimeCustomerState.ConsumeResult serveResult,
-            bool levelWon,
-            bool fullyConsumed = false)
-        {
-            if (flyer != null)
-            {
-                _ownedVisuals.Remove(flyer);
-                _foodPool.Despawn(flyer);
-            }
-
-            _customerSpawner.PlayConsumePunch(
-                coord, _feel.ConsumePunchStrength, _feel.ConsumePunchDuration,
-                _feel.ConsumePunchVibrato, _feel.ConsumePunchElasticity);
-
-            ApplyServeResult(coord, serveResult);
-
-            _audioService.PlaySfx(_audioLibrary.CustomerEatSfx);
-            if (fullyConsumed)
-            {
-                _audioService.PlaySfx(_audioLibrary.FoodGroupCompletedSfx);
-            }
-
-            _signalBus.Fire(new FoodDeliveredToCustomerSignal
-            {
-                CustomerCoord = coord,
-                DeliveredStack = takenStack,
-                WorldPosition = worldPosition,
-                ServeResult = serveResult
-            });
-
-            if (levelWon) _consumeService.NotifyLevelWon();
-        }
-
-        // The customer reacts when the food lands, not when the logical layer decided it would.
-        private void ApplyServeResult(Vector2Int coord, RuntimeCustomerState.ConsumeResult serveResult)
-        {
-            switch (serveResult)
-            {
-                case RuntimeCustomerState.ConsumeResult.Reduced:
-                    RefreshCustomerVisual(coord);
-                    break;
-
-                case RuntimeCustomerState.ConsumeResult.Promoted:
-                    RefreshCustomerVisual(coord);
-                    _customerSpawner.PlayServeReaction(coord, hasSecondOrderRemaining: true);
-                    break;
-
-                case RuntimeCustomerState.ConsumeResult.Served:
-                    // Order UI goes seamless-instant; the reaction animation is just the character's
-                    // exit performance before despawn, not something the UI should wait on.
-                    _customerSpawner.HideOrderUI(coord);
-                    _customerSpawner.PlayServeReaction(coord, hasSecondOrderRemaining: false);
-                    break;
-            }
-        }
-
-        private void RefreshCustomerVisual(Vector2Int coord)
-        {
-            if (!_customerState.TryGetCustomer(coord, out var customer)) return;
-            _customerSpawner.RefreshCustomerVisual(coord, customer);
-        }
-
-        private Vector3 ResolveCustomerHandoffPosition(Vector2Int coord, Vector3 fallback)
-        {
-            if (!_customerSpawner.TryGetVisual(coord, out var customerVisual) || customerVisual == null) return fallback;
-
-            var anchor = customerVisual.FoodHandoffAnchor;
-            return anchor != null ? anchor.position : customerVisual.transform.position;
+            _flightService.Cancel(partnerVisual.transform);
+            _foodPool.Despawn(partnerVisual);
         }
 
         private void OnBeltCleared()
         {
-            // Consume flights land instantly: the serve already happened logically, and its arrival is what
-            // updates the customer (and reports the win) — dropping it would leave that undone.
-            var landingNow = _consumeFlights.ToArray();
-            foreach (var flight in landingNow)
-            {
-                if (flight.Transform != null)
-                {
-                    _flightService.Cancel(flight.Transform);
-                    flight.Transform.position = flight.Target();
-                }
-                flight.Arrive();
-            }
+            _serveVisuals.LandAllFlights();
 
-            // Scoped to belt/owned visuals only — a global CancelAll() would also freeze an
-            // already-docked item's BeltToStack flight mid-flight (dock happens, then a same-frame
-            // deadlock can pause the game before the flight lands), stranding its visual on the belt
-            // forever even though the exit stack already logically holds it.
+            // Scoped to belt/owned visuals only: a global CancelAll() would also freeze an already-docked
+            // item's flight to the exit stack and strand its visual on the belt.
             foreach (var beltVisual in _beltVisuals.Values)
             {
                 if (beltVisual.Visual != null) _flightService.Cancel(beltVisual.Visual.transform);
             }
-            foreach (var visual in _ownedVisuals)
-            {
-                if (visual != null) _flightService.Cancel(visual.transform);
-            }
+            _serveVisuals.CancelOwnedFlights();
 
             _beltVisuals.Clear();
-            DespawnOwnedVisuals();
-        }
-
-        private void DespawnOwnedVisuals()
-        {
-            foreach (var visual in _ownedVisuals)
-            {
-                if (visual == null) continue;
-                _foodPool.Despawn(visual);
-            }
-
-            _ownedVisuals.Clear();
+            _serveVisuals.DespawnOwnedVisuals();
         }
     }
 }

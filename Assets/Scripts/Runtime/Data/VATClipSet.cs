@@ -3,9 +3,8 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Data
 {
-    // Frame-range layout of a baked Vertex Animation Texture. Produced by Assets/Editor/VAT/VATBaker.cs,
-    // consumed by VATCustomerVisual at runtime. Only Idle is populated today — happy_idle_beko.controller
-    // has no reaction clips yet, so the other entries stay invalid (FrameCount 0) until real clips exist.
+    // Frame ranges of a baked Vertex Animation Texture, written by the VAT baker and read by VATCustomerVisual.
+    // Clips without frames (FrameCount 0) report IsValid false.
     [CreateAssetMenu(menuName = "RestaurantLoop/VAT Clip Set", fileName = "VATClipSet")]
     public class VATClipSet : ScriptableObject
     {

@@ -54,8 +54,12 @@ Entry point: **RestaurantLoop → Conveyor Grid Tool** menu, `ConveyorGridWindow
 
 | File | Role |
 |---|---|
-| `ConveyorGridWindow.cs` | The EditorWindow shell. Owns `_draft` (a transient `ConveyorLevelDataSO`), New/Save/Load, grid resize, mode/brush/palette bar, and hosts the three sub-panels below. Save also runs the path baker (§4) and writes to `Assets/Data/Levels/ConveyorLevel_{id}.asset`. |
-| `ConveyorGridCanvas.cs` | The main painting canvas. Three modes: **Path** (stamp Straight/Corner, Shift+Click or hover+R to rotate 90°, Ctrl+Click to toggle Gate), **Entity** (stamp food stacks onto belt cells), **Table** (place/select tables on non-belt cells). Every mutation goes through `Undo.RecordObject(Data, ...)` on the SO, never a plain field — that's what makes Ctrl+Z work. |
+| `ConveyorGridWindow.cs` | The EditorWindow shell: builds the layout, toolbars and sub-panels around a transient `ConveyorLevelDataSO` draft. |
+| `ConveyorGridCanvas.cs` | The main painting canvas: pointer/keyboard input and view only. **Path** (Straight/Corner, Shift+Click or hover+R to rotate, Ctrl+Click toggles Gate), **Entity** and **Customer** modes. |
+| `ConveyorLevelEdits.cs` | Every undoable edit to the draft (paint/erase/rotate/gate/entities/customers, resize, reset). All go through `Undo.RecordObject`, which is what makes Ctrl+Z work. |
+| `QueueLaneEdits.cs` | Queue lane "Generate From Customers" and "Shuffle Queue". |
+| `ConveyorLevelAssetIO.cs` | Save/Load: bakes the path (§4), writes `Assets/Data/Levels/ConveyorLevel_{id}.asset` and registers it in `LevelDatabase`. |
+| `GridPainter.cs` / `ConveyorTilePainter.cs` | Painter2D drawing shared by both canvases / conveyor-specific tiles, arrows, customers and gate. |
 | `QueueGridCanvas.cs` | Fixed supply-lane grid (always present, separate concept from Tables). Row 0 = front = servable. |
 | `TableOrderListView.cs` | Side-panel editor for one selected table's order list. |
 | `EntityLabelFactory.cs` | Shared icon+amount-badge overlay factory, used by both grid canvases. |

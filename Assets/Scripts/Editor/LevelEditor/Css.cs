@@ -1,7 +1,6 @@
 namespace RestaurantLoop.Editor.LevelEditor
 {
-    // USS class name constants. A mismatch between these and LevelEditor.uss is a
-    // silent failure at runtime; centralising the strings here makes USS-refactoring safe.
+    // USS class names used in LevelEditor.uss; a typo fails silently, so keep them in one place.
     internal static class Css
     {
         public const string Root          = "rl-root";
@@ -28,7 +27,6 @@ namespace RestaurantLoop.Editor.LevelEditor
         public const string Row           = "rl-row";
         public const string RowWrap       = "rl-row--wrap";
 
-        // ── Color/entity palette ─────────────────────────────────────────────
         public const string PaletteSwatch         = "rl-palette-swatch";
         public const string PaletteSwatchSelected = "rl-palette-swatch--selected";
     }

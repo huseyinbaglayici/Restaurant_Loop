@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
@@ -13,11 +12,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private float _baseTiltZ;
         private float _axisSign;
 
-        private IConveyorPieceVisual[] _visuals;
-
-        private GameObject _activeThemeVisual;
-        private readonly List<GameObject> _originalChildren = new();
-        private Renderer[] _originalRenderers;
+        private ThemeVisualOverride _themeVisual;
 
         private void Awake()
         {
@@ -26,56 +21,13 @@ namespace RestaurantLoop.Runtime.Conveyor
             _baseEulerY = e.y;
             _baseTiltZ = e.z;
 
-            _originalRenderers = GetComponents<Renderer>();
-
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                _originalChildren.Add(transform.GetChild(i).gameObject);
-            }
+            _themeVisual = new ThemeVisualOverride(transform);
         }
 
+        // Null restores the base look.
         public void ApplyThemeVisual(GameObject overridePrefab)
         {
-            if (overridePrefab != null)
-            {
-                // Disable base mesh renderer on self if any
-                if (_originalRenderers != null)
-                {
-                    foreach (var r in _originalRenderers) r.enabled = false;
-                }
-
-                // Disable all original child visuals of the base conveyor piece
-                foreach (var child in _originalChildren)
-                {
-                    if (child != null) child.SetActive(false);
-                }
-
-                if (_activeThemeVisual == null || _activeThemeVisual.name != overridePrefab.name)
-                {
-                    if (_activeThemeVisual != null) Destroy(_activeThemeVisual);
-                    _activeThemeVisual = Instantiate(overridePrefab, transform);
-                    _activeThemeVisual.name = overridePrefab.name;
-                    _activeThemeVisual.transform.localPosition = Vector3.zero;
-                    _activeThemeVisual.transform.localRotation = Quaternion.identity;
-                    _activeThemeVisual.transform.localScale = Vector3.one;
-                }
-                _activeThemeVisual.SetActive(true);
-            }
-            else
-            {
-                if (_activeThemeVisual != null) _activeThemeVisual.SetActive(false);
-
-                if (_originalRenderers != null)
-                {
-                    foreach (var r in _originalRenderers) r.enabled = true;
-                }
-
-                foreach (var child in _originalChildren)
-                {
-                    if (child != null) child.SetActive(true);
-                }
-            }
-
+            _themeVisual.Apply(overridePrefab);
             UpdateVisualsAxisSign();
         }
 
@@ -88,7 +40,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void OnSpawned(Vector3 position, float worldYRotation)
         {
             transform.SetPositionAndRotation(position, Quaternion.Euler(_baseTiltX, _baseEulerY + worldYRotation, _baseTiltZ));
-            // axis flip at 90/270
+            // Flow flips for pieces turned 90/270 degrees.
             _axisSign = Mathf.Cos(2f * worldYRotation * Mathf.Deg2Rad);
 
             gameObject.SetActive(true);
@@ -103,13 +55,11 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void UpdateVisualsAxisSign()
         {
-            _visuals = GetComponentsInChildren<IConveyorPieceVisual>(false);
-            if (_visuals != null)
+            // Re-queried each time: the active theme visual decides which piece visuals exist.
+            var visuals = GetComponentsInChildren<IConveyorPieceVisual>(false);
+            for (int i = 0; i < visuals.Length; i++)
             {
-                for (int i = 0; i < _visuals.Length; i++)
-                {
-                    _visuals[i].OnPieceSpawned(_axisSign);
-                }
+                visuals[i].OnPieceSpawned(_axisSign);
             }
         }
 

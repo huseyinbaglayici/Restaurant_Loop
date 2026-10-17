@@ -7,9 +7,8 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Tutorial
 {
-    // Plays a tutorial level's ordered TutorialSteps: each step waits for its trigger, then either
-    // a matching gameplay action or a blocker tap advances it. Non-tutorial levels are untouched —
-    // Initialize() bails out immediately and no signal is ever fired.
+    // Plays a tutorial level's TutorialSteps in order: each waits for its trigger, then a matching
+    // gameplay action or a blocker tap advances it. Does nothing on non-tutorial levels.
     public class TutorialController : IInitializable, ITickable, IDisposable
     {
         private readonly ConveyorLevelDataSO _level;
@@ -21,7 +20,6 @@ namespace RestaurantLoop.Runtime.Tutorial
         private readonly Camera _camera;
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ConveyorTuning _tuning;
-
         private readonly CustomerConsumeService _consumeService;
         private readonly PowerUpSettings _powerUpSettings;
 
@@ -82,7 +80,7 @@ namespace RestaurantLoop.Runtime.Tutorial
         {
             if (!_isRunning || !_isStepActive || _currentStepIndex >= _level.TutorialSteps.Count) return;
 
-            // Kamera veya UI oturdukça parmak pozisyonunu sürekli güncel tut
+            // Targets can move (camera framing, UI layout), so the finger follows every frame.
             var step = _level.TutorialSteps[_currentStepIndex];
             var screenPos = ResolveScreenPos(step);
             if (screenPos.HasValue && _view != null)
@@ -123,8 +121,7 @@ namespace RestaurantLoop.Runtime.Tutorial
                 TryShowCurrentStep(TutorialTriggerCondition.OnExitStackNearFull);
         }
 
-        // Only fired by ConveyorEntryInput / PowerUpButtonsController once the click's real
-        // gameplay effect actually happened, not just once it was allowed.
+        // Fired only once a click's gameplay effect actually happened, not just once it was allowed.
         private void OnActionPerformed(TutorialActionPerformedSignal signal)
         {
             if (!_isRunning || !_isStepActive || _currentStepIndex >= _level.TutorialSteps.Count) return;
@@ -147,76 +144,10 @@ namespace RestaurantLoop.Runtime.Tutorial
 
             _isStepActive = true;
             bool tapToAdvance = step.HoverKind is TutorialHoverTargetKind.None or TutorialHoverTargetKind.ConveyorCell;
+            var layout = TutorialStepLayout.Resolve(_level.TutorialSteps, _currentStepIndex, _powerUpSettings);
 
-            var settings = _powerUpSettings;
-            Vector2? customPanelPos = null;
-            Vector2? fingerOffset = null;
-            Vector2? blockerOffset = null;
-
-            bool isPowerUpRelated = step.HoverKind != TutorialHoverTargetKind.QueueLane &&
-                                   step.HoverKind != TutorialHoverTargetKind.ConveyorCell &&
-                                   (step.HoverKind == TutorialHoverTargetKind.PowerUpButton ||
-                                    step.Trigger == TutorialTriggerCondition.OnFirstLevelFail ||
-                                    (_currentStepIndex + 1 < _level.TutorialSteps.Count && _level.TutorialSteps[_currentStepIndex + 1].HoverKind == TutorialHoverTargetKind.PowerUpButton));
-
-            if (isPowerUpRelated && settings != null)
-            {
-                PowerUpButtonId powerUpId = step.HoverKind == TutorialHoverTargetKind.PowerUpButton 
-                    ? step.PowerUpButton 
-                    : (_currentStepIndex + 1 < _level.TutorialSteps.Count && _level.TutorialSteps[_currentStepIndex + 1].HoverKind == TutorialHoverTargetKind.PowerUpButton 
-                        ? _level.TutorialSteps[_currentStepIndex + 1].PowerUpButton 
-                        : step.PowerUpButton);
-
-                var def = settings.GetDefinition(powerUpId);
-                if (def != null && def.CustomTutorialPanelPos != Vector2.zero)
-                {
-                    customPanelPos = def.CustomTutorialPanelPos;
-                }
-                else
-                {
-                    customPanelPos = settings.PowerUpTutorialPanelPos;
-                }
-
-                if (def != null && def.CustomFingerOffset != Vector2.zero)
-                {
-                    fingerOffset = def.CustomFingerOffset;
-                }
-                else if (settings.PowerUpFingerOffset != Vector2.zero)
-                {
-                    fingerOffset = settings.PowerUpFingerOffset;
-                }
-
-                if (def != null && def.CustomBlockerOffset != Vector2.zero)
-                {
-                    blockerOffset = def.CustomBlockerOffset;
-                }
-                else if (settings.PowerUpBlockerOffset != Vector2.zero)
-                {
-                    blockerOffset = settings.PowerUpBlockerOffset;
-                }
-            }
-            else if (step.HoverKind == TutorialHoverTargetKind.QueueLane && settings != null)
-            {
-                // QUEUE TUTORIAL STEP: Use custom QueueFingerOffset from PowerUpSettings if set, otherwise fallback to NormalTutorialFingerOffset
-                if (settings.QueueFingerOffset != Vector2.zero)
-                {
-                    fingerOffset = settings.QueueFingerOffset;
-                }
-                else if (settings.NormalTutorialFingerOffset != Vector2.zero)
-                {
-                    fingerOffset = settings.NormalTutorialFingerOffset;
-                }
-            }
-            else if (!isPowerUpRelated && settings != null)
-            {
-                // NORMAL GAMEPLAY TUTORIAL STEP (non-powerup):
-                if (settings.NormalTutorialFingerOffset != Vector2.zero)
-                {
-                    fingerOffset = settings.NormalTutorialFingerOffset;
-                }
-            }
-
-            _view.Show(step.Text, ResolveScreenPos(step), tapToAdvance, customPanelPos, fingerOffset, blockerOffset, isPowerUpRelated);
+            _view.Show(step.Text, ResolveScreenPos(step), tapToAdvance,
+                layout.PanelPos, layout.FingerOffset, layout.BlockerOffset, layout.IsPowerUpStep);
             _signalBus.Fire(new TutorialStepActivatedSignal { Step = step });
         }
 
@@ -234,9 +165,8 @@ namespace RestaurantLoop.Runtime.Tutorial
                 return;
             }
 
-            var nextStep = _level.TutorialSteps[_currentStepIndex];
-            // Eğer sıradaki adım doğrudan devam eden bir adımsa (aynı tetikleyici veya None) kesintisiz göster
-            TryShowCurrentStep(nextStep.Trigger);
+            // Scene-load steps chain straight on; event-triggered steps wait for their own event.
+            TryShowCurrentStep(TutorialTriggerCondition.OnGameplaySceneLoaded);
         }
 
         private Vector3? ResolveScreenPos(TutorialStepData step) => step.HoverKind switch

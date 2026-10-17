@@ -19,7 +19,7 @@ namespace RestaurantLoop.Runtime.Data
             public FoodType Type;
 
             [Header("Color")]
-            [Tooltip("Bu yiyecek tipine özel renk (bağlantı prizması, UI vs. için). Boş bırakılırsa varsayılan renk kullanılır.")]
+            [Tooltip("Color of this food type (link prism, UI). Leave unset (0,0,0,0) to use the built-in type color.")]
             public Color Color;
 
             [Tooltip("Instantiated as-is for the opened unit visual — its own authored mesh, materials and " +
@@ -36,10 +36,10 @@ namespace RestaurantLoop.Runtime.Data
             public Vector3 ClosedRotationEuler;
 
             [Header("2D Sprites")]
-            [Tooltip("Müşteri sipariş baloncuğunda çıkacak 2D ikon.")]
+            [Tooltip("2D icon shown in the customer's order bubble.")]
             public Sprite CustomerIcon;
 
-            [Tooltip("Aşağıdaki kuyrukta (Queue) tabakta/masada çıkacak 2D ikon.")]
+            [Tooltip("2D icon shown on the queue table.")]
             public Sprite QueueIcon;
 
             [Tooltip("UI sprite for this food type (fallback if specific icons are not set).")]
@@ -71,33 +71,33 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("UI sprite shown when a customer is hidden (question mark / mystery bubble).")]
         public Sprite HiddenOrderBubble;
 
-        [Tooltip("Müşteri sipariş baloncuğunun genel büyüklüğü / ölçeği (Scale).")]
+        [Tooltip("Overall scale of the customer order bubble.")]
         [Range(0.5f, 5f)] public float CustomerBubbleScale = 1.0f;
 
-        [Tooltip("Sipariş baloncuğunun müşterinin ne kadar yukarısında duracağı (Y Yüksekliği).")]
+        [Tooltip("Height of the order bubble above the customer.")]
         public float CustomerBubbleHeight = 3.0f;
 
-        [Tooltip("Kamera zoom yaptıkça baloncuğun da büyümesini sağlar.")]
+        [Tooltip("Scale the bubble up as the camera zooms out.")]
         public bool ScaleBubbleWithCamera = false;
 
-        [Tooltip("Kamera zoom çarpanı.")]
+        [Tooltip("Camera zoom multiplier for the bubble scale.")]
         public float BubbleCameraScaleMultiplier = 1.0f;
 
         [Header("Customer Order Bubble Pulsing Animation")]
-        [Tooltip("Sipariş baloncuğunda hafif nabız/büyüyüp küçülme (pulsing) animasyonu aktif olsun mu?")]
+        [Tooltip("Play a gentle pulse on the order bubble.")]
         public bool EnableBubblePulsing = true;
-        [Tooltip("Pulsing scale çarpanı (Örn: 1.1f).")]
+        [Tooltip("Pulse scale multiplier (e.g. 1.1).")]
         public float BubblePulseScale = 1.1f;
-        [Tooltip("Pulsing döngü süresi saniye cinsinden.")]
+        [Tooltip("Pulse cycle duration in seconds.")]
         public float BubblePulseDuration = 0.7f;
-        [Tooltip("Pulsing renk parlama çarpanı (isteğe bağlı, beyaz/parlak).")]
+        [Tooltip("Pulse color tint (above 1 brightens the bubble).")]
         public Color BubblePulseColor = new Color(1.12f, 1.12f, 1.12f, 1f);
 
         [Header("Fonts & Badges")]
         [Tooltip("Font asset used for stack amount numbers across 2D queue and 3D conveyor.")]
         public TMPro.TMP_FontAsset StackAmountFont;
 
-        [Tooltip("Bantta (Conveyor) ve Rafta (Stack) yemeklerin tepesindeki sayı rozetinin ekstra Y yükseklik ofseti.")]
+        [Tooltip("Extra height of the amount badge above foods on the belt and exit rack.")]
         public float ConveyorBadgeHeightOffset = 0.8f;
 
         [SerializeField] private List<Entry> _entries = new();

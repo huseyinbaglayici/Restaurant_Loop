@@ -70,34 +70,30 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (_badge == null || !_badge.activeSelf) return;
 
             var cam = Camera.main;
-            if (cam == null)
+            if (cam == null && _cameraController != null && _cameraController.Camera != null)
             {
-                var camCtrl = _cameraController;
-                if (camCtrl != null && camCtrl.Camera != null) cam = camCtrl.Camera;
+                cam = _cameraController.Camera;
             }
             if (cam == null) return;
 
-            // Faces the camera in world space so the food's own rotation doesn't affect it
+            // World-space facing, so the food's own rotation doesn't affect it.
             _badge.transform.rotation = cam.transform.rotation;
 
-            // Parent scale compensation so text size stays consistent regardless of model scaling
+            // Cancels the parent's scale so the text size stays the same for every food model.
             Vector3 lossy = _owner.lossyScale;
             _badge.transform.localScale = new Vector3(
                 lossy.x > 0.001f ? 1f / lossy.x : 1f,
                 lossy.y > 0.001f ? 1f / lossy.y : 1f,
                 lossy.z > 0.001f ? 1f / lossy.z : 1f);
 
-            var meshSettings = _foodMeshSettings;
-            float extraOffset = meshSettings != null ? meshSettings.ConveyorBadgeHeightOffset : 0.85f;
+            float extraOffset = _foodMeshSettings != null ? _foodMeshSettings.ConveyorBadgeHeightOffset : 0.85f;
             Vector3 topPosition = _stackBuilder.TopUnitWorldPosition;
 
-            // TopUnitWorldPosition returns the highest rendered bounds Y.
-            // Add a clean vertical offset and slight right offset so it hovers above the stack.
+            // Hovers just above and slightly right of the stack's highest rendered point.
             Vector3 worldOffset = Vector3.up * (extraOffset + 0.35f) + cam.transform.right * 0.35f;
 
             if (location == FoodLocation.FoodStack)
             {
-                // Exit stack badges sit +1 on Z and -2.2 on Y
                 worldOffset.z += 1f;
                 worldOffset.y -= 2.2f;
             }
@@ -109,10 +105,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             EnsureBadge();
             _badge.SetActive(true);
-            var meshSettings = _foodMeshSettings;
-            if (meshSettings != null && meshSettings.StackAmountFont != null && _text.font != meshSettings.StackAmountFont)
+            if (_foodMeshSettings != null && _foodMeshSettings.StackAmountFont != null && _text.font != _foodMeshSettings.StackAmountFont)
             {
-                _text.font = meshSettings.StackAmountFont;
+                _text.font = _foodMeshSettings.StackAmountFont;
             }
             _text.text = amount.ToString();
 
@@ -136,17 +131,16 @@ namespace RestaurantLoop.Runtime.Conveyor
             rt.sizeDelta = new Vector2(2f, 2f);
 
             _text = textObj.AddComponent<TextMeshPro>();
-            var meshSettings = _foodMeshSettings;
-            if (meshSettings != null && meshSettings.StackAmountFont != null)
+            if (_foodMeshSettings != null && _foodMeshSettings.StackAmountFont != null)
             {
-                _text.font = meshSettings.StackAmountFont;
+                _text.font = _foodMeshSettings.StackAmountFont;
             }
             _text.alignment = TextAlignmentOptions.Center;
             _text.fontSize = 5.5f;
             _text.color = Color.white;
             _text.fontStyle = FontStyles.Bold;
             _text.sortingOrder = 2000;
-            _text.isOverlay = true; // Always renders on top of 3D geometry
+            _text.isOverlay = true; // draws over 3D geometry
 
             var meshRenderer = textObj.GetComponent<MeshRenderer>();
             if (meshRenderer != null)

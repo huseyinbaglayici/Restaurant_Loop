@@ -82,7 +82,7 @@ namespace RestaurantLoop.Runtime.Data
                 return true;
             }
 
-            // End of playlist: loop back or keep at last
+            // End of playlist: loop back to the start.
             CurrentPlaylistIndex = 0;
             nextLevelId = list[0];
             return true;

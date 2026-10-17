@@ -20,16 +20,16 @@ namespace RestaurantLoop.Runtime.Data
         public Vector3 BaseScale = new Vector3(420f, 239f, 239f);
 
         [Header("Exit Rack & Table Spacing")]
-        [Tooltip("Exit Rack (üstteki raf) ile Masa arasındaki Z ekseni boşluk mesafesi.")]
+        [Tooltip("Z gap between the exit rack and the table.")]
         public float GapFromExitRack = 1.8f;
 
-        [Tooltip("Masanın X eksenindeki ofseti (0 = Exit Rack ve Dünya merkezine tam ortalı).")]
+        [Tooltip("Table X offset (0 = centered on the exit rack and world origin).")]
         public float TableXOffset = 0f;
 
-        [Tooltip("Masa üzerinde yemek kuyruğunun Z eksenindeki yerleşim ofseti.")]
+        [Tooltip("Z offset of the food queue on the table.")]
         public float QueueFoodZOffsetOnTable = 0f;
 
-        [Tooltip("Masa üzerinde yemek kuyruğunun X eksenindeki ekstra ofseti (0 = masaya tam ortalı).")]
+        [Tooltip("Extra X offset of the food queue on the table (0 = centered).")]
         public float QueueFoodXOffsetOnTable = 0f;
 
         [Tooltip("Local offset added to table position relative to the queue lanes center.")]

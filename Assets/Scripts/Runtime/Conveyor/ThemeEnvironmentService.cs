@@ -4,6 +4,7 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
+    // Shows the level theme's environment prefab under LevelHolder and places it for the grid size and camera zoom.
     public class ThemeEnvironmentService : IInitializable
     {
         private readonly ConveyorTuning _tuning;
@@ -44,8 +45,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 {
                     if (child.name == "Plane") continue;
 
-                    bool match = child.name == targetPrefab.name || 
-                                 child.name.StartsWith(targetPrefab.name) || 
+                    bool match = child.name == targetPrefab.name ||
+                                 child.name.StartsWith(targetPrefab.name) ||
                                  targetPrefab.name.StartsWith(child.name);
 
                     child.gameObject.SetActive(match);
@@ -72,11 +73,11 @@ namespace RestaurantLoop.Runtime.Conveyor
             _environmentInstance.transform.localScale = Vector3.Scale(_tuning.EnvironmentBaseScale, themeScale);
             _environmentInstance.transform.localRotation = Quaternion.Euler(themeRot);
 
-            // 1. Izgara yuksekligi arttiginda konveyorun fiziksel uzama boyu ile dengeli Z otelenmesi
+            // Taller grids stretch the belt, so the environment moves back with it.
             float gridHeightDiff = _level.GridHeight - _tuning.ReferenceGridHeight;
             float beltPhysicalExpansionZ = gridHeightDiff * (_prefabSettings.CellWorldSize * 0.65f);
 
-            // 2. Kamera zoom-out yaptiginda dengeli kadraj payi
+            // A zoomed-out camera needs the environment pushed further back to stay framed.
             float cameraZoomPushZ = 0f;
             if (_cameraController != null && _cameraController.CameraZoomFactor > 1f)
             {
@@ -84,8 +85,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
                 float zShiftMult = themeEntry != null && themeEntry.CameraZOffsetMultiplier != 0f
                     ? themeEntry.CameraZOffsetMultiplier
-                    : (themeEntry != null && themeEntry.CameraZoomZShiftMultiplier != 0f 
-                        ? themeEntry.CameraZoomZShiftMultiplier 
+                    : (themeEntry != null && themeEntry.CameraZoomZShiftMultiplier != 0f
+                        ? themeEntry.CameraZoomZShiftMultiplier
                         : 1.2f);
 
                 cameraZoomPushZ = zoomDiff * zShiftMult;

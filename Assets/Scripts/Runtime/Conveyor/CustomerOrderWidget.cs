@@ -7,8 +7,7 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // Lives under the single shared world-space order canvas (see ConveyorInstaller.BindCustomerPool)
-    // instead of each customer owning its own Canvas. Pooled and repositioned per spawn.
+    // Order bubble above a customer. Pooled under one shared world-space canvas instead of a Canvas per customer.
     public class CustomerOrderWidget : MonoBehaviour, IPoolable<Vector3, Quaternion>
     {
         [SerializeField] private RectTransform _rectTransform;
@@ -19,11 +18,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         [SerializeField] private Image _secondFoodImage;
         [SerializeField] private TMP_Text _secondAmountText;
 
-        // All Image graphics across every pooled widget share this one parent, and all TMP_Text graphics
-        // share the other — uGUI only batches consecutive same-material siblings, so this is what makes
-        // the icons batch with each other and the texts batch with each other, instead of each widget's
-        // Image/Text/Image/Text interleaving breaking every batch. Reparented out on Spawn (after this
-        // widget's own transform hierarchy has positioned them correctly), reparented back on Despawn.
+        // uGUI only batches consecutive same-material siblings, so every widget's icons share one parent and
+        // texts another. Reparented out on spawn, back under this widget on despawn.
         [Inject(Id = "OrderIconsGroup")] private Transform _iconsGroup;
         [Inject(Id = "OrderTextsGroup")] private Transform _textsGroup;
 
@@ -34,6 +30,11 @@ namespace RestaurantLoop.Runtime.Conveyor
         private float _secondAmountDimAlpha = 1f;
         private bool _dimAlphaCaptured;
         private bool _hasSecondOrder;
+        private bool _isHidden;
+        private bool _wasHidden;
+
+        private Tween _glowTween;
+        private Tween _glowColorTween;
 
         private float GetBaseScale()
         {
@@ -68,11 +69,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (_secondAmountText != null) _secondAmountText.transform.localScale = Vector3.one * (scale * 0.75f);
         }
 
-        private Tween _glowTween;
-        private Tween _glowColorTween;
-
-        // Active widgets are destroyed with GameplayScene without being despawned — kill the looping
-        // pulse tweens so they don't keep driving destroyed RectTransforms.
+        // Active widgets die with GameplayScene without a despawn; the looping pulse must not outlive them.
         private void OnDestroy()
         {
             _glowTween?.Kill();
@@ -114,9 +111,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             gameObject.SetActive(false);
         }
-
-        private bool _isHidden;
-        private bool _wasHidden;
 
         public void SetVisible(bool visible)
         {
@@ -214,7 +208,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             if (hasSecondOrder)
             {
-                // dimmed second order icon & text
                 SetAlpha(_secondFoodImage, _secondFoodDimAlpha);
                 SetAlpha(_secondAmountText, _secondAmountDimAlpha);
 
@@ -254,7 +247,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _foodImage.transform.localScale = Vector3.one * baseScale;
 
-            // Smooth continuous pulsing (büyüyüp küçülme)
             _glowTween = _foodImage.transform.DOScale(Vector3.one * (baseScale * pulseScaleFactor), duration)
                 .SetEase(Ease.InOutSine)
                 .SetLoops(-1, LoopType.Yoyo);
@@ -286,7 +278,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        // Sprite-only visual: no separate background image, the food sprite carries the full look.
+        // The food sprite carries the full look; without an icon the image falls back to the food color.
         private void ApplyFoodSprite(Image image, FoodType type)
         {
             if (image == null) return;

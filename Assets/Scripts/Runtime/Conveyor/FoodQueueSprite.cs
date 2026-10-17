@@ -60,9 +60,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _amountText.text = stack.Amount > 0 ? stack.Amount.ToString() : "";
             }
 
-            var tableSettings = _tableSettings;
             _holder.transform.localScale = Vector3.one * GetScaleMultiplier();
-            _holder.transform.localPosition = tableSettings != null ? tableSettings.Queue2DOffset : new Vector3(0f, 0.5f, 0f);
+            _holder.transform.localPosition = _tableSettings != null ? _tableSettings.Queue2DOffset : new Vector3(0f, 0.5f, 0f);
 
             AlignWithCamera();
         }
@@ -95,7 +94,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             var textObj = new GameObject("AmountText");
             textObj.transform.SetParent(_holder.transform, false);
-            // Position at top-right corner of the 2D sprite
+            // Top-right corner of the sprite.
             textObj.transform.localPosition = new Vector3(6f, 6f, -0.2f);
             textObj.transform.localRotation = Quaternion.identity;
             textObj.transform.localScale = Vector3.one * 12f;
@@ -104,16 +103,15 @@ namespace RestaurantLoop.Runtime.Conveyor
             rt.sizeDelta = new Vector2(3f, 3f);
 
             _amountText = textObj.AddComponent<TextMeshPro>();
-            var meshSettings = _foodMeshSettings;
-            if (meshSettings != null && meshSettings.StackAmountFont != null)
+            if (_foodMeshSettings != null && _foodMeshSettings.StackAmountFont != null)
             {
-                _amountText.font = meshSettings.StackAmountFont;
+                _amountText.font = _foodMeshSettings.StackAmountFont;
             }
             _amountText.alignment = TextAlignmentOptions.Center;
             _amountText.fontSize = 6.5f;
             _amountText.color = Color.white;
             _amountText.fontStyle = FontStyles.Bold;
-            _amountText.sortingOrder = 50; // Higher sorting order so it always appears above the sprite
+            _amountText.sortingOrder = 50; // above the sprite
 
             var meshRenderer = textObj.GetComponent<MeshRenderer>();
             if (meshRenderer != null)
@@ -124,25 +122,23 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private float GetScaleMultiplier()
         {
-            var tableSettings = _tableSettings;
-            if (tableSettings == null) return 1f;
+            if (_tableSettings == null) return 1f;
 
-            float baseIconScale = tableSettings.Queue2DIconScale;
+            float baseIconScale = _tableSettings.Queue2DIconScale;
             float globalQueueScale = _placement != null ? _placement.GlobalQueueScale : 1f;
             float zoomMultiplier = 1f;
 
-            if (tableSettings.ScaleWithCamera)
+            if (_tableSettings.ScaleWithCamera)
             {
-                var camCtrl = _cameraController;
-                float zoom = camCtrl != null ? camCtrl.CameraZoomFactor : 1f;
+                float zoom = _cameraController != null ? _cameraController.CameraZoomFactor : 1f;
 
-                // Fallback to Main Camera orthographic ratio if CameraController wasn't resolved yet
-                if (camCtrl == null)
+                // CameraController isn't injected into the pooled item, so derive the zoom from the main camera.
+                if (_cameraController == null)
                 {
                     var cam = Camera.main;
                     if (cam != null && cam.orthographic)
                     {
-                        // Standard base ortho size is around 8.5; the aspect widening is not a zoom-out.
+                        // 8.5 is the base ortho size; the aspect widening is not a zoom-out.
                         float baseOrtho = 8.5f;
                         float orthoSize = cam.orthographicSize / CameraController.AspectWidthFactor(cam);
                         if (orthoSize > baseOrtho)
@@ -152,9 +148,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                     }
                 }
 
-                float multiplier = tableSettings.FoodQueueScaleMultiplier > 0f
-                    ? tableSettings.FoodQueueScaleMultiplier
-                    : tableSettings.TableScaleMultiplier;
+                float multiplier = _tableSettings.FoodQueueScaleMultiplier > 0f
+                    ? _tableSettings.FoodQueueScaleMultiplier
+                    : _tableSettings.TableScaleMultiplier;
                 zoomMultiplier = 1f + (zoom - 1f) * multiplier;
             }
 

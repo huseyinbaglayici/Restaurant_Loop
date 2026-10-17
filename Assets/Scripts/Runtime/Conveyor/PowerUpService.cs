@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // Manual-call power-up entry points. No UI/cooldown wiring yet — call these directly.
+    // Power-up effects, called by the purchase UI and the keep-playing offer.
     public class PowerUpService
     {
         private readonly QueueSpawner _queueSpawner;
@@ -53,7 +53,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public bool CanActivateExtraTray() => _exitStackAnchor != null && _exitStackAnchor.CanAddExtraSlot;
 
-        // Adds an extra exit stack slot and adds an extra tray to the tray dispenser pool (up to max 1).
+        // One extra exit stack slot plus one extra dispenser tray (ExitStackAnchor.MaxExtraSlots).
         public bool ActivateExtraTray()
         {
             bool addedSlot = _exitStackAnchor.TryAddExtraSlot();

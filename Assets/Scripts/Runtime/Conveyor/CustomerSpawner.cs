@@ -8,10 +8,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 {
     public class CustomerSpawner : IInitializable, IDisposable
     {
-        // Matches the old per-customer Canvas's anchoredPosition.y — the bubble always sat this far
-        // above the customer's pivot, unaffected by the customer's own facing (see ApplySecondOrder
-        // history: canvasRoot's local rotation canceled the customer's Y rotation, net world rotation
-        // was always identity).
+        // Used when FoodMeshSettings has no bubble height set.
         private const float OrderBubbleHeight = 3f;
 
         private readonly ConveyorLevelDataSO _level;
@@ -21,7 +18,6 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly CustomerOrderWidget.Pool _orderWidgetPool;
         private readonly FoodMeshSettings _foodMeshSettings;
 
-        // keyed by coord
         private readonly Dictionary<Vector2Int, CustomerController> _spawnedCustomers = new();
         private readonly Dictionary<Vector2Int, CustomerOrderWidget> _spawnedWidgets = new();
 
@@ -60,7 +56,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        // peek-only
         public bool TryGetVisual(Vector2Int coord, out CustomerController visual) =>
             _spawnedCustomers.TryGetValue(coord, out visual);
 
@@ -98,8 +93,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        // hasSecondOrderRemaining == true: customer stays (second order now active), just reacts.
-        // hasSecondOrderRemaining == false: customer is fully served — reacts, then despawns itself.
+        // A fully served customer (no second order left) despawns once its reaction finishes.
         public void PlayServeReaction(Vector2Int coord, bool hasSecondOrderRemaining)
         {
             if (!_spawnedCustomers.TryGetValue(coord, out var visual)) return;

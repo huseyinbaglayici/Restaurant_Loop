@@ -54,7 +54,7 @@ namespace RestaurantLoop.Runtime.Installers
                 .NonLazy();
         }
 
-        // ExitStackAnchor spawns one rack piece total (spans every slot) — pool only ever needs one instance.
+        // ExitStackAnchor spawns a single rack piece spanning every slot.
         private void BindExitSlotPool()
         {
             Container.BindMemoryPool<ExitSlotController, ExitSlotController.Pool>()
@@ -64,9 +64,8 @@ namespace RestaurantLoop.Runtime.Installers
                 .NonLazy();
         }
 
-        // ProjectContext-scoped so customers survive GameplayScene unload/reload instead of being
-        // torn down and reprewarmed every level (CustomerOrderWidget.Pool stays in ConveyorInstaller
-        // since its Canvas refs are genuinely scene-local).
+        // ProjectContext-scoped so customers survive GameplayScene reloads instead of being re-prewarmed
+        // every level. The order widget pool stays scene-local because it needs the scene's canvas.
         private void BindCustomerPool()
         {
             Container.BindInstance(_customerInitialSize).WithId("CustomerPoolSize").AsCached();
@@ -78,8 +77,7 @@ namespace RestaurantLoop.Runtime.Installers
                 .NonLazy();
         }
 
-        // One small pool per variant instead of every occupant slot pre-instantiating all variants —
-        // sized for concurrent on-screen customers, not per-slot.
+        // One small pool per variant, sized for concurrent on-screen customers.
         private void BindCustomerVisualPools()
         {
             var boundVariants = new List<CustomerVariant>();

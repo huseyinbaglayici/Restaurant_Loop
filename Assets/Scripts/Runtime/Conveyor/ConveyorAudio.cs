@@ -6,10 +6,8 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // Belt loop sound: plays while any food is drawn on the belt, silent otherwise. Re-asserted every
-    // frame (both calls are no-ops when already in that state), so a stop from elsewhere — e.g. level
-    // end — is picked back up exactly like before. Bind right after ConveyorVisualService so it reads
-    // the same frame's belt state.
+    // Belt loop sound while any food is on the belt. Re-asserted every frame so a stop from elsewhere
+    // (e.g. level end) is picked back up. Bound right after ConveyorVisualService to read this frame's state.
     public class ConveyorAudio : ITickable, IDisposable
     {
         private readonly ConveyorVisualService _visualService;

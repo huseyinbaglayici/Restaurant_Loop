@@ -8,12 +8,13 @@ using UnityEngine.UIElements;
 
 namespace RestaurantLoop.Editor.LevelEditor
 {
+    // Level editor window: builds the UI Toolkit layout, keeps the toolbars in sync with the canvases
+    // and forwards actions to ConveyorLevelEdits / QueueLaneEdits / ConveyorLevelAssetIO.
     public class ConveyorGridWindow : EditorWindow
     {
         private const string UssPath = "Assets/Scripts/Editor/LevelEditor/LevelEditor.uss";
-        private const string LevelFolder = "Assets/Data/Levels";
-        private const string LevelDatabasePath = "Assets/Resources/LevelDatabase.asset";
-        private const int QueueLaneCount = 3;
+        private const float CanvasScrollHeight = 340f;
+        private const string LinkModeHelp = "Click two queue entries to link them. Right-click an entry to unlink it.";
 
         private static readonly FoodType[] Palette =
         {
@@ -74,9 +75,7 @@ namespace RestaurantLoop.Editor.LevelEditor
             if (uss != null) root.styleSheets.Add(uss);
             else Debug.LogWarning($"[ConveyorGridWindow] Stylesheet not found at {UssPath}");
 
-            _draft = ScriptableObject.CreateInstance<ConveyorLevelDataSO>();
-            _draft.LevelId = 1;
-            for (int i = 0; i < QueueLaneCount; i++) _draft.Queues.Add(new QueueLaneData());
+            _draft = ConveyorLevelEdits.CreateDraft();
 
             Undo.undoRedoPerformed -= OnUndoRedo;
             Undo.undoRedoPerformed += OnUndoRedo;
@@ -135,7 +134,7 @@ namespace RestaurantLoop.Editor.LevelEditor
             _queueCanvas.MarkDirtyRepaint();
         }
 
-        #region Level bar (Save/Load)
+        #region Level bar (New/Save/Load)
 
         private VisualElement BuildLevelBar()
         {
@@ -168,17 +167,13 @@ namespace RestaurantLoop.Editor.LevelEditor
             _tutorialStepsButton.SetEnabled(false);
             bar.Add(_tutorialStepsButton);
 
-            var sep = new VisualElement();
-            sep.AddToClassList(Css.TopbarSep);
-            bar.Add(sep);
+            bar.Add(MakeTopbarSeparator());
 
             bar.Add(MakeButton("New", NewLevel, Css.Btn));
             bar.Add(MakeButton("Save", SaveLevel, Css.BtnPrimary));
             bar.Add(MakeButton("Load", LoadLevel, Css.Btn));
 
-            var sep2 = new VisualElement();
-            sep2.AddToClassList(Css.TopbarSep);
-            bar.Add(sep2);
+            bar.Add(MakeTopbarSeparator());
 
             bar.Add(MakeButton("Build In Scene", () => ConveyorSceneBuilder.Build(_draft), Css.BtnPrimary));
             bar.Add(MakeButton("Settings", LevelEditorSettingsWindow.ShowWindow, Css.Btn));
@@ -188,148 +183,22 @@ namespace RestaurantLoop.Editor.LevelEditor
 
         private void NewLevel()
         {
-            Undo.RecordObject(_draft, "New Level");
-            _draft.LevelId = _levelIdField.value;
-            _draft.Difficulty = LevelDifficulty.None;
-            _draft.Theme = ThemeType.Asian;
-            _draft.GridWidth = 8;
-            _draft.GridHeight = 8;
-            _draft.ConveyorCells.Clear();
-            _draft.ConveyorEntities.Clear();
-            _draft.Customers.Clear();
-            _draft.Queues = Enumerable.Range(0, QueueLaneCount).Select(_ => new QueueLaneData()).ToList();
-            _draft.IsTutorial = false;
-            _draft.TutorialSteps.Clear();
-
+            ConveyorLevelEdits.ResetDraft(_draft, _levelIdField.value);
             RefreshUiFromDraft();
         }
 
         private void SaveLevel()
         {
-            AssetFolderUtil.EnsureFolder(LevelFolder);
             _draft.LevelId = _levelIdField.value;
             _draft.Difficulty = (LevelDifficulty)_difficultyField.value;
             _draft.Theme = (ThemeType)_themeField.value;
-            string path = $"{LevelFolder}/ConveyorLevel_{_draft.LevelId}.asset";
-
-            var asset = AssetDatabase.LoadAssetAtPath<ConveyorLevelDataSO>(path);
-            bool isNew = asset == null;
-            if (isNew) asset = ScriptableObject.CreateInstance<ConveyorLevelDataSO>();
-
-            asset.LevelId = _draft.LevelId;
-            asset.Difficulty = _draft.Difficulty;
-            asset.Theme = _draft.Theme;
-            asset.GridWidth = _draft.GridWidth;
-            asset.GridHeight = _draft.GridHeight;
-            asset.ConveyorCells = new List<ConveyorCellData>(_draft.ConveyorCells);
-            asset.ConveyorEntities = new List<ConveyorEntityPlacement>(_draft.ConveyorEntities);
-            asset.Customers = new List<CustomerEntity>(_draft.Customers);
-            asset.Queues = _draft.Queues.Select(q => new QueueLaneData { Entries = new List<FoodStackData>(q.Entries) })
-                .ToList();
-            asset.IsTutorial = _draft.IsTutorial;
-            asset.TutorialSteps = _draft.TutorialSteps
-                .Select(s => new TutorialStepData
-                {
-                    Text = s.Text, Trigger = s.Trigger, HoverKind = s.HoverKind,
-                    PowerUpButton = s.PowerUpButton, QueueLaneIndex = s.QueueLaneIndex,
-                    QueueRowIndex = s.QueueRowIndex, ConveyorCell = s.ConveyorCell
-                })
-                .ToList();
-
-            if (ConveyorPathBaker.TryBake(_draft, out var orderedPath, out var bakeError))
-            {
-                asset.BakedPath.OrderedPath = orderedPath;
-                Debug.Log($"[ConveyorGridWindow] Baked path: {orderedPath.Count} cells — {string.Join(" -> ", orderedPath)}");
-            }
-            else
-            {
-                asset.BakedPath.OrderedPath.Clear();
-                Debug.LogWarning($"[ConveyorGridWindow] Bake failed, saving without a path: {bakeError}");
-            }
-
-            if (isNew) AssetDatabase.CreateAsset(asset, path);
-            EditorUtility.SetDirty(asset);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            RegisterInDatabase(asset);
-
-            Debug.Log($"[ConveyorGridWindow] Saved level {asset.LevelId} to {path}");
-        }
-
-        private static void RegisterInDatabase(ConveyorLevelDataSO asset)
-        {
-            var database = AssetDatabase.LoadAssetAtPath<LevelDatabase>(LevelDatabasePath);
-            if (database == null)
-            {
-                Debug.LogWarning($"[ConveyorGridWindow] No LevelDatabase found at {LevelDatabasePath} — level not registered.");
-                return;
-            }
-
-            var so = new SerializedObject(database);
-            var levels = so.FindProperty("_levels");
-
-            for (int i = 0; i < levels.arraySize; i++)
-            {
-                var element = levels.GetArrayElementAtIndex(i);
-                var existing = element.objectReferenceValue as ConveyorLevelDataSO;
-
-                if (existing == asset) return;
-
-                if (existing != null && existing.LevelId == asset.LevelId)
-                {
-                    element.objectReferenceValue = asset;
-                    so.ApplyModifiedProperties();
-                    EditorUtility.SetDirty(database);
-                    AssetDatabase.SaveAssets();
-                    return;
-                }
-            }
-
-            levels.InsertArrayElementAtIndex(levels.arraySize);
-            levels.GetArrayElementAtIndex(levels.arraySize - 1).objectReferenceValue = asset;
-            so.ApplyModifiedProperties();
-            EditorUtility.SetDirty(database);
-            AssetDatabase.SaveAssets();
+            ConveyorLevelAssetIO.Save(_draft);
         }
 
         private void LoadLevel()
         {
-            string path = $"{LevelFolder}/ConveyorLevel_{_levelIdField.value}.asset";
-            var loaded = AssetDatabase.LoadAssetAtPath<ConveyorLevelDataSO>(path);
-            if (loaded == null)
-            {
-                Debug.LogWarning($"[ConveyorGridWindow] No level asset found at {path}");
-                return;
-            }
-
-            Undo.RecordObject(_draft, "Load Level");
-            _draft.LevelId = loaded.LevelId;
-            _draft.Difficulty = loaded.Difficulty;
-            _draft.Theme = loaded.Theme;
-            _draft.GridWidth = loaded.GridWidth;
-            _draft.GridHeight = loaded.GridHeight;
-            _draft.ConveyorCells = new List<ConveyorCellData>(loaded.ConveyorCells);
-            _draft.ConveyorEntities = new List<ConveyorEntityPlacement>(loaded.ConveyorEntities);
-            _draft.Customers = new List<CustomerEntity>(loaded.Customers);
-            _draft.Queues = Enumerable.Range(0, QueueLaneCount)
-                .Select(i => i < loaded.Queues.Count
-                    ? new QueueLaneData { Entries = new List<FoodStackData>(loaded.Queues[i].Entries) }
-                    : new QueueLaneData())
-                .ToList();
-            _draft.IsTutorial = loaded.IsTutorial;
-            _draft.TutorialSteps = loaded.TutorialSteps
-                .Select(s => new TutorialStepData
-                {
-                    Text = s.Text, Trigger = s.Trigger, HoverKind = s.HoverKind,
-                    PowerUpButton = s.PowerUpButton, QueueLaneIndex = s.QueueLaneIndex,
-                    QueueRowIndex = s.QueueRowIndex, ConveyorCell = s.ConveyorCell
-                })
-                .ToList();
-
-            RefreshUiFromDraft();
-
-            Debug.Log($"[ConveyorGridWindow] Loaded level {_draft.LevelId} from {path}");
+            if (ConveyorLevelAssetIO.TryLoadInto(_draft, _levelIdField.value))
+                RefreshUiFromDraft();
         }
 
         #endregion
@@ -341,14 +210,12 @@ namespace RestaurantLoop.Editor.LevelEditor
             var bar = new VisualElement();
             bar.AddToClassList(Css.Topbar);
 
-            _widthField = CompactIntField("Width", 8);
-            _heightField = CompactIntField("Height", 8);
+            _widthField = CompactIntField("Width", ConveyorLevelEdits.DefaultGridSize);
+            _heightField = CompactIntField("Height", ConveyorLevelEdits.DefaultGridSize);
             bar.Add(_widthField);
             bar.Add(_heightField);
 
-            var sep = new VisualElement();
-            sep.AddToClassList(Css.TopbarSep);
-            bar.Add(sep);
+            bar.Add(MakeTopbarSeparator());
 
             bar.Add(MakeButton("Resize", ApplySize, Css.BtnPrimary));
             bar.Add(MakeButton("Clear Conveyor", () => _canvas.ClearAll(), Css.BtnDanger));
@@ -363,24 +230,24 @@ namespace RestaurantLoop.Editor.LevelEditor
 
             var modeRow = new VisualElement();
             modeRow.AddToClassList(Css.Topbar);
-            AddModeButton(modeRow, CanvasMode.Path, "Path");
-            AddModeButton(modeRow, CanvasMode.Entity, "Entity");
-            AddModeButton(modeRow, CanvasMode.Customer, "Customer");
+            AddToolButton(modeRow, _modeButtons, CanvasMode.Path, "Path", SetMode);
+            AddToolButton(modeRow, _modeButtons, CanvasMode.Entity, "Entity", SetMode);
+            AddToolButton(modeRow, _modeButtons, CanvasMode.Customer, "Customer", SetMode);
             container.Add(modeRow);
 
             _brushRow = new VisualElement();
             _brushRow.AddToClassList(Css.Topbar);
-            AddBrushButton(_brushRow, ConveyorTileShape.Straight, "Straight");
-            AddBrushButton(_brushRow, ConveyorTileShape.Corner, "Corner");
+            AddToolButton(_brushRow, _brushButtons, ConveyorTileShape.Straight, "Straight", SelectBrush);
+            AddToolButton(_brushRow, _brushButtons, ConveyorTileShape.Corner, "Corner", SelectBrush);
             container.Add(_brushRow);
 
             _customerSubModeRow = new VisualElement();
             _customerSubModeRow.AddToClassList(Css.Topbar);
-            AddCustomerSubModeButton(_customerSubModeRow, CustomerSubMode.Order, "Order",
+            AddToolButton(_customerSubModeRow, _customerSubModeButtons, CustomerSubMode.Order, "Order", SelectCustomerSubMode,
                 "Click paints the primary order from the palette below. Right-click erases the whole customer.");
-            AddCustomerSubModeButton(_customerSubModeRow, CustomerSubMode.SecondOrder, "2nd Order",
+            AddToolButton(_customerSubModeRow, _customerSubModeButtons, CustomerSubMode.SecondOrder, "2nd Order", SelectCustomerSubMode,
                 "Click an existing customer to give it a second dish (from the palette below), servable after the first. Right-click clears it.");
-            AddCustomerSubModeButton(_customerSubModeRow, CustomerSubMode.Hidden, "Hidden",
+            AddToolButton(_customerSubModeRow, _customerSubModeButtons, CustomerSubMode.Hidden, "Hidden", SelectCustomerSubMode,
                 "Click an existing customer to toggle it Hidden (dimmed) — unservable until a neighboring customer is served.");
             container.Add(_customerSubModeRow);
 
@@ -396,7 +263,7 @@ namespace RestaurantLoop.Editor.LevelEditor
                 var captured = food;
                 var swatch = new Button(() => SelectFoodType(captured)) { text = FoodTypeUtil.ToIcon(food) };
                 swatch.AddToClassList(Css.PaletteSwatch);
-                swatch.style.backgroundColor = ConveyorGridCanvas.GetFoodColor(food);
+                swatch.style.backgroundColor = GridPainter.GetFoodColor(food);
                 swatch.tooltip = food.ToString();
                 _paletteButtons.Add(swatch);
                 _paletteRow.Add(swatch);
@@ -417,34 +284,26 @@ namespace RestaurantLoop.Editor.LevelEditor
             return container;
         }
 
-        private void AddModeButton(VisualElement parent, CanvasMode mode, string label)
+        private static void AddToolButton<T>(VisualElement parent, Dictionary<T, Button> group, T value, string label,
+            System.Action<T> onSelect, string tooltip = null)
         {
-            var btn = new Button(() => SetMode(mode)) { text = label };
+            var btn = new Button(() => onSelect(value)) { text = label };
+            if (tooltip != null) btn.tooltip = tooltip;
             btn.AddToClassList(Css.Tool);
-            _modeButtons[mode] = btn;
+            group[value] = btn;
             parent.Add(btn);
         }
 
-        private void AddBrushButton(VisualElement parent, ConveyorTileShape shape, string label)
+        private static void HighlightActive<T>(Dictionary<T, Button> group, T active)
         {
-            var btn = new Button(() => SelectBrush(shape)) { text = label };
-            btn.AddToClassList(Css.Tool);
-            _brushButtons[shape] = btn;
-            parent.Add(btn);
-        }
-
-        private void AddCustomerSubModeButton(VisualElement parent, CustomerSubMode subMode, string label, string tooltip)
-        {
-            var btn = new Button(() => SelectCustomerSubMode(subMode)) { text = label, tooltip = tooltip };
-            btn.AddToClassList(Css.Tool);
-            _customerSubModeButtons[subMode] = btn;
-            parent.Add(btn);
+            foreach (var kv in group)
+                kv.Value.EnableInClassList(Css.ToolActive, EqualityComparer<T>.Default.Equals(kv.Key, active));
         }
 
         private void SetMode(CanvasMode mode)
         {
             _canvas.Mode = mode;
-            foreach (var kv in _modeButtons) kv.Value.EnableInClassList(Css.ToolActive, kv.Key == mode);
+            HighlightActive(_modeButtons, mode);
 
             _brushRow.style.display = mode == CanvasMode.Path ? DisplayStyle.Flex : DisplayStyle.None;
 
@@ -457,13 +316,13 @@ namespace RestaurantLoop.Editor.LevelEditor
         private void SelectBrush(ConveyorTileShape shape)
         {
             _canvas.BrushShape = shape;
-            foreach (var kv in _brushButtons) kv.Value.EnableInClassList(Css.ToolActive, kv.Key == shape);
+            HighlightActive(_brushButtons, shape);
         }
 
         private void SelectCustomerSubMode(CustomerSubMode subMode)
         {
             _canvas.CustomerMode = subMode;
-            foreach (var kv in _customerSubModeButtons) kv.Value.EnableInClassList(Css.ToolActive, kv.Key == subMode);
+            HighlightActive(_customerSubModeButtons, subMode);
             _customerSubModeHint.text = _customerSubModeButtons[subMode].tooltip;
         }
 
@@ -477,16 +336,7 @@ namespace RestaurantLoop.Editor.LevelEditor
 
         private void ApplySize()
         {
-            Undo.RecordObject(_draft, "Resize Grid");
-            _draft.GridWidth = Mathf.Max(1, _widthField.value);
-            _draft.GridHeight = Mathf.Max(1, _heightField.value);
-            _draft.ConveyorCells.RemoveAll(c =>
-                c.Coord.x < 0 || c.Coord.x >= _draft.GridWidth || c.Coord.y < 0 || c.Coord.y >= _draft.GridHeight);
-            _draft.ConveyorEntities.RemoveAll(e =>
-                e.Coord.x < 0 || e.Coord.x >= _draft.GridWidth || e.Coord.y < 0 || e.Coord.y >= _draft.GridHeight);
-            _draft.Customers.RemoveAll(c =>
-                c.Coord.x < 0 || c.Coord.x >= _draft.GridWidth || c.Coord.y < 0 || c.Coord.y >= _draft.GridHeight);
-
+            ConveyorLevelEdits.ResizeGrid(_draft, _widthField.value, _heightField.value);
             RefreshUiFromDraft();
         }
 
@@ -498,22 +348,13 @@ namespace RestaurantLoop.Editor.LevelEditor
         {
             var section = MakeSection("Conveyor");
 
-            var scroll = new ScrollView(ScrollViewMode.VerticalAndHorizontal);
-            scroll.style.height = 340;
-
-            var canvasHost = new VisualElement();
-            canvasHost.AddToClassList(Css.CanvasHost);
-
             _canvas = new ConveyorGridCanvas
                 { GridWidth = _draft.GridWidth, GridHeight = _draft.GridHeight, Data = _draft };
             _canvas.AddToClassList(Css.Canvas);
             _canvas.OnCellsChanged += UpdateCellCountLabel;
             _canvas.Resize();
             _canvas.RebuildCacheAndRepaint();
-
-            canvasHost.Add(_canvas);
-            scroll.Add(canvasHost);
-            section.Add(scroll);
+            section.Add(MakeCanvasScroll(_canvas));
 
             _cellCountLabel = new Label();
             _cellCountLabel.AddToClassList(Css.StatusLabel);
@@ -550,31 +391,20 @@ namespace RestaurantLoop.Editor.LevelEditor
             sizeBar.AddToClassList(Css.Row);
             _queueDepthField = CompactIntField("Depth", _queueDepthValue);
             sizeBar.Add(_queueDepthField);
-            sizeBar.Add(MakeButton("Resize", () =>
-            {
-                Undo.RecordObject(this, "Resize Queue Depth");
-                _queueDepthValue = Mathf.Max(1, _queueDepthField.value);
-                ApplyQueueDepth();
-            }, Css.BtnPrimary));
+            sizeBar.Add(MakeButton("Resize", ResizeQueueDepth, Css.BtnPrimary));
             sizeBar.Add(MakeButton("Clear Queue", () => _queueCanvas.ClearQueues(), Css.BtnDanger));
             sizeBar.Add(MakeButton("Generate From Customers", GenerateQueueFromCustomers, Css.BtnPrimary));
             sizeBar.Add(MakeButton("Shuffle Queue", ShuffleQueue, Css.Btn));
 
             _linkModeButton = new Button(ToggleLinkMode) { text = "Link" };
             _linkModeButton.AddToClassList(Css.Tool);
-            _linkModeButton.tooltip = "Click two queue entries to link them. Right-click an entry to unlink it.";
+            _linkModeButton.tooltip = LinkModeHelp;
             sizeBar.Add(_linkModeButton);
             section.Add(sizeBar);
 
             _linkModeHint = new Label();
             _linkModeHint.AddToClassList(Css.StatusLabel);
             section.Add(_linkModeHint);
-
-            var scroll = new ScrollView(ScrollViewMode.VerticalAndHorizontal);
-            scroll.style.height = 340;
-
-            var canvasHost = new VisualElement();
-            canvasHost.AddToClassList(Css.CanvasHost);
 
             _queueCanvas = new QueueGridCanvas
             {
@@ -585,79 +415,35 @@ namespace RestaurantLoop.Editor.LevelEditor
             };
             _queueCanvas.AddToClassList(Css.Canvas);
             _queueCanvas.Resize();
-
-            canvasHost.Add(_queueCanvas);
-            scroll.Add(canvasHost);
-            section.Add(scroll);
+            section.Add(MakeCanvasScroll(_queueCanvas));
 
             return section;
+        }
+
+        // queue depth is an editor view setting stored on the window, not on the level
+        private void ResizeQueueDepth()
+        {
+            Undo.RecordObject(this, "Resize Queue Depth");
+            _queueDepthValue = Mathf.Max(1, _queueDepthField.value);
+            ApplyQueueDepth();
         }
 
         private void ToggleLinkMode()
         {
             _queueCanvas.LinkMode = !_queueCanvas.LinkMode;
             _linkModeButton.EnableInClassList(Css.ToolActive, _queueCanvas.LinkMode);
-            _linkModeHint.text = _queueCanvas.LinkMode
-                ? "Click two queue entries to link them. Right-click an entry to unlink it."
-                : "";
+            _linkModeHint.text = _queueCanvas.LinkMode ? LinkModeHelp : "";
         }
 
-        // color-total -> 3-5 random chunks -> round-robin across lanes
         private void GenerateQueueFromCustomers()
         {
-            Undo.RecordObject(_draft, "Generate Queue From Customers");
-
-            var totals = new Dictionary<FoodType, int>();
-            foreach (var customer in _draft.Customers)
-            {
-                totals[customer.Order.Type] = totals.GetValueOrDefault(customer.Order.Type) + customer.Order.Amount;
-                if (customer.HasSecondOrder)
-                    totals[customer.SecondOrder.Type] = totals.GetValueOrDefault(customer.SecondOrder.Type) + customer.SecondOrder.Amount;
-            }
-
-            foreach (var lane in _draft.Queues) lane.Entries.Clear();
-
-            int laneIndex = 0;
-            foreach (var kv in totals)
-            {
-                int remaining = kv.Value;
-                while (remaining > 0)
-                {
-                    int chunkSize = Random.Range(3, 6);
-                    if (remaining <= 5) chunkSize = remaining;
-                    else if (remaining - chunkSize < 3) chunkSize = remaining - 3;
-                    if (chunkSize < 3) chunkSize = remaining;
-
-                    remaining -= chunkSize;
-                    _draft.Queues[laneIndex % _draft.Queues.Count].Entries.Add(new FoodStackData { Type = kv.Key, Amount = chunkSize });
-                    laneIndex++;
-                }
-            }
-
+            QueueLaneEdits.GenerateFromCustomers(_draft);
             RefreshUiFromDraft();
         }
 
-        // flattens every lane (preserving each entry's LinkId), shuffles, then redeals round-robin
         private void ShuffleQueue()
         {
-            Undo.RecordObject(_draft, "Shuffle Queue");
-
-            var all = new List<FoodStackData>();
-            foreach (var lane in _draft.Queues)
-            {
-                all.AddRange(lane.Entries);
-                lane.Entries.Clear();
-            }
-
-            for (int i = 0; i < all.Count; i++)
-            {
-                int j = Random.Range(i, all.Count);
-                (all[i], all[j]) = (all[j], all[i]);
-            }
-
-            for (int i = 0; i < all.Count; i++)
-                _draft.Queues[i % _draft.Queues.Count].Entries.Add(all[i]);
-
+            QueueLaneEdits.Shuffle(_draft);
             RefreshUiFromDraft();
         }
 
@@ -673,6 +459,25 @@ namespace RestaurantLoop.Editor.LevelEditor
             h.AddToClassList(Css.SectionHeader);
             section.Add(h);
             return section;
+        }
+
+        private static ScrollView MakeCanvasScroll(VisualElement canvas)
+        {
+            var scroll = new ScrollView(ScrollViewMode.VerticalAndHorizontal);
+            scroll.style.height = CanvasScrollHeight;
+
+            var canvasHost = new VisualElement();
+            canvasHost.AddToClassList(Css.CanvasHost);
+            canvasHost.Add(canvas);
+            scroll.Add(canvasHost);
+            return scroll;
+        }
+
+        private static VisualElement MakeTopbarSeparator()
+        {
+            var sep = new VisualElement();
+            sep.AddToClassList(Css.TopbarSep);
+            return sep;
         }
 
         private static Button MakeButton(string text, System.Action onClick, string ussClass)

@@ -8,7 +8,6 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
- 
     public class QueueSpawner : IInitializable, ITickable, IDisposable
     {
         private readonly ConveyorLevelDataSO _level;
@@ -30,11 +29,17 @@ namespace RestaurantLoop.Runtime.Conveyor
         private const float MinHopDuration = 0.14f;
         private const float MaxHopDuration = 0.32f;
         private const float RowStagger = 0.035f;
+        private const float IntroDelay = 0.1f;
+        private const float IntroFallbackSeconds = 2f;
+
+        private readonly Dictionary<FoodItemController, Vector3> _introScales = new();
+        private bool _introPlayed;
+        private float _introFallbackTimer;
 
         // Pick From Bottom power-up: while true, any row in a lane is pickable, not just the front. One-shot.
         public bool PickFromBottomEnabled { get; set; }
 
-        // True while a shuffle animation is moving the queue; picks wait until it settles.
+        // True until the intro has played and while a shuffle moves the queue; picks wait until it settles.
         public bool IsAnimating => !_introPlayed || _externallyAnimated.Count > 0;
 
         public int LaneCount => _lanes.Count;
@@ -75,10 +80,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             _signalBus.Subscribe<LoadingHiddenSignal>(PlayIntro);
         }
 
-        private bool _introPlayed;
-        private readonly Dictionary<FoodItemController, Vector3> _introScales = new();
-        private float _introFallbackTimer;
-
         // Level intro: the queue pops onto the table front-to-back once the loading screen lifts
         // (with a timeout, so playing GameplayScene directly in the editor still shows the queue).
         private void PlayIntro()
@@ -96,9 +97,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _introScales.Clear();
         }
-
-        private const float IntroDelay = 0.1f;
-        private const float IntroFallbackSeconds = 2f;
 
         private static void PopIn(Transform target, Vector3 rest, float delay)
         {

@@ -5,32 +5,26 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // Keeps the scene's current camera offset (X/Z/Y delta from the queue center) as a fixed
-    // baseline, then re-centers the camera on the queue's lane center for whatever level loads —
-    // rotation is left untouched.
+    // Frames the camera for each level (CameraLevelFraming), then plays the runtime camera moves:
+    // impact shake and the pick-from-bottom queue focus, both returning to the framed rest pose.
     public class CameraController : IInitializable
     {
-        private readonly ConveyorLevelDataSO _level;
+        // Layouts are authored for 9:16 portrait; narrower (taller) screens widen the ortho size so the
+        // board keeps its full width and the extra height goes behind the HUD bars.
+        public const float ReferenceAspect = 9f / 16f;
+
         private readonly ConveyorTuning _tuning;
-        private readonly QueueAnchor _queueAnchor;
         private readonly Camera _camera;
-        private readonly ThemeSettings _themeSettings;
-        private readonly ConveyorPrefabSettings _prefabSettings;
-        public Camera Camera => _camera;
-        private readonly Vector3 _offsetFromQueueCenter;
-        private readonly float _initialOrthoSize;
+        private readonly CameraLevelFraming _framing;
         private Vector3 _defaultPosition;
         private float _defaultOrthoSize;
         private Tween _moveTween;
         private Tween _orthoTween;
         private bool _isFocusedOnQueue;
 
-        // Layouts are authored for 9:16 portrait; narrower (taller) screens widen the ortho size so the
-        // board keeps its full width and the extra height goes behind the HUD bars.
-        public const float ReferenceAspect = 9f / 16f;
-
-        public float CameraZoomFactor { get; private set; } = 1f;
-        public float HeightZoomFactor { get; private set; } = 1f;
+        public Camera Camera => _camera;
+        public float CameraZoomFactor => _framing.ZoomFactor;
+        public float HeightZoomFactor => _framing.HeightZoomFactor;
 
         public static float AspectWidthFactor(Camera camera) =>
             camera != null && camera.aspect > 0f && camera.aspect < ReferenceAspect ? ReferenceAspect / camera.aspect : 1f;
@@ -43,149 +37,18 @@ namespace RestaurantLoop.Runtime.Conveyor
             ThemeSettings themeSettings,
             ConveyorPrefabSettings prefabSettings)
         {
-            _level = level;
             _tuning = tuning;
-            _queueAnchor = queueAnchor;
             _camera = camera;
-            _themeSettings = themeSettings;
-            _prefabSettings = prefabSettings;
-            _initialOrthoSize = camera.orthographicSize;
-            _offsetFromQueueCenter = camera.transform.position - ComputeQueueCenter();
-        }
-
-        private Vector3 ComputeQueueCenter()
-        {
-            var lanePositions = _queueAnchor.LanePositions;
-            if (lanePositions.Length == 0) return Vector3.zero;
-
-            var sum = Vector3.zero;
-            foreach (var position in lanePositions) sum += position;
-            return sum / lanePositions.Length;
+            // Captures the scene camera's authored pose now, before any level framing moves it.
+            _framing = new CameraLevelFraming(level, tuning, queueAnchor, camera, themeSettings, prefabSettings);
         }
 
         public void Initialize()
         {
-            if (_tuning.EnableDynamicCameraScale && _camera.orthographic && _tuning.ReferenceGridWidth > 0 && _tuning.ReferenceGridHeight > 0)
-            {
-                float widthRatio = (float)_level.GridWidth / _tuning.ReferenceGridWidth;
-                float heightRatio = (float)_level.GridHeight / _tuning.ReferenceGridHeight;
-                float maxRatio = Mathf.Max(widthRatio, heightRatio);
-
-                float sensitivity = _tuning.CameraZoomSensitivity > 0f ? _tuning.CameraZoomSensitivity : 0.85f;
-
-                if (maxRatio > 1f)
-                {
-                    float scaleFactor = 1f + (maxRatio - 1f) * sensitivity;
-                    _camera.orthographicSize = _initialOrthoSize * scaleFactor;
-                    CameraZoomFactor = scaleFactor;
-                }
-
-                if (heightRatio > 1f)
-                {
-                    HeightZoomFactor = 1f + (heightRatio - 1f) * sensitivity;
-                }
-            }
-
-            var queueCenter = ComputeQueueCenter();
-            var targetPos = queueCenter + _offsetFromQueueCenter;
-            targetPos.x = queueCenter.x;
-
-            // Apply camera Y and Z zoom shift if camera has zoomed out
-            if (CameraZoomFactor > 1f)
-            {
-                float zoomDiff = CameraZoomFactor - 1f;
-                var theme = _themeSettings != null ? _themeSettings.GetTheme(_level.Theme) : null;
-
-                float yMult = theme != null && theme.CameraZoomYShiftMultiplier != 0f
-                    ? theme.CameraZoomYShiftMultiplier
-                    : _tuning.CameraZoomYShiftMultiplier;
-
-                float zMult = theme != null && theme.CameraZoomZShiftMultiplier != 0f
-                    ? theme.CameraZoomZShiftMultiplier
-                    : _tuning.CameraZoomZShiftMultiplier;
-
-                targetPos.y += zoomDiff * yMult;
-                targetPos.z += zoomDiff * zMult;
-            }
-
-            _camera.transform.position = targetPos;
-            if (_camera.orthographic)
-            {
-                _camera.orthographicSize *= AspectWidthFactor(_camera);
-                FitBoardBetweenHud();
-            }
+            _framing.Apply();
 
             _defaultPosition = _camera.transform.position;
             _defaultOrthoSize = _camera.orthographicSize;
-        }
-
-        // Keeps the belt and the first queue rows inside the band between the top HUD and the bottom
-        // power-up bar: zooms out only if the board is taller than the band, then slides the camera.
-        private void FitBoardBetweenHud()
-        {
-            if (!TryGetBoardViewportRange(out float minY, out float maxY, out float minX, out float maxX)) return;
-
-            float bandMin = _tuning.CameraHudBottomFraction;
-            float bandMax = 1f - _tuning.CameraHudTopFraction;
-            float band = bandMax - bandMin;
-            if (band <= 0f) return;
-
-            float scale = Mathf.Max(1f, (maxY - minY) / band, (maxX - minX) / 0.96f);
-            if (scale > 1f)
-            {
-                _camera.orthographicSize *= scale;
-                minY = 0.5f + (minY - 0.5f) / scale;
-                maxY = 0.5f + (maxY - 0.5f) / scale;
-            }
-
-            float shift = 0f;
-            if (minY < bandMin) shift = bandMin - minY;
-            else if (maxY > bandMax) shift = bandMax - maxY;
-            if (Mathf.Approximately(shift, 0f)) return;
-
-            // Moving the camera down its own up axis slides the content up the viewport.
-            _camera.transform.position -= _camera.transform.up * (shift * 2f * _camera.orthographicSize);
-        }
-
-        private bool TryGetBoardViewportRange(out float minY, out float maxY, out float minX, out float maxX)
-        {
-            float yMin = float.MaxValue, yMax = float.MinValue, xMin = float.MaxValue, xMax = float.MinValue;
-            bool any = false;
-
-            float cellSize = _prefabSettings.CellWorldSize;
-            var beltOrigin = ConveyorWorldUtil.ComputeBeltOrigin(_level, _tuning, cellSize);
-            foreach (var cell in _level.ConveyorCells)
-            {
-                var world = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize, 0f, beltOrigin);
-                Include(world + new Vector3(-cellSize, 0f, -cellSize) * 0.5f);
-                Include(world + new Vector3(cellSize, 0f, cellSize) * 0.5f);
-                any = true;
-            }
-
-            var lanes = _queueAnchor.LanePositions;
-            for (int lane = 0; lane < lanes.Length && lane < _level.Queues.Count; lane++)
-            {
-                int rows = Mathf.Min(_level.Queues[lane].Entries.Count, Mathf.Max(1, _tuning.CameraVisibleQueueRows));
-                float spacing = _tuning.QueueRowSpacing;
-                Include(lanes[lane] + new Vector3(-spacing * 0.5f, 0f, spacing * 0.5f));
-                Include(lanes[lane] + new Vector3(spacing * 0.5f, 0f, -(rows - 0.5f) * spacing));
-                any = true;
-            }
-
-            minY = yMin;
-            maxY = yMax;
-            minX = xMin;
-            maxX = xMax;
-            return any;
-
-            void Include(Vector3 world)
-            {
-                var v = _camera.WorldToViewportPoint(world);
-                yMin = Mathf.Min(yMin, v.y);
-                yMax = Mathf.Max(yMax, v.y);
-                xMin = Mathf.Min(xMin, v.x);
-                xMax = Mathf.Max(xMax, v.x);
-            }
         }
 
         // Short positional shake for impacts (power-ups); always settles back on the resting position.

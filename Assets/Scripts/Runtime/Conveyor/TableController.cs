@@ -4,6 +4,8 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
+    // Spawns the food table for the level, scaled with the camera zoom and centered under the exit rack
+    // (or the queue when there is no rack).
     public class TableController : IInitializable
     {
         private readonly TableSettings _settings;
@@ -28,11 +30,10 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             if (_settings == null || _settings.TablePrefab == null) return;
 
-            // Spawned fresh each level; it lives in GameplayScene and unloads with it
+            // Spawned fresh each level; it lives in GameplayScene and unloads with it.
             _tableInstance = Object.Instantiate(_settings.TablePrefab, _settings.BasePosition, Quaternion.Euler(_settings.BaseRotation));
             _tableInstance.name = "yemek_alti_masa";
 
-            // Apply camera zoom scale if enabled
             float finalScaleFactor = 1f;
             if (_settings.ScaleWithCamera && _cameraController != null)
             {
@@ -43,7 +44,6 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _tableInstance.transform.localScale = _settings.BaseScale * finalScaleFactor;
             }
 
-            // Align table X/Z with Exit Rack and Queue center
             if (_exitStackAnchor != null && _exitStackAnchor.SlotPositions.Length > 0)
             {
                 float leftX = _exitStackAnchor.SlotPositions[0].x;

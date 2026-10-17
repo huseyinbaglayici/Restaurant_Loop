@@ -5,8 +5,8 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Tutorial
 {
-    // Decoupled from TutorialController — only talks to it via signals, so it's free for
-    // non-tutorial levels (no signal ever arrives, _requiredStep stays null).
+    // Restricts input to what the active tutorial step expects. Driven only by tutorial signals,
+    // so it never restricts anything on non-tutorial levels.
     public class TutorialInputGate : IInitializable, IDisposable
     {
         private readonly SignalBus _signalBus;
@@ -42,8 +42,7 @@ namespace RestaurantLoop.Runtime.Tutorial
         public bool IsPowerUpRequired(PowerUpButtonId id) => IsRestricting &&
             _requiredStep.HoverKind == TutorialHoverTargetKind.PowerUpButton && _requiredStep.PowerUpButton == id;
 
-        // Exit stack has no hover-target kind of its own — block it like any unrepresented action
-        // while a step is actively restricting input.
+        // The exit stack has no hover-target kind, so it is blocked while any step is active.
         public bool CanClickExitStack() => !IsRestricting;
     }
 }

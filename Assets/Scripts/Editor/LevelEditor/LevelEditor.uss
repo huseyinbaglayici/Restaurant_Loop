@@ -1,7 +1,4 @@
-/* Restaurant Loop — Level Editor styling.
-   Ported from the Twisted Tangle level creator's dark ImGui-inspired theme
-   (#1A1A1A base, #4296F7 blue accent) so future editor windows in this project
-   share the same look. Only the pieces the Conveyor Grid tool needs so far. */
+/* Level editor dark theme: #1A1A1A base, #4296F7 accent. */
 
 .rl-root {
     flex-grow: 1;
@@ -14,7 +11,7 @@
     padding: 8px;
 }
 
-/* ── Topbar ──────────────────────────────────────────────────────────────── */
+/* Topbar */
 
 .rl-topbar {
     flex-direction: row;
@@ -38,7 +35,7 @@
     margin-right: 12px;
 }
 
-/* ── Buttons ─────────────────────────────────────────────────────────────── */
+/* Buttons */
 
 .rl-btn {
     height: 24px;
@@ -70,7 +67,7 @@
     border-color: #CC3333;
 }
 
-/* ── Numeric fields ──────────────────────────────────────────────────────── */
+/* Numeric fields */
 
 .rl-num {
     flex-grow: 0;
@@ -113,7 +110,7 @@
     -unity-font-style: normal;
 }
 
-/* ── Canvas ──────────────────────────────────────────────────────────────── */
+/* Canvas */
 
 .rl-canvas-host {
     align-items: flex-start;
@@ -128,7 +125,7 @@
     align-self: flex-start;
 }
 
-/* ── Misc text ───────────────────────────────────────────────────────────── */
+/* Misc text */
 
 .rl-status-label {
     color: #AAAAAA;
@@ -136,7 +133,7 @@
     margin-top: 6px;
 }
 
-/* ── Rows / sections ─────────────────────────────────────────────────────── */
+/* Rows / sections */
 
 .rl-row {
     flex-direction: row;
@@ -163,7 +160,7 @@
     color: #CCCCCC;
 }
 
-/* ── Mode / tool buttons ─────────────────────────────────────────────────── */
+/* Mode / tool buttons */
 
 .rl-tool {
     height: 24px;
@@ -183,7 +180,7 @@
     color: #4296F7;
 }
 
-/* ── Palette swatches ────────────────────────────────────────────────────── */
+/* Palette swatches */
 
 .rl-palette-swatch {
     width: 36px;

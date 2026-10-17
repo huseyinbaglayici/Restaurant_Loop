@@ -2,9 +2,7 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Environment
 {
-    // Combine is called after conveyor-based layout is applied elsewhere (future work) —
-    // moving a child transform after Combine() breaks that child's batch, so any repositioning
-    // logic must run before this, not after.
+    // Static-batches the environment on Start. Children must not move afterwards or their batch breaks.
     public class EnvironmentController : MonoBehaviour
     {
         private void Start()

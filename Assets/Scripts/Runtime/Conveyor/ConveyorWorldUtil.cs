@@ -12,7 +12,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (level.ConveyorCells.Count == 0) return tuning.WorldOrigin;
 
             float deltaX = ((level.GridWidth - 1) * 0.5f - (tuning.ReferenceGridWidth - 1) * 0.5f) * cellSize;
-            // The conveyor bottom and exit rack remain fixed along Z, expanding upwards towards the environment
+            // Centered on X only: the belt's bottom edge and the exit rack stay fixed along Z.
             return new Vector3(tuning.WorldOrigin.x - deltaX, tuning.WorldOrigin.y, tuning.WorldOrigin.z);
         }
 

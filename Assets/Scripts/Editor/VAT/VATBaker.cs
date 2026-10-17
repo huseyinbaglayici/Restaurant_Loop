@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RestaurantLoop.Editor.LevelEditor;
 using RestaurantLoop.Runtime.Data;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -7,24 +8,20 @@ using UnityEngine.Rendering;
 
 namespace RestaurantLoop.Editor.VAT
 {
-    // Bakes the live customer rig (Assets/Art/Models/Character/Customer.prefab) into a position-only
-    // Vertex Animation Texture. Customer.prefab actually uses TWO different shaders across its parts
-    // (body/eyes on RestaurantLoop/SoftMatte v1, pants/shoes/tshirt/Eyebrow on Soft_Matte_2 v2) — one
-    // merged material can't reproduce both looks, so this bakes into TWO meshes/materials sharing one
-    // VAT position texture + one clip layout (still just 2 draw calls total, down from the original
-    // 7 unbatched skinned draws). Each part's flat material color is baked into vertex COLOR so each
-    // shared material reproduces all its parts' distinct tones. Single fixed character — no hair, no
-    // per-instance variation. See VATCustomerVisual for runtime playback.
+    // Bakes Customer.prefab's idle clip into a position-only Vertex Animation Texture.
+    // The prefab uses two shaders, so its parts are baked into two meshes/materials (Body, Outfit)
+    // that share one position texture and clip layout. Each part's flat color goes into vertex color.
+    // Runtime playback: VATCustomerVisual.
     public static class VATBaker
     {
         private const float SampleFps = 30f;
         private const string CustomerPrefabPath = "Assets/Art/Models/Character/Customer.prefab";
+        private const string OutputFolder = "Assets/Art/VAT/Body";
         private const string EyebrowName = "Eyebrow";
 
         private const string BodyShaderName = "RestaurantLoop/SoftMatte";
-        // Soft_Matte_2.shader also declares itself as "RestaurantLoop/SoftMatte" (name collision with
-        // RestaurantSoftMatte.shader) — resolve it by asset path instead of Shader.Find to avoid
-        // picking the wrong one.
+        // Soft_Matte_2.shader declares the same shader name as RestaurantSoftMatte.shader,
+        // so it is loaded by path instead of Shader.Find.
         private const string OutfitShaderPath = "Assets/Prefabs/JapanScenePrefabs/Soft_Matte_2.shader";
 
         private class SkinnedSource
@@ -44,9 +41,7 @@ namespace RestaurantLoop.Editor.VAT
         {
             public string Name;
             public Shader Shader;
-            // Source material whose full property set (hemisphere, directional, toon-step, AO,
-            // gradient, etc — not just _BaseColor) is copied onto the baked material, so the merged
-            // mesh reproduces Customer.prefab's actual tuned look, not shader defaults.
+            // Its full property set is copied onto the baked material so the tuned look survives.
             public Material TemplateMaterial;
             public List<SkinnedSource> Skinned = new List<SkinnedSource>();
             public List<RigidSource> Rigid = new List<RigidSource>();
@@ -60,6 +55,33 @@ namespace RestaurantLoop.Editor.VAT
                     foreach (var r in Rigid) n += r.Mesh.vertexCount;
                     return n;
                 }
+            }
+        }
+
+        // All groups share one vertex index space: group by group, skinned then rigid within each.
+        private class BakeBuffers
+        {
+            public readonly int TotalVerts;
+            public readonly Color[] Positions;
+            public readonly Vector2[] VatId;
+            public readonly Color[] Colors;
+            public readonly Vector2[] Uv;
+            public readonly Vector3[] RestVerts;
+            public readonly Vector3[] RestNormals;
+            public readonly (int start, int count)[] GroupRanges;
+            public readonly List<int>[] GroupTris;
+
+            public BakeBuffers(int totalVerts, int frameCount, int groupCount)
+            {
+                TotalVerts = totalVerts;
+                Positions = new Color[totalVerts * frameCount];
+                VatId = new Vector2[totalVerts];
+                Colors = new Color[totalVerts];
+                Uv = new Vector2[totalVerts];
+                RestVerts = new Vector3[totalVerts];
+                RestNormals = new Vector3[totalVerts];
+                GroupRanges = new (int start, int count)[groupCount];
+                GroupTris = new List<int>[groupCount];
             }
         }
 
@@ -84,24 +106,26 @@ namespace RestaurantLoop.Editor.VAT
                 var bodyGroup = new PartGroup { Name = "Body", Shader = bodyShader };
                 AddSkinned(scratch.transform, bodyGroup, "body");
                 AddSkinned(scratch.transform, bodyGroup, "eyes");
-                // body is the dominant visible surface in this group — use its tuning as the template.
-                bodyGroup.TemplateMaterial = bodyGroup.Skinned.Count > 0 ? bodyGroup.Skinned[0].Renderer.sharedMaterial : null;
+                bodyGroup.TemplateMaterial = FirstSkinnedMaterial(bodyGroup);
 
                 var outfitGroup = new PartGroup { Name = "Outfit", Shader = outfitShader };
                 AddSkinned(scratch.transform, outfitGroup, "pants");
                 AddSkinned(scratch.transform, outfitGroup, "shoes");
                 AddSkinned(scratch.transform, outfitGroup, "tshirt");
                 AddEyebrow(scratch.transform, outfitGroup);
-                // pants matches 3 of the 4 outfit parts' _HemisphereWrap (0.92) — most representative template.
-                outfitGroup.TemplateMaterial = outfitGroup.Skinned.Count > 0 ? outfitGroup.Skinned[0].Renderer.sharedMaterial : null;
+                // pants shares its tuning with most outfit parts, so it is the template
+                outfitGroup.TemplateMaterial = FirstSkinnedMaterial(outfitGroup);
 
-                BakeGroups(new[] { bodyGroup, outfitGroup }, scratch.transform, idleClip, "Assets/Art/VAT/Body");
+                BakeGroups(new[] { bodyGroup, outfitGroup }, scratch.transform, idleClip, OutputFolder);
             }
             finally
             {
                 Object.DestroyImmediate(scratch);
             }
         }
+
+        private static Material FirstSkinnedMaterial(PartGroup group) =>
+            group.Skinned.Count > 0 ? group.Skinned[0].Renderer.sharedMaterial : null;
 
         private static void AddSkinned(Transform root, PartGroup group, string partName)
         {
@@ -144,49 +168,62 @@ namespace RestaurantLoop.Editor.VAT
                 return;
             }
 
-            EnsureFolder(folder);
+            AssetFolderUtil.EnsureFolder(folder);
 
             int frameCount = Mathf.Max(1, Mathf.RoundToInt(clip.length * SampleFps));
-            var positions = new Color[totalVerts * frameCount];
-            var vatId = new Vector2[totalVerts];
-            var vertColor = new Color[totalVerts];
-            var combinedUv = new Vector2[totalVerts];
-            var combinedNormals = new Vector3[totalVerts];
-            var combinedVerts = new Vector3[totalVerts];
+            var buffers = new BakeBuffers(totalVerts, frameCount, groups.Length);
+            LayOutVertices(groups, buffers);
+            SampleFrames(groups, root, clip, frameCount, buffers);
 
-            // Per-group vertex range + local triangle list, built while laying out the shared
-            // global vertex space (order: group by group, skinned then rigid within each).
-            var groupRanges = new (int start, int count)[groups.Length];
-            var groupTris = new List<int>[groups.Length];
+            var tex = WritePositionTexture(folder, buffers.Positions, totalVerts, frameCount);
+            WriteClipSet(folder, tex, clip, totalVerts, frameCount);
+            for (int g = 0; g < groups.Length; g++)
+            {
+                WriteGroupMesh(folder, groups[g], buffers, g);
+                WriteGroupMaterial(folder, groups[g], tex, frameCount);
+            }
 
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[VATBaker] Baked {totalVerts} verts x {frameCount} frames across {groups.Length} groups -> {folder}");
+        }
+
+        // Static per-vertex data (VAT column id, uv, color) and each group's triangle list.
+        private static void LayOutVertices(PartGroup[] groups, BakeBuffers buffers)
+        {
             int cursor = 0;
             for (int g = 0; g < groups.Length; g++)
             {
                 int groupStart = cursor;
-                groupTris[g] = new List<int>();
+                buffers.GroupTris[g] = new List<int>();
 
-                void LayOut(Mesh mesh, Color color)
-                {
-                    int count = mesh.vertexCount;
-                    var uv0 = mesh.uv;
-                    var tris = mesh.triangles;
-                    for (int i = 0; i < count; i++)
-                    {
-                        vatId[cursor + i] = new Vector2((cursor + i + 0.5f) / totalVerts, 0f);
-                        combinedUv[cursor + i] = (uv0 != null && i < uv0.Length) ? uv0[i] : Vector2.zero;
-                        vertColor[cursor + i] = color;
-                    }
-                    // Local to this group's own mesh (relative to groupStart), not the global cursor.
-                    for (int i = 0; i < tris.Length; i++) groupTris[g].Add(tris[i] + (cursor - groupStart));
-                    cursor += count;
-                }
+                foreach (var s in groups[g].Skinned)
+                    LayOutMesh(buffers, s.Renderer.sharedMesh, s.VertexColor, groupStart, buffers.GroupTris[g], ref cursor);
+                foreach (var r in groups[g].Rigid)
+                    LayOutMesh(buffers, r.Mesh, r.VertexColor, groupStart, buffers.GroupTris[g], ref cursor);
 
-                foreach (var s in groups[g].Skinned) LayOut(s.Renderer.sharedMesh, s.VertexColor);
-                foreach (var r in groups[g].Rigid) LayOut(r.Mesh, r.VertexColor);
-
-                groupRanges[g] = (groupStart, cursor - groupStart);
+                buffers.GroupRanges[g] = (groupStart, cursor - groupStart);
             }
+        }
 
+        private static void LayOutMesh(BakeBuffers buffers, Mesh mesh, Color color, int groupStart, List<int> groupTris, ref int cursor)
+        {
+            int count = mesh.vertexCount;
+            var uv0 = mesh.uv;
+            var tris = mesh.triangles;
+            for (int i = 0; i < count; i++)
+            {
+                buffers.VatId[cursor + i] = new Vector2((cursor + i + 0.5f) / buffers.TotalVerts, 0f);
+                buffers.Uv[cursor + i] = (uv0 != null && i < uv0.Length) ? uv0[i] : Vector2.zero;
+                buffers.Colors[cursor + i] = color;
+            }
+            // indices are local to the group's own mesh, not the shared vertex space
+            for (int i = 0; i < tris.Length; i++) groupTris.Add(tris[i] + (cursor - groupStart));
+            cursor += count;
+        }
+
+        // One texture row per frame, root-local positions. Frame 0 also becomes the rest pose mesh.
+        private static void SampleFrames(PartGroup[] groups, Transform root, AnimationClip clip, int frameCount, BakeBuffers buffers)
+        {
             var bakedMesh = new Mesh();
             for (int f = 0; f < frameCount; f++)
             {
@@ -194,7 +231,6 @@ namespace RestaurantLoop.Editor.VAT
                 clip.SampleAnimation(root.gameObject, t);
 
                 Matrix4x4 rootInverse = root.worldToLocalMatrix;
-                int rowBase = f * totalVerts;
                 int writeCursor = 0;
 
                 foreach (var group in groups)
@@ -202,47 +238,41 @@ namespace RestaurantLoop.Editor.VAT
                     foreach (var s in group.Skinned)
                     {
                         s.Renderer.BakeMesh(bakedMesh, false);
-                        var verts = bakedMesh.vertices;
-                        var normals = bakedMesh.normals;
                         Matrix4x4 toRoot = rootInverse * s.Renderer.transform.localToWorldMatrix;
-                        for (int i = 0; i < verts.Length; i++)
-                        {
-                            Vector3 p = toRoot.MultiplyPoint3x4(verts[i]);
-                            positions[rowBase + writeCursor + i] = new Color(p.x, p.y, p.z, 1f);
-                            if (f == 0)
-                            {
-                                combinedVerts[writeCursor + i] = p;
-                                combinedNormals[writeCursor + i] = (normals != null && i < normals.Length)
-                                    ? toRoot.MultiplyVector(normals[i]).normalized
-                                    : Vector3.up;
-                            }
-                        }
-                        writeCursor += verts.Length;
+                        WriteFrameVertices(buffers, bakedMesh.vertices, bakedMesh.normals, toRoot, f, ref writeCursor);
                     }
 
                     foreach (var r in group.Rigid)
                     {
-                        var verts = r.Mesh.vertices;
-                        var normals = r.Mesh.normals;
                         Matrix4x4 toRoot = rootInverse * r.Source.localToWorldMatrix;
-                        for (int i = 0; i < verts.Length; i++)
-                        {
-                            Vector3 p = toRoot.MultiplyPoint3x4(verts[i]);
-                            positions[rowBase + writeCursor + i] = new Color(p.x, p.y, p.z, 1f);
-                            if (f == 0)
-                            {
-                                combinedVerts[writeCursor + i] = p;
-                                combinedNormals[writeCursor + i] = (normals != null && i < normals.Length)
-                                    ? toRoot.MultiplyVector(normals[i]).normalized
-                                    : Vector3.up;
-                            }
-                        }
-                        writeCursor += verts.Length;
+                        WriteFrameVertices(buffers, r.Mesh.vertices, r.Mesh.normals, toRoot, f, ref writeCursor);
                     }
                 }
             }
             Object.DestroyImmediate(bakedMesh);
+        }
 
+        private static void WriteFrameVertices(BakeBuffers buffers, Vector3[] verts, Vector3[] normals, Matrix4x4 toRoot,
+            int frame, ref int writeCursor)
+        {
+            int rowBase = frame * buffers.TotalVerts;
+            for (int i = 0; i < verts.Length; i++)
+            {
+                Vector3 p = toRoot.MultiplyPoint3x4(verts[i]);
+                buffers.Positions[rowBase + writeCursor + i] = new Color(p.x, p.y, p.z, 1f);
+                if (frame == 0)
+                {
+                    buffers.RestVerts[writeCursor + i] = p;
+                    buffers.RestNormals[writeCursor + i] = (normals != null && i < normals.Length)
+                        ? toRoot.MultiplyVector(normals[i]).normalized
+                        : Vector3.up;
+                }
+            }
+            writeCursor += verts.Length;
+        }
+
+        private static Texture2D WritePositionTexture(string folder, Color[] positions, int totalVerts, int frameCount)
+        {
             string texPath = $"{folder}/Body_VATPositions.asset";
             var tex = LoadOrCreate<Texture2D>(texPath, () => new Texture2D(totalVerts, frameCount, TextureFormat.RGBAHalf, false, true));
             if (tex.width != totalVerts || tex.height != frameCount)
@@ -252,7 +282,11 @@ namespace RestaurantLoop.Editor.VAT
             tex.SetPixels(positions);
             tex.Apply(false, false);
             PersistAsset(tex, texPath);
+            return tex;
+        }
 
+        private static void WriteClipSet(string folder, Texture2D tex, AnimationClip clip, int totalVerts, int frameCount)
+        {
             string clipSetPath = $"{folder}/Body_VATClipSet.asset";
             var clipSet = LoadOrCreate<VATClipSet>(clipSetPath, ScriptableObject.CreateInstance<VATClipSet>);
             clipSet.PositionTexture = tex;
@@ -261,60 +295,54 @@ namespace RestaurantLoop.Editor.VAT
             clipSet.SampleFps = SampleFps;
             clipSet.Idle = new VATClipEntry { ClipName = clip.name, StartFrame = 0, FrameCount = frameCount, Loop = true };
             PersistAsset(clipSet, clipSetPath);
+        }
 
-            for (int g = 0; g < groups.Length; g++)
-            {
-                var (start, count) = groupRanges[g];
-                var groupVerts = new Vector3[count];
-                var groupNormals = new Vector3[count];
-                var groupUv = new Vector2[count];
-                var groupColors = new Color[count];
-                var groupVatId = new Vector2[count];
-                System.Array.Copy(combinedVerts, start, groupVerts, 0, count);
-                System.Array.Copy(combinedNormals, start, groupNormals, 0, count);
-                System.Array.Copy(combinedUv, start, groupUv, 0, count);
-                System.Array.Copy(vertColor, start, groupColors, 0, count);
-                System.Array.Copy(vatId, start, groupVatId, 0, count);
+        private static void WriteGroupMesh(string folder, PartGroup group, BakeBuffers buffers, int groupIndex)
+        {
+            var (start, count) = buffers.GroupRanges[groupIndex];
 
-                string meshPath = $"{folder}/{groups[g].Name}_VATMesh.asset";
-                var vatMesh = LoadOrCreate<Mesh>(meshPath, () => new Mesh());
-                vatMesh.Clear();
-                if (count > 65535) vatMesh.indexFormat = IndexFormat.UInt32;
-                vatMesh.vertices = groupVerts;
-                vatMesh.normals = groupNormals;
-                vatMesh.uv = groupUv;
-                vatMesh.colors = groupColors;
-                vatMesh.uv2 = groupVatId;
-                vatMesh.triangles = groupTris[g].ToArray();
-                vatMesh.RecalculateBounds();
-                vatMesh.name = groups[g].Name + "_VATMesh";
-                PersistAsset(vatMesh, meshPath);
+            string meshPath = $"{folder}/{group.Name}_VATMesh.asset";
+            var vatMesh = LoadOrCreate<Mesh>(meshPath, () => new Mesh());
+            vatMesh.Clear();
+            if (count > 65535) vatMesh.indexFormat = IndexFormat.UInt32;
+            vatMesh.vertices = Slice(buffers.RestVerts, start, count);
+            vatMesh.normals = Slice(buffers.RestNormals, start, count);
+            vatMesh.uv = Slice(buffers.Uv, start, count);
+            vatMesh.colors = Slice(buffers.Colors, start, count);
+            vatMesh.uv2 = Slice(buffers.VatId, start, count);
+            vatMesh.triangles = buffers.GroupTris[groupIndex].ToArray();
+            vatMesh.RecalculateBounds();
+            vatMesh.name = group.Name + "_VATMesh";
+            PersistAsset(vatMesh, meshPath);
+        }
 
-                string matPath = $"{folder}/{groups[g].Name}_VATMaterial.mat";
-                var mat = LoadOrCreate<Material>(matPath, () => new Material(groups[g].Shader));
-                if (groups[g].TemplateMaterial != null)
-                    EditorUtility.CopySerialized(groups[g].TemplateMaterial, mat);
-                mat.shader = groups[g].Shader;
-                mat.name = groups[g].Name + "_VATMaterial";
-                // Vertex color carries each part's own tone (baked from its own template's
-                // _BaseColor) — the merged material's own _BaseColor must be white so it doesn't
-                // double-tint on top.
-                mat.SetColor("_BaseColor", Color.white);
-                // Realtime shadow receiving is pointless overhead for a mobile top-down crowd —
-                // this project's own shader already prefers blob-shadow decals over it.
-                mat.SetFloat("_ReceiveShadowStrength", 0f);
-                mat.EnableKeyword("_VAT_ON");
-                mat.EnableKeyword("_VERTEXCOLOR_ON");
-                mat.SetFloat("_VATToggle", 1f);
-                mat.SetFloat("_VertexColorToggle", 1f);
-                mat.SetTexture("_VATPositions", tex);
-                mat.SetFloat("_VATTexHeight", frameCount);
-                mat.enableInstancing = true;
-                PersistAsset(mat, matPath);
-            }
+        private static void WriteGroupMaterial(string folder, PartGroup group, Texture2D tex, int frameCount)
+        {
+            string matPath = $"{folder}/{group.Name}_VATMaterial.mat";
+            var mat = LoadOrCreate<Material>(matPath, () => new Material(group.Shader));
+            if (group.TemplateMaterial != null)
+                EditorUtility.CopySerialized(group.TemplateMaterial, mat);
+            mat.shader = group.Shader;
+            mat.name = group.Name + "_VATMaterial";
+            // vertex color already carries each part's tint; a non-white base color would tint twice
+            mat.SetColor("_BaseColor", Color.white);
+            // crowd uses blob-shadow decals, realtime shadow receiving is wasted work on mobile
+            mat.SetFloat("_ReceiveShadowStrength", 0f);
+            mat.EnableKeyword("_VAT_ON");
+            mat.EnableKeyword("_VERTEXCOLOR_ON");
+            mat.SetFloat("_VATToggle", 1f);
+            mat.SetFloat("_VertexColorToggle", 1f);
+            mat.SetTexture("_VATPositions", tex);
+            mat.SetFloat("_VATTexHeight", frameCount);
+            mat.enableInstancing = true;
+            PersistAsset(mat, matPath);
+        }
 
-            AssetDatabase.SaveAssets();
-            Debug.Log($"[VATBaker] Baked {totalVerts} verts x {frameCount} frames across {groups.Length} groups -> {folder}");
+        private static T[] Slice<T>(T[] source, int start, int count)
+        {
+            var result = new T[count];
+            System.Array.Copy(source, start, result, 0, count);
+            return result;
         }
 
         private static AnimationClip FindIdleClip(GameObject sourcePrefab)
@@ -359,20 +387,6 @@ namespace RestaurantLoop.Editor.VAT
         {
             if (AssetDatabase.Contains(asset)) EditorUtility.SetDirty(asset);
             else AssetDatabase.CreateAsset(asset, path);
-        }
-
-        private static void EnsureFolder(string path)
-        {
-            if (AssetDatabase.IsValidFolder(path)) return;
-
-            var parts = path.Split('/');
-            string current = parts[0];
-            for (int i = 1; i < parts.Length; i++)
-            {
-                string next = $"{current}/{parts[i]}";
-                if (!AssetDatabase.IsValidFolder(next)) AssetDatabase.CreateFolder(current, parts[i]);
-                current = next;
-            }
         }
     }
 }

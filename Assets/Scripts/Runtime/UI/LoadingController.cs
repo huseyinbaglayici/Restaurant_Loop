@@ -8,16 +8,8 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.UI
 {
-    // Lives in MainMenuScene (loaded once at boot, never unloaded) so the same instance covers every
-    // scene transition — boot's implicit continue-into-Gameplay included, not just later Play/Claim
-    // Menu<->Gameplay loads. Owns only the loading overlay; MainMenu's own content visibility is
-    // MainMenuVisibilityController's job (same scene, separate concern).
-    //
-    // loadingRoot's authored default is ACTIVE. That's deliberate: on cold boot nothing fires
-    // LoadingStartedSignal before this scene exists (there's no subscriber to hear it), so the
-    // default-on state is what covers the instant this scene wakes up. _loadingStartedAt defaults to
-    // 0, which happens to line up with "loading became visible at scene start" for that same reason,
-    // so HideLoading()'s elapsed-time math is still correct without an explicit boot-time Show call.
+    // Lives in MainMenuScene (loaded once, never unloaded), so one instance covers every scene transition.
+    // loadingRoot is authored active: that is what covers cold boot, before LoadingStartedSignal can fire.
     public class LoadingController : MonoBehaviour
     {
         private const float MinLoadingDuration = 1f;
@@ -31,6 +23,7 @@ namespace RestaurantLoop.Runtime.UI
         private SignalBus _signalBus;
         private CurrentLevelProvider _currentLevelProvider;
         private ThemeSettings _themeSettings;
+        // Stays 0 on cold boot, matching the overlay being visible from scene start.
         private float _loadingStartedAt;
         private bool _isFirstLoad = true;
         private CanvasGroup _loadingGroup;
@@ -45,9 +38,7 @@ namespace RestaurantLoop.Runtime.UI
             _currentLevelProvider = currentLevelProvider;
             _themeSettings = themeSettings;
 
-            // Note: MainMenuReadySignal is NOT one of the hide triggers — on cold boot that signal
-            // chains straight into loading GameplayScene (see SceneLoader), and this screen should
-            // stay up through that so the menu is never actually seen.
+            // Not hidden on MainMenuReadySignal: on cold boot that chains straight into GameplayScene.
             _signalBus.Subscribe<LoadingStartedSignal>(ShowLoading);
             _signalBus.Subscribe<GameplaySceneReadySignal>(HideLoading);
             _signalBus.Subscribe<MenuReadySignal>(HideLoading);

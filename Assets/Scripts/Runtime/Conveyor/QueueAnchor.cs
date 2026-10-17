@@ -1,10 +1,10 @@
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
-using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    public class QueueAnchor : IInitializable
+    // World positions of the queue lanes, centered on the table in front of the exit rack.
+    public class QueueAnchor
     {
         private readonly ConveyorLevelDataSO _level;
         private readonly ConveyorTuning _tuning;
@@ -56,11 +56,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             return positions;
-        }
-
-        public void Initialize()
-        {
-            // TODO: lane floors
         }
     }
 }

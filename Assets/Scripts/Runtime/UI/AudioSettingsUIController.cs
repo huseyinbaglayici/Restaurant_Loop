@@ -5,11 +5,10 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.UI
 {
-    // Hem Main Menu'deki hem Gameplay'deki Settings panellerine takılabilir veya
-    // sahnede otomatik olarak MusicSlider & SoundSlider'ları bulup AudioService ile eşitler.
+    // Keeps the music / sfx sliders of a settings panel (menu or gameplay) in sync with AudioService.
     public class AudioSettingsUIController : MonoBehaviour
     {
-        [Header("Sliders (Boş bırakılırsa otomatik aranır)")]
+        [Header("Sliders (found among children by name if left empty)")]
         [SerializeField] private Slider _musicSlider;
         [SerializeField] private Slider _sfxSlider;
 
@@ -23,8 +22,7 @@ namespace RestaurantLoop.Runtime.UI
             SyncSlidersWithService();
         }
 
-        // The panel usually starts inactive (OnEnable never runs), so the service subscription only
-        // lives between OnEnable/OnDisable; this is just a safety net for destroy-while-enabled.
+        // Safety net only: the subscription normally lives between OnEnable and OnDisable.
         private void OnDestroy()
         {
             if (_audioService != null) _audioService.OnAudioSettingsChanged -= HandleAudioSettingsChanged;
@@ -32,7 +30,6 @@ namespace RestaurantLoop.Runtime.UI
 
         private void Awake()
         {
-            // Eğer inspector'dan atanmadıysa child objelerden otomatik bul
             if (_musicSlider == null || _sfxSlider == null)
             {
                 var sliders = GetComponentsInChildren<Slider>(true);
@@ -44,7 +41,6 @@ namespace RestaurantLoop.Runtime.UI
                 }
             }
 
-            // Slider min/max değerleri standart 0.0 - 1.0 (Full)
             if (_musicSlider != null)
             {
                 _musicSlider.minValue = 0f;

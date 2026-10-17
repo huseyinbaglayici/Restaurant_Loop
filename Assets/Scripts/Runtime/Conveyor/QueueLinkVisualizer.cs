@@ -7,9 +7,8 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // Draws a solid 3D rectangular prism between every pair of items sharing a nonzero LinkId,
-    // wherever they currently are (queue lane, conveyor belt, or exit stack). The prism is sharply
-    // split half-and-half with the distinct colors of each linked food type (configured in FoodMeshSettings).
+    // Draws a two-colored prism between the halves of every linked pair, wherever they are (queue,
+    // hovering above the entry, belt or exit stack).
     public class QueueLinkVisualizer : IInitializable, ITickable, IDisposable
     {
         private class LinkPrism
@@ -156,32 +155,30 @@ namespace RestaurantLoop.Runtime.Conveyor
             var root = new GameObject($"LinkPrism_{linkId}");
             root.transform.SetParent(_container, false);
 
-            var halfA = new GameObject("HalfA");
-            halfA.transform.SetParent(root.transform, false);
-            var mfA = halfA.AddComponent<MeshFilter>();
-            mfA.sharedMesh = _cubeMesh;
-            var mrA = halfA.AddComponent<MeshRenderer>();
-            mrA.sharedMaterial = _prismMaterial;
-            mrA.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            mrA.receiveShadows = false;
-
-            var halfB = new GameObject("HalfB");
-            halfB.transform.SetParent(root.transform, false);
-            var mfB = halfB.AddComponent<MeshFilter>();
-            mfB.sharedMesh = _cubeMesh;
-            var mrB = halfB.AddComponent<MeshRenderer>();
-            mrB.sharedMaterial = _prismMaterial;
-            mrB.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            mrB.receiveShadows = false;
+            var halfA = CreateHalf("HalfA", root.transform);
+            var halfB = CreateHalf("HalfB", root.transform);
 
             return new LinkPrism
             {
                 Root = root,
                 HalfATransform = halfA.transform,
-                HalfARenderer = mrA,
+                HalfARenderer = halfA,
                 HalfBTransform = halfB.transform,
-                HalfBRenderer = mrB
+                HalfBRenderer = halfB
             };
+        }
+
+        private MeshRenderer CreateHalf(string name, Transform parent)
+        {
+            var half = new GameObject(name);
+            half.transform.SetParent(parent, false);
+            half.AddComponent<MeshFilter>().sharedMesh = _cubeMesh;
+
+            var renderer = half.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = _prismMaterial;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            return renderer;
         }
 
         private void DrawLink(int linkId, Vector3 start, Vector3 end, FoodType startType, FoodType endType)

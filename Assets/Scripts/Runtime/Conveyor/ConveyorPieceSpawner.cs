@@ -45,7 +45,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             foreach (var cell in _level.ConveyorCells)
             {
-                // gate: no physical piece
+                // The gate has no physical piece.
                 if (cell.IsGate) continue;
 
                 var position = ConveyorWorldUtil.ToWorldPosition(cell.Coord, cellSize, _tuning.BeltTrackHeight, beltOrigin);

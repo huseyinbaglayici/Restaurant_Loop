@@ -3,10 +3,7 @@ using UnityEngine.SceneManagement;
 
 namespace RestaurantLoop.Runtime.UI
 {
-    /// <summary>
-    /// Guarantees that all Canvases across all scenes have TexCoord1, Normal, and Tangent shader channels
-    /// enabled, preventing TextMeshPro outline/underlay flickering and shader corruption at runtime.
-    /// </summary>
+    // Enables TexCoord1/Normal/Tangent on every canvas in every loaded scene; TMP outline/underlay flickers without them.
     public static class CanvasShaderChannelsEnforcer
     {
         private const AdditionalCanvasShaderChannels RequiredChannels =

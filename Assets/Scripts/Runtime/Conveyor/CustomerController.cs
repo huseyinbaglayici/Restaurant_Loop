@@ -4,14 +4,11 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // Order-widget lifecycle lives in CustomerSpawner, not here — this keeps CustomerController free
-    // of scene-scoped dependencies (CustomerOrderWidget.Pool needs GameplayScene's own Canvas refs),
-    // which is what lets CustomerController.Pool itself live in ProjectContext/DDOL and survive scene
-    // reloads instead of being torn down and reprewarmed every level.
+    // Order widgets are handled by CustomerSpawner, so this has no scene-scoped dependencies and its
+    // pool can live in ProjectContext across level reloads.
     public class CustomerController : MonoBehaviour, IPoolable<Vector3, float>
     {
-        // World-space handoff point the consumed FoodItemController flies to (ConveyorVisualService).
-        // Should sit on the character's hand bone, not the UI canvas.
+        // Where consumed food flies to; should sit on the character's hand bone.
         [SerializeField] private Transform _foodHandoffAnchor;
 
         [SerializeField] private VATCustomerVisual _playableAnimator;
@@ -24,9 +21,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, worldYRotation, 0f));
             gameObject.SetActive(true);
 
+            // VATCustomerVisual randomizes its idle phase in its own OnEnable.
             _visualVariantPicker?.PickRandom();
-            // VATCustomerVisual randomizes its own idle phase from OnEnable, triggered by the
-            // SetActive(true) above cascading to its (always-active) child — no explicit call needed.
         }
 
         public void OnDespawned()
@@ -35,15 +31,14 @@ namespace RestaurantLoop.Runtime.Conveyor
             gameObject.SetActive(false);
         }
 
-        // Very small scale punch on the model root each time a food unit lands on this customer.
+        // Small scale punch each time a food unit lands on this customer.
         public void PlayConsumePunch(Vector3 strength, float duration, int vibrato, float elasticity)
         {
             if (_playableAnimator == null) return;
             _playableAnimator.PlayConsumePunch(strength, duration, vibrato, elasticity);
         }
 
-        // hasSecondOrderRemaining == true: plays the "first order served" reaction, then returns to Idle.
-        // hasSecondOrderRemaining == false: plays a happy reaction, then invokes onComplete (caller despawns).
+        // With a second order left the customer just reacts; otherwise onComplete fires (caller despawns).
         public void PlayServeReaction(bool hasSecondOrderRemaining, Action onComplete)
         {
             if (_playableAnimator == null)

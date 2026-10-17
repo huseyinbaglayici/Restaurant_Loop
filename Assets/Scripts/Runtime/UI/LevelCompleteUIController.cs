@@ -13,49 +13,48 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.UI
 {
-    // Win flow view: celebration (logo tween + confetti, also previewed in Edit Mode) then the Level Complete panel.
-    // The celebration stays in this MonoBehaviour: it needs [ExecuteAlways] lifecycle, coroutines and its serialized
-    // scene refs. Rewards/saving live in LevelProgression, board cleanup in LevelBoardCleanup.
+    // Win flow view: celebration (logo + confetti, also previewed in Edit Mode) then the Level Complete panel.
+    // Rewards/saving live in LevelProgression, board cleanup in LevelBoardCleanup.
     [ExecuteAlways]
     public class LevelCompleteUIController : MonoBehaviour
     {
         [Header("Editor Preview & Loop")]
-        [Tooltip("İşaretlendiğinde sahne görünümünde (Edit Mode) bile sürekli logo ve konfeti animasyonunu döngü halinde oynatır.")]
+        [Tooltip("Loops the logo and confetti celebration in the Scene view while in Edit Mode.")]
         [SerializeField] private bool _previewLoopInEditMode = true;
 
         [Header("Celebration / Win Sequence")]
-        [Tooltip("Oyun bittiğinde ilk açılacak kutlama paneli.")]
+        [Tooltip("Panel shown first when the level is won.")]
         [SerializeField] private GameObject _celebrationPanel;
-        [Tooltip("Aşağıdan yukarıya süzülecek logo veya tebrik görseli.")]
+        [Tooltip("Logo / congrats image that rises up from below.")]
         [SerializeField] private RectTransform _logoTransform;
-        [Tooltip("Logonun hedeflenen büyüklüğü (Scale). Varsayılan olarak 1.3x.")]
+        [Tooltip("Final scale of the logo.")]
         [SerializeField] private Vector3 _logoTargetScale = new Vector3(1.35f, 1.35f, 1.35f);
-        [Tooltip("Logonun ilk başlayacağı ekran dışı / alt pozisyon ofseti.")]
+        [Tooltip("Off-screen offset the logo starts from.")]
         [SerializeField] private Vector2 _logoStartOffset = new Vector2(0, -600f);
-        [Tooltip("Logonun animasyon süresi.")]
+        [Tooltip("Duration of the logo rise.")]
         [SerializeField] private float _logoMoveDuration = 1.2f;
         [SerializeField] private Ease _logoEase = Ease.OutBack;
-        [Tooltip("Logo belirdikten sonra kaç saniye sonra asıl Level Success paneline geçilsin?")]
+        [Tooltip("Seconds the celebration stays up before the Level Complete panel opens.")]
         [SerializeField] private float _celebrationDuration = 2.5f;
 
         [Header("Confetti VFX")]
-        [Tooltip("Tetiklenecek Konfeti VFX Prefab'leri veya Sahnedeki Particle System'ler (Confetti_blast_multicolor veya Confetti_directional_multicolor).")]
+        [Tooltip("Confetti particle systems already placed in the scene.")]
         [SerializeField] private List<ParticleSystem> _confettiParticles = new List<ParticleSystem>();
-        [Tooltip("Eğer prefab olarak spawn etmek istersen buraya atayabilirsin.")]
+        [Tooltip("Optional confetti prefabs spawned on every burst.")]
         [SerializeField] private GameObject[] _confettiPrefabs;
-        [Tooltip("Konfetilerin doğacağı pozisyonlar (Canvas üzeri veya 3D dünya noktaları).")]
+        [Tooltip("Spawn point per confetti prefab (same index). Falls back to the logo position.")]
         [SerializeField] private Transform[] _confettiSpawnPoints;
-        [Tooltip("Konfeti parçacıklarının / efekt objesinin boyut çarpanı (Scale). Varsayılan 1.5x.")]
+        [Tooltip("Scale multiplier for the confetti effects.")]
         [SerializeField] private float _confettiScaleMultiplier = 1.5f;
-        [Tooltip("Toplam kaç dalga/kez konfeti patlasın? (Örn: 3-4 kez ardı ardına).")]
+        [Tooltip("How many confetti bursts play back to back.")]
         [SerializeField] private int _burstCount = 3;
-        [Tooltip("Dalgalar arasındaki bekleme süresi (saniye).")]
+        [Tooltip("Seconds between bursts.")]
         [SerializeField] private float _burstInterval = 0.35f;
-        [Tooltip("Konfetilerin doğacağı rastgele pozisyon yayılma yarıçapı.")]
+        [Tooltip("Random spread radius around each spawn point.")]
         [SerializeField] private float _randomSpreadRadius = 150f;
-        [Tooltip("UI üzerinde veya arkasında görünmesi için Sorting Order (Logonun arkasında görünmesi için düşük bir değer, örn: 10 veya logonun canvas order'ından küçük bir değer).")]
+        [Tooltip("Sorting order of the confetti. The logo draws 20 above it.")]
         [SerializeField] private int _confettiSortingOrder = 10;
-        [Tooltip("Kullanılacak Sorting Layer adı (Genellikle 'UI' veya 'Default').")]
+        [Tooltip("Sorting layer used by the confetti and the logo canvas.")]
         [SerializeField] private string _confettiSortingLayerName = "UI";
 
         [Header("Level Complete / Success Panel")]
@@ -109,7 +108,6 @@ namespace RestaurantLoop.Runtime.UI
 
             if (Application.isPlaying)
             {
-                // Stop and hide any confetti already placed in the scene
                 if (_confettiParticles != null)
                 {
                     foreach (var ps in _confettiParticles)
@@ -167,7 +165,7 @@ namespace RestaurantLoop.Runtime.UI
             if (_logoTransform != null) _logoTransform.DOKill();
         }
 
-        // Own Canvas with overrideSorting so the logo always draws in front of the confetti
+        // Own Canvas with overrideSorting so the logo always draws in front of the confetti.
         private void SetupLogoCanvas()
         {
             Canvas logoCanvas = _logoTransform.GetComponent<Canvas>();
@@ -246,20 +244,10 @@ namespace RestaurantLoop.Runtime.UI
         {
             if (_logoTransform == null) return;
 
-            _celebrationSequence?.Kill();
-            _celebrationSequence = DOTween.Sequence().SetUpdate(true);
-
-            _logoTransform.anchoredPosition = _logoTargetPosition + _logoStartOffset;
-            _logoTransform.localScale = Vector3.zero;
-
-            _celebrationSequence.Append(_logoTransform.DOAnchorPos(_logoTargetPosition, _logoMoveDuration).SetEase(_logoEase));
-            _celebrationSequence.Join(_logoTransform.DOScale(_logoTargetScale, _logoMoveDuration).SetEase(Ease.OutBack));
+            PlayLogoIntro();
             _celebrationSequence.AppendInterval(1.5f);
             _celebrationSequence.Append(_logoTransform.DOScale(Vector3.zero, 0.4f).SetEase(Ease.InBack));
-            _celebrationSequence.AppendCallback(() =>
-            {
-                PlayConfettiEffects();
-            });
+            _celebrationSequence.AppendCallback(PlayConfettiEffects);
             _celebrationSequence.SetLoops(-1);
         }
 #endif
@@ -274,7 +262,6 @@ namespace RestaurantLoop.Runtime.UI
 
         private void StartCelebrationSequence()
         {
-            // Stop background audio and play the celebration sfx
             if (_audioService != null)
             {
                 _audioService.StopMusic();
@@ -296,18 +283,10 @@ namespace RestaurantLoop.Runtime.UI
                 _celebrationPanel.SetActive(true);
             }
 
-            // Logo rises from below with a scale bounce, then pulses
+            // Logo rises with a scale bounce, then pulses until the panel closes.
             if (_logoTransform != null)
             {
-                _logoTransform.anchoredPosition = _logoTargetPosition + _logoStartOffset;
-                _logoTransform.localScale = Vector3.zero;
-
-                _celebrationSequence?.Kill();
-                _celebrationSequence = DOTween.Sequence().SetUpdate(true);
-
-                _celebrationSequence.Append(_logoTransform.DOAnchorPos(_logoTargetPosition, _logoMoveDuration).SetEase(_logoEase));
-                _celebrationSequence.Join(_logoTransform.DOScale(_logoTargetScale, _logoMoveDuration).SetEase(Ease.OutBack));
-                _celebrationSequence.OnComplete(() =>
+                PlayLogoIntro().OnComplete(() =>
                 {
                     _logoTransform.DOScale(_logoTargetScale * 1.06f, 0.6f)
                         .SetLoops(-1, LoopType.Yoyo)
@@ -321,6 +300,19 @@ namespace RestaurantLoop.Runtime.UI
             StartCoroutine(CelebrationToSuccessRoutine());
         }
 
+        // Restarts _celebrationSequence with the logo rising from its start offset into place.
+        private Sequence PlayLogoIntro()
+        {
+            _logoTransform.anchoredPosition = _logoTargetPosition + _logoStartOffset;
+            _logoTransform.localScale = Vector3.zero;
+
+            _celebrationSequence?.Kill();
+            _celebrationSequence = DOTween.Sequence().SetUpdate(true);
+            _celebrationSequence.Append(_logoTransform.DOAnchorPos(_logoTargetPosition, _logoMoveDuration).SetEase(_logoEase));
+            _celebrationSequence.Join(_logoTransform.DOScale(_logoTargetScale, _logoMoveDuration).SetEase(Ease.OutBack));
+            return _celebrationSequence;
+        }
+
         private void PlayConfettiEffects()
         {
             if (Application.isPlaying)
@@ -329,7 +321,7 @@ namespace RestaurantLoop.Runtime.UI
             }
             else
             {
-                // Edit Mode: single instant wave
+                // Edit Mode has no coroutines to wait on: a single wave.
                 SpawnSingleConfettiWave();
             }
         }
@@ -348,7 +340,6 @@ namespace RestaurantLoop.Runtime.UI
 
         private void SpawnSingleConfettiWave()
         {
-            // Particle systems already placed in the scene
             if (_confettiParticles != null)
             {
                 foreach (var ps in _confettiParticles)
@@ -363,58 +354,61 @@ namespace RestaurantLoop.Runtime.UI
                 }
             }
 
-            // Prefabs spawned at the spawn points (or the logo), with a small random spread
-            if (_confettiPrefabs != null && _confettiPrefabs.Length > 0)
+            if (_confettiPrefabs == null) return;
+
+            for (int i = 0; i < _confettiPrefabs.Length; i++)
             {
-                for (int i = 0; i < _confettiPrefabs.Length; i++)
-                {
-                    var prefab = _confettiPrefabs[i];
-                    if (prefab == null) continue;
+                var prefab = _confettiPrefabs[i];
+                if (prefab == null) continue;
 
-                    Vector3 spawnPos = Vector3.zero;
-                    Quaternion spawnRot = Quaternion.identity;
+                SpawnConfettiPrefab(prefab, i);
+            }
+        }
 
-                    if (_confettiSpawnPoints != null && i < _confettiSpawnPoints.Length && _confettiSpawnPoints[i] != null)
-                    {
-                        spawnPos = _confettiSpawnPoints[i].position;
-                        spawnRot = _confettiSpawnPoints[i].rotation;
-                    }
-                    else if (_logoTransform != null)
-                    {
-                        spawnPos = _logoTransform.position;
-                    }
+        private void SpawnConfettiPrefab(GameObject prefab, int index)
+        {
+            Vector3 spawnPos = Vector3.zero;
+            Quaternion spawnRot = Quaternion.identity;
 
-                    if (_randomSpreadRadius > 0)
-                    {
-                        Vector2 randomOffset = Random.insideUnitCircle * _randomSpreadRadius;
-                        spawnPos += new Vector3(randomOffset.x, randomOffset.y, 0f);
-                    }
+            if (_confettiSpawnPoints != null && index < _confettiSpawnPoints.Length && _confettiSpawnPoints[index] != null)
+            {
+                spawnPos = _confettiSpawnPoints[index].position;
+                spawnRot = _confettiSpawnPoints[index].rotation;
+            }
+            else if (_logoTransform != null)
+            {
+                spawnPos = _logoTransform.position;
+            }
 
-                    GameObject fxInstance = Instantiate(prefab, spawnPos, spawnRot);
-                    fxInstance.transform.localScale = prefab.transform.localScale * _confettiScaleMultiplier;
+            if (_randomSpreadRadius > 0)
+            {
+                Vector2 randomOffset = Random.insideUnitCircle * _randomSpreadRadius;
+                spawnPos += new Vector3(randomOffset.x, randomOffset.y, 0f);
+            }
 
-                    // First sibling under the celebration panel so it renders behind the logo
-                    if (_celebrationPanel != null)
-                    {
-                        fxInstance.transform.SetParent(_celebrationPanel.transform, true);
-                        fxInstance.transform.SetAsFirstSibling();
-                    }
+            GameObject fxInstance = Instantiate(prefab, spawnPos, spawnRot);
+            fxInstance.transform.localScale = prefab.transform.localScale * _confettiScaleMultiplier;
 
-                    ApplySortingOrder(fxInstance);
+            // First sibling under the celebration panel so it renders behind the logo.
+            if (_celebrationPanel != null)
+            {
+                fxInstance.transform.SetParent(_celebrationPanel.transform, true);
+                fxInstance.transform.SetAsFirstSibling();
+            }
 
-                    if (Application.isPlaying)
-                    {
-                        _spawnedConfettiInstances.Add(fxInstance);
-                        StartCoroutine(DestroyFxUnscaled(fxInstance, 4f));
-                    }
-                    else
-                    {
+            ApplySortingOrder(fxInstance);
+
+            if (Application.isPlaying)
+            {
+                _spawnedConfettiInstances.Add(fxInstance);
+                StartCoroutine(DestroyFxUnscaled(fxInstance, 4f));
+            }
+            else
+            {
 #if UNITY_EDITOR
-                        _editorSpawnedFx.Add(fxInstance);
-                        fxInstance.hideFlags = HideFlags.DontSave;
+                _editorSpawnedFx.Add(fxInstance);
+                fxInstance.hideFlags = HideFlags.DontSave;
 #endif
-                    }
-                }
             }
         }
 

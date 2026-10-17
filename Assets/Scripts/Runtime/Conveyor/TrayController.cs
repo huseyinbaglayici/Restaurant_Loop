@@ -53,7 +53,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             _initialLocalScale = transform.localScale;
         }
 
-
         public void EnterBelt(
             Func<Vector3> targetProvider,
             Quaternion beltLocalRotation,
@@ -67,7 +66,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             flightService.Launch(transform, targetProvider, flightTuning, onArrive);
         }
-
 
         public void SetRidePosition(Vector3 worldPosition) => transform.position = worldPosition;
 
@@ -85,7 +83,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             var e = _initialLocalRotation.eulerAngles;
             return Quaternion.Euler(e.x, 0f, e.z);
         }
-
 
         public void ReturnToInitialPose(
             Vector3 targetLocalPosition,

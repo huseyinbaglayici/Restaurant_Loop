@@ -150,7 +150,6 @@ namespace RestaurantLoop.Runtime.UI
 
             if (!_keepPlayingOffer.TryAccept())
             {
-                Debug.LogWarning($"[LevelFailUIController] Not enough coins (needs {KeepPlayingOffer.Cost}) to keep playing.");
                 PlayNotEnoughCoinsFeedback();
                 return;
             }

@@ -92,7 +92,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             if (stack.LinkId != 0 && TryFindLinkedPartner(stack.LinkId, bestLane, bestRow, out int partnerLane, out int partnerRow, out var partnerVisual))
             {
-                // If not in pick-from-bottom mode, both must be accessible at the front:
+                // Unless Pick From Bottom is on, both halves must be at the front (or back-to-back in one lane).
                 bool pickFromBottom = _queueSpawner.PickFromBottomEnabled;
                 bool isBestFront = bestRow == 0 || pickFromBottom;
                 bool isPartnerFront = (partnerLane == bestLane && (partnerRow == 0 || partnerRow == 1)) || partnerRow == 0 || pickFromBottom;
@@ -132,9 +132,6 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _queueSpawner.PickFromBottomEnabled = false;
                 _cameraController.FocusOnQueue(false);
 
-                // The queue visuals themselves fly onto the belt — no despawn + respawn snap. Goes through
-                // the pair-atomic entry point so both always land together (1 cell apart) instead of
-                // independently racing the entry-spacing gate and potentially splitting apart.
                 SquashTween.Play(linkedVisual.transform, 0.25f, 0.22f);
                 SquashTween.Play(linkedPartnerVisual.transform, 0.25f, 0.22f);
                 _signalBus.Fire(new LinkedPairPickedSignal { LinkId = stack.LinkId });
@@ -179,7 +176,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private bool TryFindLinkedPartner(int linkId, int excludeLane, int excludeRow, out int partnerLane, out int partnerRow, out FoodItemController partnerVisual)
         {
-            // First check same lane
             int sameLaneCount = _queueSpawner.GetLaneCount(excludeLane);
             for (int r = 0; r < sameLaneCount; r++)
             {
@@ -193,7 +189,6 @@ namespace RestaurantLoop.Runtime.Conveyor
                 }
             }
 
-            // Then check other lanes
             for (int lane = 0; lane < _queueAnchor.LanePositions.Length; lane++)
             {
                 if (lane == excludeLane) continue;

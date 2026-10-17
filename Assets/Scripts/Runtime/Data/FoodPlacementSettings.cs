@@ -11,9 +11,8 @@ namespace RestaurantLoop.Runtime.Data
         Conveyor
     }
 
-    // Per-food display scale (by location x Closed/Opened) and stack spacing, all in one place so a food's
-    // look never needs touching three different assets to tune. Runtime-only: nothing here is ever written
-    // back to the prefab, the unit prefab or the source mesh.
+    // Per-food display scale (by location and Closed/Opened) and stack spacing, tuned in one place.
+    // Applied at runtime only; prefabs and meshes are never modified.
     [CreateAssetMenu(fileName = "FoodPlacementSettings", menuName = "RestaurantLoop/Food Placement Settings")]
     public class FoodPlacementSettings : ScriptableObject
     {
@@ -40,13 +39,13 @@ namespace RestaurantLoop.Runtime.Data
             public LocationScale Conveyor = LocationScale.Default;
 
             [Header("Stacking Spacing")]
-            [Tooltip("Bantta (Conveyor) giderken üst üste binen stack birimlerinin arasındaki boşluk/aralık çarpanı (1 = tam temas, >1 = aralarında boşluk bırakır, <1 = iç içe geçer).")]
+            [Tooltip("Spacing between stacked units on the belt (1 = touching, above 1 = gap, below 1 = overlap).")]
             public float ConveyorStackSpacing = 1f;
 
-            [Tooltip("Üst rafta (Exit Stack / Rack) dururken üst üste binen stack birimlerinin arasındaki boşluk/aralık çarpanı (1 = tam temas, >1 = aralarında boşluk bırakır, 0 ise Conveyor değeri kullanılır).")]
+            [Tooltip("Spacing between stacked units on the exit rack (1 = touching, above 1 = gap, 0 = use the belt value).")]
             public float ExitStackSpacing = 0f;
 
-            [Tooltip("Genel/Varsayılan stack boşluk çarpanı (1 = tam temas).")]
+            [Tooltip("Default stack spacing (1 = touching).")]
             public float StackSpacingFactor = 1f;
         }
 

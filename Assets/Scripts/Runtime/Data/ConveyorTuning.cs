@@ -27,10 +27,10 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Extra damping/multiplier for camera zoom out (e.g. 0.8 = zoom out 20% less to reduce empty side space).")]
         public float CameraZoomSensitivity = 0.85f;
 
-        [Tooltip("Kamera zoom yaptıkça (uzaklaştıkça) kameranın Y pozisyonunun ötelenme çarpanı (Yukarı çıkması için). Örn: 2.0")]
+        [Tooltip("How far the camera moves up on Y as it zooms out (e.g. 2.0).")]
         public float CameraZoomYShiftMultiplier = 0f;
 
-        [Tooltip("Kamera zoom yaptıkça (uzaklaştıkça) kameranın Z pozisyonunun ötelenme çarpanı (Geriye/arkaya gitmesi için). Örn: 2.0")]
+        [Tooltip("How far the camera moves back on Z as it zooms out (e.g. 2.0).")]
         public float CameraZoomZShiftMultiplier = 0f;
 
         [Header("Camera HUD Framing")]
@@ -44,13 +44,13 @@ namespace RestaurantLoop.Runtime.Data
         public int CameraVisibleQueueRows = 4;
 
         [Header("Pick From Bottom Camera Tuning")]
-        [Tooltip("Pick from bottom aktifken kameranın kuyruğa ve stack'lere doğru kayacağı dünya ofseti (Z/Y).")]
+        [Tooltip("World offset (Y/Z) the camera slides by toward the queue while Pick From Bottom is active.")]
         public Vector3 CameraPickFromBottomOffset = new Vector3(0f, -0.6f, -1.8f);
 
-        [Tooltip("Kameranın kuyruğa kayma ve geri dönme animasyon süresi (saniye).")]
+        [Tooltip("Seconds the camera takes to slide to the queue and back.")]
         public float CameraPickFromBottomDuration = 0.35f;
 
-        [Tooltip("Pick from bottom aktifken kameranın hafif yaklaşma/zoom çarpanı (1.0 = zoomsuz, <1.0 = daha yakın).")]
+        [Tooltip("Orthographic size multiplier while Pick From Bottom is active (1 = no zoom, below 1 = closer).")]
         public float CameraPickFromBottomOrthoMultiplier = 0.95f;
 
         [Header("Food (item height per stage)")]
@@ -111,8 +111,7 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("World units 'below' (negative Z) the belt's own closest (minimum-Y) row.")]
         public float ExitStackZOffsetFromGrid = 1.5f;
 
-        [Tooltip("World X the exit stack (and the queue, which centers itself under it) is centered on, " +
-                 "relative to WorldOrigin.x — manual placement, no longer derived from the grid's width.")]
+        [Tooltip("World X the exit stack (and the queue centered under it) is centered on, relative to WorldOrigin.x.")]
         public float ExitStackXOffset = 0f;
 
         [Tooltip("Distance between consecutive exit stack food slots on X. Defaults to 1 (uses cell size if 0 or left unassigned).")]
@@ -136,7 +135,7 @@ namespace RestaurantLoop.Runtime.Data
         public float ClickRadiusPixels = 80f;
 
         [Header("Queue Link Visualizer (QueueLinkVisualizer)")]
-        [Tooltip("Distance between the two items of a linked pair while riding on the conveyor belt (in belt progress/cell units). Defaults to 1 (adjacent cells), higher values increase the line length on conveyor).")]
+        [Tooltip("Belt distance (in cells) between the two items of a linked pair. 1 = adjacent cells.")]
         public float LinkedPairBeltSpacing = 1.4f;
 
         [Tooltip("Width (thickness perpendicular to link direction) of the 3D rectangular connection prism.")]
@@ -148,7 +147,7 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Vertical Y offset of the 3D connection prism relative to the food base position.")]
         public float LinkPrismYOffset = 0.12f;
 
-        [Tooltip("World units wide, the rope drawn between two linked queue items (legacy fallback).")]
+        [Tooltip("Width in world units of the rope drawn between two linked queue items.")]
         public float LinkLineWidth = 0.06f;
 
         [Tooltip("World units the rope dips down at its midpoint — 0 draws it straight.")]
@@ -173,10 +172,10 @@ namespace RestaurantLoop.Runtime.Data
         [Tooltip("Extra manual Z offset added on top of the calculated position.")]
         public float EnvironmentExtraZOffset = 0f;
 
-        [Tooltip("Camera zoom yaptıkça (uzaklaştıkça) environment'ın Y ekseninde (yukarı/derine) ötelenme katsayısı (Örn: 2.0f).")]
+        [Tooltip("How far the environment shifts on Y as the camera zooms out (e.g. 2.0).")]
         public float EnvironmentCameraYMultiplier = 0f;
 
-        [Tooltip("Camera zoom yaptıkça (uzaklaştıkça) environment'ın Z ekseninde geriye ötelenme katsayısı (Örn: 2.0f). 0 ise sabit kalır.")]
+        [Tooltip("How far the environment moves back on Z as the camera zooms out (e.g. 2.0). 0 = fixed.")]
         public float EnvironmentCameraZMultiplier = 0f;
     }
 }

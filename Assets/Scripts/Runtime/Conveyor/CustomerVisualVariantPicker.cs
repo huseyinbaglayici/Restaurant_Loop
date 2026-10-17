@@ -4,11 +4,8 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // Rents one pooled character model per spawn instead of randomizing per-part material colors —
-    // every customer of a given variant shares the same Material assets, so the SRP Batcher isn't
-    // broken by per-instance material instances. Each variant lives in its own small Zenject pool
-    // (see ConveyorInstaller) sized for how many customers are ever on screen at once, instead of
-    // every occupant slot pre-instantiating all 6 variants (see PF_Customer_Occupant history).
+    // Rents one pooled character model per spawn. Customers of a variant share material assets, so the
+    // SRP Batcher stays intact; each variant has its own pool (ConveyorInstaller).
     public class CustomerVisualVariantPicker : MonoBehaviour
     {
         [SerializeField] private CustomerPlayableAnimator _playableAnimator;

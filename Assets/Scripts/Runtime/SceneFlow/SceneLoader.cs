@@ -31,9 +31,8 @@ namespace RestaurantLoop.Runtime.SceneFlow
             _signalBus.Subscribe<MainMenuReadySignal>(OnMainMenuReady);
         }
 
-        // Cold boot only: MainMenuScene just finished loading. Continue straight on into GameplayScene
-        // under the same loading screen — unless the player is out of lives, then the menu (with its
-        // refill timer) is shown instead of a free attempt.
+        // Cold boot: continue into GameplayScene under the same loading screen, or show the menu
+        // (with its refill timer) when the player is out of lives.
         private void OnMainMenuReady()
         {
             if (_livesService.HasLives) LoadGameplayScene();
@@ -81,8 +80,7 @@ namespace RestaurantLoop.Runtime.SceneFlow
             _signalBus.Fire<GameplaySceneReadySignal>();
         }
 
-        // Claim: show the loading screen for the teardown too, then reveal the menu once
-        // GameplayScene is actually gone (not on the raw signal — the unload is still async).
+        // The loading screen covers the async unload; the menu is revealed once GameplayScene is gone.
         private void OnLevelEnded(LevelEndedSignal signal)
         {
             _signalBus.Fire<LoadingStartedSignal>();
@@ -96,8 +94,7 @@ namespace RestaurantLoop.Runtime.SceneFlow
 
         private void OnPlayRequested(PlayRequestedSignal signal)
         {
-            // Null Level means "continue with whatever CurrentLevelProvider resolved at boot" — only an
-            // explicit level-select (future menu) should override it.
+            // Null Level keeps the level CurrentLevelProvider already resolved.
             if (signal.Level != null)
                 _currentLevelProvider.Current = signal.Level;
 

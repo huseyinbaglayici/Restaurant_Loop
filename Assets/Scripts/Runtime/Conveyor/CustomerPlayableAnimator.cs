@@ -23,13 +23,11 @@ namespace RestaurantLoop.Runtime.Conveyor
         private AnimationClipPlayable _incoming;
         private Coroutine _crossfadeRoutine;
 
-        // Whatever the currently running _crossfadeRoutine still owes a caller — StopCrossfade() must
-        // fire this before dropping the routine, or an interrupted PlayServeReaction(false, DespawnCustomer)
-        // (second order finishing while the first-order reaction is still mid-playback) silently loses the
-        // despawn callback and leaves the customer stuck on screen forever.
+        // Callback the running crossfade still owes; StopCrossfade fires it so an interrupted reaction
+        // never drops a despawn.
         private Action _pendingOnComplete;
 
-private void Awake()
+        private void Awake()
         {
             _animator = GetComponentInChildren<Animator>(true);
 
@@ -40,13 +38,12 @@ private void Awake()
             _output.SetSourcePlayable(_mixer);
         }
 
-// Rebinds the graph's output to a different variant's Animator (see CustomerVisualVariantPicker).
+        // Rebinds the graph's output to the spawned variant's Animator (CustomerVisualVariantPicker).
         public void SetAnimator(Animator animator)
         {
             _animator = animator;
             if (_graph.IsValid()) _output.SetTarget(_animator);
         }
-
 
         private void OnDestroy()
         {
@@ -64,8 +61,7 @@ private void Awake()
             _graph.Play();
         }
 
-        // hasSecondOrderRemaining == true: first-of-two order served, plays and returns to Idle.
-        // hasSecondOrderRemaining == false: final order served, plays a random happy clip then invokes onComplete.
+        // First of two orders: plays and returns to Idle. Final order: random happy clip, then onComplete.
         public void PlayServeReaction(bool hasSecondOrderRemaining, Action onComplete)
         {
             if (!_graph.IsValid())
@@ -104,8 +100,7 @@ private void Awake()
             float playDuration = clip.length / speed;
             yield return new WaitForSeconds(Mathf.Max(0f, playDuration - _clips.CrossfadeDuration));
 
-            // clear before PlayIdleWithRandomOffset() — it calls StopCrossfade(), which would
-            // otherwise call StopCoroutine() on this very routine from inside itself.
+            // Cleared first: PlayIdleWithRandomOffset calls StopCrossfade, which would stop this routine from inside.
             _crossfadeRoutine = null;
             _pendingOnComplete = null;
 
@@ -174,9 +169,7 @@ private void Awake()
                 _incoming = default;
             }
 
-            // The routine never reached its own completion point, so whatever it still owed (e.g. the
-            // despawn callback on a Served reaction) would otherwise vanish with it — fire it now instead
-            // of leaking a customer that's already logically gone but never disappears on screen.
+            // The routine never finished, so fire what it still owed (e.g. the despawn callback).
             var pending = _pendingOnComplete;
             _pendingOnComplete = null;
             pending?.Invoke();

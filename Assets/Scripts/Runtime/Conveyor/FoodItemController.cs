@@ -34,9 +34,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public FoodLocation Location => _location;
 
-        // e.g. a drink rack: several pre-placed single-item children under one shared base, instead of a
-        // vertical stack of copies. Consume flights fly one of those children directly (see TakeFixedSlotChild)
-        // rather than a duplicate of the whole rack.
+        // A rack of pre-placed children (e.g. drinks): consume flights fly one child (TakeFixedSlotChild),
+        // not a copy of the whole rack.
         public bool UsesFixedChildSlots => _stackBuilder.UsesFixedChildSlots;
 
         public Vector3 VisualCenter
@@ -52,13 +51,12 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        // World position of the top unit — the one that renders Opened while this item is Opened. Consume
-        // flights should spawn here, not at the item root (which sits at the bottom of the stack).
+        // Consume flights spawn here, not at the item root (which sits at the bottom of the stack).
         public Vector3 TopUnitWorldPosition => _stackBuilder.TopUnitWorldPosition;
 
-        // Zenject injects before Awake (the prefab is instantiated inactive), so the settings are ready here.
         private Vector3 _rootScale = Vector3.one;
 
+        // Zenject injects before Awake (the prefab is instantiated inactive), so the settings are ready here.
         private void Awake()
         {
             _rootScale = transform.localScale;
@@ -98,8 +96,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             ApplyStack(Stack);
         }
 
-        // Where this item currently sits (queue / exit stack / belt) — drives which of FoodPlacementSettings'
-        // per-location scales applies. Called by the systems that move a visual between those places.
+        // Queue / belt / exit stack: picks which per-location scale from FoodPlacementSettings applies.
         public void SetLocation(FoodLocation location)
         {
             if (_location == location) return;

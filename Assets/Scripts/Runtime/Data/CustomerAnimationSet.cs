@@ -20,8 +20,7 @@ namespace RestaurantLoop.Runtime.Data
         public float CrossfadeDuration = 0.15f;
 
         [Header("Playback speed")]
-        [Tooltip("Playback speed multiplier for the serve-reaction one-shots (Happy / First Order Served). " +
-                 "Higher = reaction plays and finishes faster, so the customer despawns sooner after being served.")]
+        [Tooltip("Playback speed of the serve reactions (Happy / First Order Served). Higher = the customer despawns sooner.")]
         public float ServeReactionSpeedMultiplier = 3f;
     }
 }

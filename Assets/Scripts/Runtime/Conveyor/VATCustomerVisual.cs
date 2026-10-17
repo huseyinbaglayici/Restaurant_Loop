@@ -5,33 +5,27 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // The customer rig is baked into a Vertex Animation
-    // Texture (see VATBaker) instead of skinned + Animator Controller. Customer.prefab uses two
-    // different shaders across its parts (body/eyes vs pants/shoes/tshirt/Eyebrow), so the bake is
-    // split into two renderers sharing one VAT texture/clip layout — both driven by the same
-    // playhead so they stay in sync. Single fixed look — no hair, no per-instance variation. Only
-    // the idle phase/speed is randomized per spawn, driven from OnEnable rather than Start().
-    // Start() only ever fires once per pooled instance's lifetime, which would have re-synced idle
-    // phase on every respawn after the first; OnEnable fires on every SetActive(true), matching
-    // CustomerController.OnSpawned.
-    //
-    // Sole owner of this transform's scale/position tweens (consume-punch AND serve-reaction both
-    // live here, not split across CustomerController + this class) — that split previously let both
-    // fire near-simultaneously and fight over the same localScale, leaving some pooled customers
-    // stuck at the wrong size. Every entry point below kills+resets before starting its own tween.
+    // Customer baked into a Vertex Animation Texture (VATBaker): two renderers (one per shader) share one
+    // clip layout and playhead. The idle phase is randomized in OnEnable so every pooled respawn differs.
+    // Sole owner of this transform's punch/serve tweens; every entry point kills and resets first.
     public class VATCustomerVisual : MonoBehaviour
     {
         private static readonly int VATFrameAId = Shader.PropertyToID("_VATFrameA");
         private static readonly int VATFrameBId = Shader.PropertyToID("_VATFrameB");
         private static readonly int VATBlendId = Shader.PropertyToID("_VATBlend");
 
-        [Header("Body (skin/eyes — RestaurantSoftMatte)")]
+        // Punches retriggered while one is still running grow (up to the max) instead of restarting, so a
+        // burst of near-simultaneous bites reads as one bigger hit.
+        private const float ConsumeComboStep = 0.35f;
+        private const float ConsumeComboMax = 2.2f;
+
+        [Header("Body (skin, eyes)")]
         [SerializeField] private MeshRenderer _bodyRenderer;
 
-        [Header("Outfit (pants/shoes/tshirt/Eyebrow — Soft_Matte_2)")]
+        [Header("Outfit (clothes, eyebrows)")]
         [SerializeField] private MeshRenderer _outfitRenderer;
 
-        [Header("Shared clip layout (one texture, both renderers)")]
+        [Header("Clips (shared by both renderers)")]
         [SerializeField] private VATClipSet _clips;
 
         private MaterialPropertyBlock _block;
@@ -42,6 +36,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         private Vector3 _restLocalPosition;
         private Quaternion _restLocalRotation;
         private Tween _scaleTween;
+        private float _consumeComboScale = 1f;
+        private bool _isExiting;
 
         private void Awake()
         {
@@ -107,18 +103,6 @@ namespace RestaurantLoop.Runtime.Conveyor
             renderer.SetPropertyBlock(_block);
         }
 
-        // Very small scale punch each time a food unit lands on this customer. Multi-item orders
-        // can hand off several units on the same flight duration, so their arrivals land within a
-        // frame or two of each other — killing+restarting a fresh punch at the same base strength
-        // for each one meant the earlier hits got cancelled before ever rendering a frame, so only
-        // the last of a burst was ever visible. Retriggering while a punch is still running instead
-        // escalates it (bigger combo pop) rather than resetting it, so a burst of near-simultaneous
-        // bites always reads as one satisfying hit instead of N silent ones.
-        private const float ConsumeComboStep = 0.35f;
-        private const float ConsumeComboMax = 2.2f;
-        private float _consumeComboScale = 1f;
-        private bool _isExiting;
-
         public void PlayConsumePunch(Vector3 strength, float duration, int vibrato, float elasticity)
         {
             if (_isExiting) return;
@@ -135,10 +119,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 .OnComplete(() => transform.localScale = _restLocalScale);
         }
 
-        // hasSecondOrderRemaining == true: small punch, customer stays and returns to idle.
-        // hasSecondOrderRemaining == false: pop + float-up shrink, then onComplete right as the
-        // character hits zero scale — the caller despawns from that same callback, so the pool-hide
-        // and the visual vanish land on the same frame instead of a scale pop-then-snap.
+        // Second order left: small punch. Final order: pop and float-up shrink, with onComplete (the
+        // despawn) firing exactly at zero scale so the hide and the vanish land on the same frame.
         public void PlayServeReaction(bool hasSecondOrderRemaining, Action onComplete)
         {
             if (_isExiting) return;
@@ -154,10 +136,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
             else
             {
-                // Anticipation squash, elastic overshoot pop + hop, a snappy landing bounce, then
-                // float up while shrinking away with a little spin — classic juicy mobile "collected!"
-                // exit. Punch amounts are relative multipliers of the rest scale, not absolute
-                // values, so the character's real size is never lost.
+                // Squash, pop + hop, landing bounce, then float up and shrink with a spin. All scales are
+                // relative to the rest scale.
                 Vector3 rest = _restLocalScale;
                 float baseY = _restLocalPosition.y;
 
@@ -181,10 +161,7 @@ namespace RestaurantLoop.Runtime.Conveyor
                 transform.localRotation = _restLocalRotation;
                 onComplete?.Invoke();
             });
-            // No SetLink here — OnDisable already kills+resets deterministically on despawn, and
-            // DOTween's own GameObject-state tracking (used by SetLink) has a known history of
-            // occasionally killing a tween early on pooled/reactivated objects, unrelated to actual
-            // despawn — exactly the "plays fine, sometimes just doesn't" symptom this was causing.
+            // No SetLink: OnDisable already resets on despawn, and SetLink can kill tweens early on pooled objects.
             _scaleTween = seq;
         }
 

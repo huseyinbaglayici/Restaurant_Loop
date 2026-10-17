@@ -5,11 +5,8 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.SceneFlow
 {
-    // The shared loading screen lives inside MainMenuScene (LoadingController) — it can't be shown
-    // before that scene exists, so we don't try to; LoadingRoot's own authored default (active) is
-    // what covers the instant it wakes up. Once MainMenuScene is loaded, MainMenuReadySignal tells
-    // SceneLoader to continue straight on into GameplayScene, so the menu itself is never seen on
-    // cold boot.
+    // Loads MainMenuScene (which holds the loading screen) additively, then fires MainMenuReadySignal
+    // so SceneLoader can continue into GameplayScene.
     public class Bootstrapper : MonoBehaviour
     {
         private SignalBus _signalBus;

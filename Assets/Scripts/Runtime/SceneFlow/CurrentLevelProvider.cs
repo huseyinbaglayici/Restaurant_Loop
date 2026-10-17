@@ -5,12 +5,8 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.SceneFlow
 {
-    /// <summary>
-    /// ProjectContext-scoped. Resolves its initial value in the CONSTRUCTOR, not in
-    /// IInitializable.Initialize() — Initialize() runs during Unity's Start(), which is always
-    /// after a GameplayScene installer's own InstallBindings() (Awake-time), so it would read a
-    /// stale default.
-    /// </summary>
+    // Resolves in the constructor, not Initialize(): Initialize runs at Start time, after GameplayScene's
+    // installers have already read Current during Awake.
     public class CurrentLevelProvider
     {
         private const int DefaultLevelId = 1;

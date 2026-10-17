@@ -7,20 +7,10 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
+    // Moves the dispenser's trays with the food: one tray per belt item, trayless items wait for the next
+    // free tray, and released trays fly back to the dispenser.
     public class TrayVisualService : IInitializable, ITickable, IDisposable
     {
-        private readonly struct DeferredCommand
-        {
-            public readonly float DueTime;
-            public readonly Action Command;
-
-            public DeferredCommand(float dueTime, Action command)
-            {
-                DueTime = dueTime;
-                Command = command;
-            }
-        }
-
         private readonly SignalBus _signalBus;
         private readonly ConveyorManager _conveyorManager;
         private readonly ConveyorTuning _tuning;
@@ -29,18 +19,12 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly TrayDispenserAnchor _trayAnchor;
 
         private readonly Dictionary<int, TrayController> _rides = new();
-
-
         private readonly HashSet<int> _ridingIds = new();
-
-
         private readonly List<int> _traylessIds = new();
 
         // Loop mode re-enters the same visual under a new id; its tray waits here until that happens.
         private readonly Dictionary<int, FoodItemController> _visualsById = new();
         private readonly Dictionary<FoodItemController, TrayController> _loopedTrays = new();
-
-        private readonly Queue<DeferredCommand> _deferred = new();
 
         public TrayVisualService(
             SignalBus signalBus,
@@ -75,13 +59,11 @@ namespace RestaurantLoop.Runtime.Conveyor
             _signalBus.TryUnsubscribe<FoodConsumedSignal>(OnFoodConsumed);
             _signalBus.TryUnsubscribe<BeltClearedSignal>(OnBeltCleared);
 
-            _deferred.Clear();
             ReleaseAllRidesImmediately();
         }
 
         public void Tick()
         {
-            FlushDueCommands();
             AdvanceRidingTrays();
             TryAssignWaitingTrayless();
         }
@@ -99,16 +81,6 @@ namespace RestaurantLoop.Runtime.Conveyor
                 tray.SetRidePosition(position);
             }
         }
-
-        private void FlushDueCommands()
-        {
-            float now = Time.time;
-            while (_deferred.Count > 0 && _deferred.Peek().DueTime <= now)
-                _deferred.Dequeue().Command?.Invoke();
-        }
-
-        private void Defer(Action command) =>
-            _deferred.Enqueue(new DeferredCommand(Time.time + Mathf.Max(0f, _feel.VisualLagSeconds), command));
 
         private void OnFoodEnteredBelt(FoodEnteredBeltSignal signal)
         {
@@ -239,11 +211,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
-        private void OnBeltCleared()
-        {
-            _deferred.Clear();
-            ReleaseAllRidesImmediately();
-        }
+        private void OnBeltCleared() => ReleaseAllRidesImmediately();
 
         private void ReleaseAllRidesImmediately()
         {

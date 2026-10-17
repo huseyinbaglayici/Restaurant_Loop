@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Runtime.Save;
 using RestaurantLoop.Runtime.SceneFlow;
-using UnityEngine;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Economy
 {
+    // Power-up charges, unlocks and level grants, persisted through SaveService.
     public class PowerUpInventoryService : IInitializable
     {
         private readonly PowerUpSettings _settings;
@@ -34,11 +34,11 @@ namespace RestaurantLoop.Runtime.Economy
             foreach (PowerUpButtonId id in Enum.GetValues(typeof(PowerUpButtonId)))
                 _counts[id] = _saveService.LoadPowerUpCount(id);
 
-            // Check if any rewards/unlocks should be granted for the current player level
             int currentLevelId = _currentLevelProvider?.Current != null ? _currentLevelProvider.Current.LevelId : 1;
             CheckLevelRewards(currentLevelId);
         }
 
+        // Editor-only debug toggle: every power-up unlocked with 99 charges that are never spent.
         public static bool IsInfinitePowerUpsEnabled()
         {
 #if UNITY_EDITOR
@@ -68,10 +68,7 @@ namespace RestaurantLoop.Runtime.Economy
 
         public bool TryUse(PowerUpButtonId id)
         {
-            if (IsInfinitePowerUpsEnabled())
-            {
-                return true;
-            }
+            if (IsInfinitePowerUpsEnabled()) return true;
 
             int current = GetCount(id);
             if (current <= 0) return false;
@@ -100,6 +97,7 @@ namespace RestaurantLoop.Runtime.Economy
             return currentLevelId >= def.UnlockLevel;
         }
 
+        // Unlocks the "unlock on first fail" power-ups.
         public void NotifyLevelFailed()
         {
             if (_settings == null || _settings.Definitions == null) return;
@@ -107,84 +105,62 @@ namespace RestaurantLoop.Runtime.Economy
             bool anyGranted = false;
             foreach (var def in _settings.Definitions)
             {
-                if (def != null && def.UnlockOnFirstFail)
-                {
-                    if (!_saveService.IsPowerUpUnlockGranted(def.Id))
-                    {
-                        if (def.StartingAmount > 0)
-                        {
-                            int newCount = GetCount(def.Id) + def.StartingAmount;
-                            _counts[def.Id] = newCount;
-                            _saveService.SavePowerUpCount(def.Id, newCount);
-                            anyGranted = true;
-                        }
-                        _saveService.MarkPowerUpUnlockGranted(def.Id);
-                    }
-                }
+                if (def != null && def.UnlockOnFirstFail) anyGranted |= TryGrantUnlock(def);
             }
 
-            if (anyGranted)
-            {
-                OnInventoryChanged?.Invoke();
-            }
+            if (anyGranted) OnInventoryChanged?.Invoke();
         }
 
+        // Grants every level unlock and milestone grant reached by currentLevelId, each only once.
         public void CheckLevelRewards(int currentLevelId)
         {
             if (_settings == null) return;
 
             bool anyGranted = false;
 
-            // 1) Check initial level-based unlock rewards (skip first-fail power-ups)
             if (_settings.Definitions != null)
             {
                 foreach (var def in _settings.Definitions)
                 {
                     if (def == null || def.UnlockOnFirstFail) continue;
-                    if (currentLevelId >= def.UnlockLevel)
-                    {
-                        if (!_saveService.IsPowerUpUnlockGranted(def.Id))
-                        {
-                            if (def.StartingAmount > 0)
-                            {
-                                int newCount = GetCount(def.Id) + def.StartingAmount;
-                                _counts[def.Id] = newCount;
-                                _saveService.SavePowerUpCount(def.Id, newCount);
-                                anyGranted = true;
-                            }
-                            _saveService.MarkPowerUpUnlockGranted(def.Id);
-                        }
-                    }
+                    if (currentLevelId >= def.UnlockLevel) anyGranted |= TryGrantUnlock(def);
                 }
             }
 
-            // 2) Check milestone level grants up to current level
             if (_settings.LevelGrants != null)
             {
                 foreach (var grant in _settings.LevelGrants)
                 {
-                    if (grant == null) continue;
-                    if (currentLevelId >= grant.Level)
-                    {
-                        if (!_saveService.IsLevelGrantClaimed(grant.Level, grant.PowerUp))
-                        {
-                            if (grant.Amount > 0)
-                            {
-                                int newCount = GetCount(grant.PowerUp) + grant.Amount;
-                                _counts[grant.PowerUp] = newCount;
-                                _saveService.SavePowerUpCount(grant.PowerUp, newCount);
-                                anyGranted = true;
-                            }
-                            _saveService.MarkLevelGrantClaimed(grant.Level, grant.PowerUp);
-                        }
-                    }
+                    if (grant == null || currentLevelId < grant.Level) continue;
+                    if (_saveService.IsLevelGrantClaimed(grant.Level, grant.PowerUp)) continue;
+
+                    anyGranted |= AddWithoutNotify(grant.PowerUp, grant.Amount);
+                    _saveService.MarkLevelGrantClaimed(grant.Level, grant.PowerUp);
                 }
             }
 
-            if (anyGranted)
-            {
-                OnInventoryChanged?.Invoke();
-            }
+            if (anyGranted) OnInventoryChanged?.Invoke();
+        }
+
+        // Gives a newly unlocked power-up its starting amount, once.
+        private bool TryGrantUnlock(PowerUpDefinition def)
+        {
+            if (_saveService.IsPowerUpUnlockGranted(def.Id)) return false;
+
+            bool granted = AddWithoutNotify(def.Id, def.StartingAmount);
+            _saveService.MarkPowerUpUnlockGranted(def.Id);
+            return granted;
+        }
+
+        // Callers fire OnInventoryChanged once for the whole batch.
+        private bool AddWithoutNotify(PowerUpButtonId id, int amount)
+        {
+            if (amount <= 0) return false;
+
+            int newCount = GetCount(id) + amount;
+            _counts[id] = newCount;
+            _saveService.SavePowerUpCount(id, newCount);
+            return true;
         }
     }
 }

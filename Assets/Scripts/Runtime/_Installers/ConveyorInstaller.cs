@@ -49,7 +49,10 @@ namespace RestaurantLoop.Runtime.Installers
             Container.BindInterfacesAndSelfTo<CameraController>().AsSingle();
             Container.BindInterfacesAndSelfTo<TableController>().AsSingle();
             Container.BindInterfacesAndSelfTo<ThemeEnvironmentService>().AsSingle();
+            Container.Bind<BeltPath>().AsSingle();
+            Container.Bind<BeltEntryGate>().AsSingle();
             Container.BindInterfacesAndSelfTo<ConveyorManager>().AsSingle();
+            Container.Bind<CustomerSightLines>().AsSingle();
             Container.BindInterfacesAndSelfTo<CustomerConsumeService>().AsSingle();
             Container.BindInterfacesTo<ConveyorEntryInput>().AsSingle();
             Container.Bind<ConveyorPointer>().AsSingle();
@@ -65,6 +68,7 @@ namespace RestaurantLoop.Runtime.Installers
             Container.BindInterfacesAndSelfTo<TrayDispenserAnchor>().AsSingle();
 
             // visual layer ticks after the logical one, flights last so they consume this frame's commands
+            Container.Bind<CustomerServeVisuals>().AsSingle();
             Container.BindInterfacesAndSelfTo<ConveyorVisualService>().AsSingle();
             Container.BindInterfacesTo<ConveyorAudio>().AsSingle();
             Container.BindInterfacesAndSelfTo<TrayVisualService>().AsSingle();
@@ -91,10 +95,8 @@ namespace RestaurantLoop.Runtime.Installers
             BindCustomerOrderWidgetPool();
         }
 
-        // CustomerController.Pool and the per-variant visual pools live in PoolInstaller
-        // (ProjectContext/DDOL) so customers survive GameplayScene unload/reload instead of being
-        // destroyed and reprewarmed every level. Only the order widget pool stays scene-scoped here
-        // — it needs GameplayScene's own Canvas refs, which SceneLoader recreates every reload.
+        // Customer pools live in PoolInstaller so they survive scene reloads; the order widget pool stays
+        // scene-scoped because it needs this scene's canvas refs.
         private void BindCustomerOrderWidgetPool()
         {
             if (_customerPrefabSettings == null || _customerPrefabSettings.CustomerOrderWidgetPrefab == null ||
@@ -106,8 +108,7 @@ namespace RestaurantLoop.Runtime.Installers
                 return;
             }
 
-            // Every widget's Image and TMP_Text graphics get reparented under these two shared groups on
-            // spawn (see CustomerOrderWidget.OnSpawned) so uGUI's batcher can merge them across widgets.
+            // Widget graphics are reparented under these shared groups on spawn so uGUI can batch them.
             Container.BindInstance(_orderIconsGroup).WithId("OrderIconsGroup").AsCached();
             Container.BindInstance(_orderTextsGroup).WithId("OrderTextsGroup").AsCached();
 
@@ -118,9 +119,7 @@ namespace RestaurantLoop.Runtime.Installers
                 .NonLazy();
         }
 
-        // The Inspector reference is a plain scene object drag-reference.
-        // If unassigned, falls back to finding 'tepsi_dagitici' in the scene.
-        // If neither exists, returns null without crashing since ThemeSettings can instantiate it dynamically.
+        // Falls back to the scene object by name; null is fine, the theme can spawn the dispenser itself.
         private Transform ResolveTrayDispenserRoot()
         {
             if (_trayDispenserRoot != null) return _trayDispenserRoot;

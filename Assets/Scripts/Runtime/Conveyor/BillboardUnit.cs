@@ -2,10 +2,7 @@
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    /// <summary>
-    /// 2D Sprite tabanlı yemek prefablarının 3D dünyada (kemerde, rafta veya uçarken)
-    /// her zaman aktif kameraya dik (billboard) bakmasını sağlar.
-    /// </summary>
+    // Keeps sprite-based food prefabs facing the camera on the belt, the rack and in flight.
     public class BillboardUnit : MonoBehaviour
     {
         private Transform _camTransform;

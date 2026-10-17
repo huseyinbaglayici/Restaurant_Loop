@@ -4,8 +4,7 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Tutorial
 {
-    // Power-up buttons register themselves here by id — there are duplicate
-    // PowerUpButtonsController instances in the hierarchy, only the active one registers.
+    // Power-up buttons register here by id so the tutorial can point at them.
     public class TutorialTargetRegistry
     {
         private readonly Dictionary<PowerUpButtonId, RectTransform> _targets = new();

@@ -37,16 +37,13 @@ namespace RestaurantLoop.Runtime.Audio
             _signalBus.Subscribe<GameplaySceneReadySignal>(OnGameplayReady);
             _signalBus.Subscribe<LevelEndedSignal>(OnLevelEnded);
 
-            // Normal boot goes MainMenuReadySignal -> GameplaySceneReadySignal via Bootstrapper/SceneLoader.
-            // Hitting Play with GameplayScene or MainMenuScene already open (editor testing) skips that
-            // chain entirely, so bootstrap straight off whatever's already active instead of staying silent.
+            // Entering Play Mode with GameplayScene or MainMenuScene open skips the boot signal chain.
             var activeSceneName = SceneManager.GetActiveScene().name;
             if (activeSceneName == SceneNames.Gameplay) OnGameplayReady();
             else if (activeSceneName == SceneNames.MainMenu) OnMenuReady();
         }
 
-        // Cold boot fires this too, but GameplaySceneReadySignal follows right behind it
-        // (SceneLoader continues straight into gameplay) and overrides the track before it's heard.
+        // On cold boot GameplaySceneReadySignal follows right away and replaces this track before it's heard.
         private void OnMenuReady()
         {
             _audioService.StopConveyorLoop();
@@ -72,20 +69,7 @@ namespace RestaurantLoop.Runtime.Audio
                 var theme = _themeSettings.GetTheme(level.Theme);
                 if (theme != null)
                 {
-                    // Select music according to level difficulty
-                    if (level.Difficulty == LevelDifficulty.SuperHard && theme.SuperHardGameplayMusic != null)
-                    {
-                        gameplayMusic = theme.SuperHardGameplayMusic;
-                    }
-                    else if ((level.Difficulty == LevelDifficulty.Hard || level.Difficulty == LevelDifficulty.SuperHard) && theme.HardGameplayMusic != null)
-                    {
-                        gameplayMusic = theme.HardGameplayMusic;
-                    }
-                    else if (theme.GameplayMusic != null)
-                    {
-                        gameplayMusic = theme.GameplayMusic;
-                    }
-
+                    gameplayMusic = PickGameplayMusic(theme, level.Difficulty, gameplayMusic);
                     if (theme.GameplayAmbience != null) ambience = theme.GameplayAmbience;
                 }
             }
@@ -94,8 +78,17 @@ namespace RestaurantLoop.Runtime.Audio
             if (ambience != null) _audioService.PlayAmbience(ambience);
         }
 
-        // Stop gameplay ambience and conveyor loop the moment a level ends, before the async scene unload even starts —
-        // MenuReadySignal (fired once the unload completes) picks the music back up.
+        // Super Hard falls back to the Hard track, both fall back to the theme's normal track.
+        private static AudioClip PickGameplayMusic(ThemeEntry theme, LevelDifficulty difficulty, AudioClip fallback)
+        {
+            if (difficulty == LevelDifficulty.SuperHard && theme.SuperHardGameplayMusic != null)
+                return theme.SuperHardGameplayMusic;
+            if ((difficulty == LevelDifficulty.Hard || difficulty == LevelDifficulty.SuperHard) && theme.HardGameplayMusic != null)
+                return theme.HardGameplayMusic;
+            return theme.GameplayMusic != null ? theme.GameplayMusic : fallback;
+        }
+
+        // Stops right away instead of waiting for the async unload; MenuReadySignal brings the music back.
         private void OnLevelEnded(LevelEndedSignal _)
         {
             _audioService.StopAmbience();

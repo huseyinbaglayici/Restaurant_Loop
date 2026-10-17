@@ -17,26 +17,26 @@ namespace RestaurantLoop.Runtime.Data
         public GameObject EnvironmentPrefab;
         [Tooltip("Custom position offset for this specific theme's environment (X, Y, Z).")]
         public Vector3 EnvironmentOffset = Vector3.zero;
-        [Tooltip("Camera uzaklaştıkça kameranın Y ekseninde (yukarı) ötelenme katsayısı (Örn: 2.0). 0 ise sabit kalır.")]
+        [Tooltip("How far the camera moves up on Y as it zooms out (e.g. 2.0). 0 = fixed.")]
         public float CameraZoomYShiftMultiplier = 0f;
-        [Tooltip("Camera uzaklaştıkça kameranın Z ekseninde (geriye/arkaya) ötelenme katsayısı (Örn: 2.0). 0 ise sabit kalır.")]
+        [Tooltip("How far the camera moves back on Z as it zooms out (e.g. 2.0). 0 = fixed.")]
         public float CameraZoomZShiftMultiplier = 0f;
-        [Tooltip("Camera uzaklaştıkça bu temanın Environment objesinin Z ekseninde (arkaya) gitme katsayısı (Örn: 2.0). 0 ise sabit kalır.")]
+        [Tooltip("How far this theme's environment moves back on Z as the camera zooms out (e.g. 2.0). 0 = fixed.")]
         public float CameraZOffsetMultiplier = 0f;
         [Tooltip("Custom Euler rotation for this specific theme's environment.")]
         public Vector3 EnvironmentRotation = Vector3.zero;
         [Tooltip("Custom scale multiplier for this specific theme's environment. Defaults to (1,1,1).")]
         public Vector3 EnvironmentScale = Vector3.one;
         [Header("Theme Prefabs / Visuals")]
-        [Tooltip("Bu tema için Düz Conveyor prefab'i (Boşsa varsayılan ayar kullanılır).")]
+        [Tooltip("Straight belt prefab for this theme (empty = default).")]
         public GameObject ConveyorStraightPrefab;
-        [Tooltip("Bu tema için Köşe Conveyor prefab'i (Boşsa varsayılan ayar kullanılır).")]
+        [Tooltip("Corner belt prefab for this theme (empty = default).")]
         public GameObject ConveyorCornerPrefab;
-        [Tooltip("Bu tema için Rack (çıkış rafı) prefab'i (Boşsa varsayılan ayar kullanılır).")]
+        [Tooltip("Exit rack prefab for this theme (empty = default).")]
         public GameObject RackPrefab;
-        [Tooltip("Bu tema için Extra Rack (ekstra raf powerup) prefab'i (Boşsa varsayılan ayar kullanılır).")]
+        [Tooltip("Extra Tray power-up rack prefab for this theme (empty = default).")]
         public GameObject ExtraRackPrefab;
-        [Tooltip("Bu tema için Tepsi Dağıtıcı (Tray Dispenser) prefab'i veya görseli (Opsiyonel).")]
+        [Tooltip("Tray dispenser prefab for this theme (optional).")]
         public GameObject TrayDispenserPrefab;
 
         [Header("Loading & Main Menu UI")]
@@ -62,11 +62,11 @@ namespace RestaurantLoop.Runtime.Data
     public class ThemeSettings : ScriptableObject
     {
         [Header("Main Menu Play Button Visuals (Per Difficulty)")]
-        [Tooltip("Normal bölümler için buton görseli / sprite.")]
+        [Tooltip("Play button sprite for normal levels.")]
         public Sprite PlayButtonNormalSprite;
-        [Tooltip("Zor (Hard) bölümler için buton görseli / sprite.")]
+        [Tooltip("Play button sprite for Hard levels.")]
         public Sprite PlayButtonHardSprite;
-        [Tooltip("Çok Zor (Super Hard) bölümler için buton görseli / sprite.")]
+        [Tooltip("Play button sprite for Super Hard levels.")]
         public Sprite PlayButtonSuperHardSprite;
 
         [Header("Themes")]

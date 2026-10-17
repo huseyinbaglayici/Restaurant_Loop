@@ -7,13 +7,15 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.UI
 {
+    // Menu level label, themed background and per-difficulty play button sprite.
+    // Single owner of the menu background sprite.
     public class MainMenuLevelInfoPresenter : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI _levelInfoText;
         [SerializeField] private TextMeshProUGUI _difficultyText;
-        [Tooltip("Inspector'dan Main Menu arka plan Image objesini buraya bağlayabilirsiniz.")]
+        [Tooltip("Main menu background image. If empty, a sibling named \"Background\" is used.")]
         [SerializeField] private UnityEngine.UI.Image _menuBackgroundImage;
-        [Tooltip("Inspector'dan Play/Seviye butonunun Image objesini buraya bağlayabilirsiniz (Zorluk seviyesine göre butonu değiştirir).")]
+        [Tooltip("Play button image, swapped per level difficulty. If empty, the first child Image is used.")]
         [SerializeField] private UnityEngine.UI.Image _playButtonImage;
 
         private CurrentLevelProvider _currentLevelProvider;
@@ -66,7 +68,6 @@ namespace RestaurantLoop.Runtime.UI
 
         public void UpdateView()
         {
-
             ConveyorLevelDataSO level = _currentLevelProvider?.Current;
             if (level == null && _currentLevelProvider != null)
             {
@@ -79,52 +80,50 @@ namespace RestaurantLoop.Runtime.UI
                 _levelInfoText.text = $"Level {level.LevelId}";
             }
 
-            // Theme background (single owner of the menu background sprite)
             if (_themeSettings != null)
             {
-                ThemeType themeType = level != null ? level.Theme : ThemeType.Asian;
-                var theme = _themeSettings.GetTheme(themeType);
-                if (theme != null && theme.MainMenuBackground != null)
-                {
-                    if (_menuBackgroundImage != null)
-                    {
-                        _menuBackgroundImage.sprite = theme.MainMenuBackground;
-                    }
-                    else
-                    {
-                        // Fallback: Check if there's a background Image component on root / parent
-                        var bg = transform.parent != null ? transform.parent.Find("Background")?.GetComponent<UnityEngine.UI.Image>() : null;
-                        if (bg != null) bg.sprite = theme.MainMenuBackground;
-                    }
-                }
-            }
-
-            // Update Play Button Sprite based on Level Difficulty
-            if (_themeSettings != null)
-            {
-                var targetDifficulty = level != null ? level.Difficulty : LevelDifficulty.None;
-                var buttonSprite = _themeSettings.GetPlayButtonSprite(targetDifficulty);
-                if (buttonSprite != null)
-                {
-                    if (_playButtonImage != null)
-                    {
-                        _playButtonImage.sprite = buttonSprite;
-                    }
-                    else
-                    {
-                        // Fallback: Check if SeviyeButton or child has an image
-                        var btnImage = GetComponentInChildren<UnityEngine.UI.Image>();
-                        if (btnImage != null && btnImage != _menuBackgroundImage)
-                        {
-                            btnImage.sprite = buttonSprite;
-                        }
-                    }
-                }
+                ApplyBackground(level);
+                ApplyPlayButtonSprite(level);
             }
 
             if (_difficultyText != null)
             {
                 _difficultyText.gameObject.SetActive(false);
+            }
+        }
+
+        private void ApplyBackground(ConveyorLevelDataSO level)
+        {
+            ThemeType themeType = level != null ? level.Theme : ThemeType.Asian;
+            var theme = _themeSettings.GetTheme(themeType);
+            if (theme == null || theme.MainMenuBackground == null) return;
+
+            if (_menuBackgroundImage != null)
+            {
+                _menuBackgroundImage.sprite = theme.MainMenuBackground;
+                return;
+            }
+
+            var bg = transform.parent != null ? transform.parent.Find("Background")?.GetComponent<UnityEngine.UI.Image>() : null;
+            if (bg != null) bg.sprite = theme.MainMenuBackground;
+        }
+
+        private void ApplyPlayButtonSprite(ConveyorLevelDataSO level)
+        {
+            var difficulty = level != null ? level.Difficulty : LevelDifficulty.None;
+            var buttonSprite = _themeSettings.GetPlayButtonSprite(difficulty);
+            if (buttonSprite == null) return;
+
+            if (_playButtonImage != null)
+            {
+                _playButtonImage.sprite = buttonSprite;
+                return;
+            }
+
+            var btnImage = GetComponentInChildren<UnityEngine.UI.Image>();
+            if (btnImage != null && btnImage != _menuBackgroundImage)
+            {
+                btnImage.sprite = buttonSprite;
             }
         }
     }

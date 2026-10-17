@@ -38,11 +38,6 @@ namespace RestaurantLoop.Runtime.Data
             }
         }
 
-        [Header("Logical -> visual offset")]
-        [Tooltip("Seconds the visual layer runs behind the logical layer. The logical grid decides consume/dock " +
-                 "immediately; the visual layer executes that decision this many seconds later.")]
-        public float VisualLagSeconds = 0.05f;
-
         [Header("Queue -> belt entry")] public FlightTuning QueueToBelt = new() { Speed = 12f, ArcHeight = 0.6f };
 
         [Header("Belt -> exit stack")] public FlightTuning BeltToStack = new() { Speed = 8f, ArcHeight = 0.45f };
@@ -51,9 +46,7 @@ namespace RestaurantLoop.Runtime.Data
         public FlightTuning ConsumeToCustomer = new() { Speed = 14f, ArcHeight = 0.8f };
 
         [Header("Serving tray")]
-        [Tooltip("Dispenser <-> belt flight, shared by the tray leaving to catch its food and by its return trip " +
-                 "(lap completed and docked, or food eaten mid-belt) — same feel every time, independent of " +
-                 "how far the hop actually is.")]
+        [Tooltip("Dispenser <-> belt flight, used both when the tray leaves to catch its food and when it returns.")]
         public FlightTuning TrayDispenserFlight = new()
         {
             Speed = 16f, MinDuration = 0.25f, MaxDuration = 0.25f, ArcHeight = 0.35f, ResetRotationOnArrive = false,
@@ -64,8 +57,7 @@ namespace RestaurantLoop.Runtime.Data
         public float BeltSpinYDegreesPerSecond;
 
         [Header("Customer consume reaction")]
-        [Tooltip("Small scale punch played on the customer's model each time a food unit lands on them. " +
-                 "0.05 read as basically invisible in practice — bumped up so a single bite actually registers.")]
+        [Tooltip("Scale punch played on the customer's model each time a food unit lands on them.")]
         public Vector3 ConsumePunchStrength = new(0.2f, 0.2f, 0.2f);
 
         public float ConsumePunchDuration = 0.15f;

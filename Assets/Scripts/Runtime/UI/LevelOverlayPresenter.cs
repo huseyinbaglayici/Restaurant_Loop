@@ -21,6 +21,8 @@ namespace RestaurantLoop.Runtime.UI
 
         private readonly GameObject _topHolder;
 
+        private int _shownCoins = -1;
+
         public LevelOverlayPresenter(
             CurrentLevelProvider currentLevelProvider,
             TextMeshProUGUI levelText,
@@ -61,8 +63,6 @@ namespace RestaurantLoop.Runtime.UI
         }
 
         private void OnCoinsChanged(int coins) => UpdateCoins(coins);
-
-        private int _shownCoins = -1;
 
         // Gains count up with a punch; the first fill and spends just snap.
         private void UpdateCoins(int coins)

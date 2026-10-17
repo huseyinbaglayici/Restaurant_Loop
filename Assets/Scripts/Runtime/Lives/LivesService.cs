@@ -8,7 +8,7 @@ namespace RestaurantLoop.Runtime.Lives
     public class LivesService : IInitializable, ITickable
     {
         public const int DefaultMaxLives = 5;
-        public const int RegenIntervalSeconds = 20 * 60; // 20 minutes (1200 seconds)
+        public const int RegenIntervalSeconds = 20 * 60;
 
         private readonly SaveService _saveService;
         private int _currentLives = DefaultMaxLives;

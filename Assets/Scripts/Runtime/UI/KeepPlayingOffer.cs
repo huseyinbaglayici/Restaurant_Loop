@@ -34,9 +34,7 @@ namespace RestaurantLoop.Runtime.UI
             bool infinite = PowerUpInventoryService.IsInfinitePowerUpsEnabled();
             if (!infinite && !_economyService.TrySpendCoins(Cost)) return false;
 
-            // Belt and hovering food stay in play — every level's supply exactly matches demand, so clearing
-            // them would make it unwinnable. The new slot is what makes room (an item held at the belt end
-            // docks into it right away).
+            // Belt food stays in play: supply exactly matches demand, so clearing it would make the level unwinnable.
             _powerUpService.ActivateExtraTray();
             return true;
         }
