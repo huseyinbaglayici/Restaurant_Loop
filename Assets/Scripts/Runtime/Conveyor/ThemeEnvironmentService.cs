@@ -5,7 +5,7 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    public class EnvironmentController : IInitializable
+    public class ThemeEnvironmentService : IInitializable
     {
         private readonly ConveyorTuning _tuning;
         private readonly ConveyorLevelDataSO _level;
@@ -14,7 +14,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly CameraController _cameraController;
         private GameObject _environmentInstance;
 
-        public EnvironmentController(
+        public ThemeEnvironmentService(
             ConveyorTuning tuning,
             ConveyorLevelDataSO level,
             ConveyorPrefabSettings prefabSettings,

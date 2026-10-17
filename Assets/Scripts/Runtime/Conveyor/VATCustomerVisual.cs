@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
-    // Replaces TestCustomerController now that the customer rig is baked into a Vertex Animation
+    // The customer rig is baked into a Vertex Animation
     // Texture (see VATBaker) instead of skinned + Animator Controller. Customer.prefab uses two
     // different shaders across its parts (body/eyes vs pants/shoes/tshirt/Eyebrow), so the bake is
     // split into two renderers sharing one VAT texture/clip layout — both driven by the same

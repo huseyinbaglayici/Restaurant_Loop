@@ -2592,7 +2592,6 @@ GameObject:
   - component: {fileID: 4749891403205777203}
   - component: {fileID: 5701935824287743867}
   - component: {fileID: 1388477292574354281}
-  - component: {fileID: 9201107405281872773}
   - component: {fileID: 1665896236350373165}
   m_Layer: 0
   m_Name: Customer
@@ -2660,42 +2659,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &9201107405281872773
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8084477697964121175}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b5ec114fae2c1b4381ece3c079c18b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _hairMode: 0
-  _hairVariants:
-  - {fileID: 546319003854764349}
-  _hairParent: {fileID: 2430690780391140956}
-  _hairPrefabs:
-  - {fileID: 0}
-  - {fileID: 919132149155446097, guid: bef15825901026f4d8132bb5ff5dc77f, type: 3}
-  - {fileID: 919132149155446097, guid: a3af4c68cac064a49a8bc3dbe66fa3bc, type: 3}
-  - {fileID: 919132149155446097, guid: 98931a571f33f2d458aac68554c3632f, type: 3}
-  - {fileID: 919132149155446097, guid: de79b1a96dce59f4485bfd7fc800f775, type: 3}
-  _hairColors:
-  - {r: 0.11372549, g: 0.078431375, b: 0.05490196, a: 1}
-  - {r: 0.3372549, g: 0.23529412, b: 0.16862746, a: 1}
-  - {r: 0.85490197, g: 0.41960785, b: 0.1764706, a: 1}
-  - {r: 0.99215686, g: 0.7294118, b: 0.3137255, a: 1}
-  _animator: {fileID: 0}
-  _idleStateName: Idle
-  _randomizeIdleOffset: 1
-  _happyTriggers:
-  - EatSuccess1
-  - EatSuccess2
-  _firstOrderServedTrigger: FirstOrderServed
-  _failTrigger: EatFail
-  _randomizeOnStart: 1
 --- !u!136 &1665896236350373165
 CapsuleCollider:
   m_ObjectHideFlags: 0
