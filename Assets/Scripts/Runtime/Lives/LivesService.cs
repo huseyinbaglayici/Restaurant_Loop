@@ -1,4 +1,5 @@
 using System;
+using RestaurantLoop.Runtime.Save;
 using UnityEngine;
 using Zenject;
 
@@ -6,12 +7,10 @@ namespace RestaurantLoop.Runtime.Lives
 {
     public class LivesService : IInitializable, ITickable
     {
-        public const string LivesSaveKey = "Player_Lives";
-        public const string LastRegenTimeSaveKey = "Player_LastRegenTime";
-
         public const int DefaultMaxLives = 5;
         public const int RegenIntervalSeconds = 20 * 60; // 20 minutes (1200 seconds)
 
+        private readonly SaveService _saveService;
         private int _currentLives = DefaultMaxLives;
         private DateTime _lastRegenTimeUtc = DateTime.UtcNow;
         private float _tickTimer = 0f;
@@ -37,19 +36,17 @@ namespace RestaurantLoop.Runtime.Lives
         public event Action<int> OnLivesChanged;
         public event Action<TimeSpan> OnTimerTick;
 
+        public LivesService(SaveService saveService)
+        {
+            _saveService = saveService;
+        }
+
         public void Initialize()
         {
-            _currentLives = ES3.KeyExists(LivesSaveKey) ? ES3.Load<int>(LivesSaveKey) : DefaultMaxLives;
-
-            if (ES3.KeyExists(LastRegenTimeSaveKey))
-            {
-                long ticks = ES3.Load<long>(LastRegenTimeSaveKey);
-                _lastRegenTimeUtc = new DateTime(ticks, DateTimeKind.Utc);
-            }
-            else
-            {
-                _lastRegenTimeUtc = DateTime.UtcNow;
-            }
+            _currentLives = _saveService.LoadLives(DefaultMaxLives);
+            _lastRegenTimeUtc = _saveService.TryLoadLastRegenTicks(out long ticks)
+                ? new DateTime(ticks, DateTimeKind.Utc)
+                : DateTime.UtcNow;
 
             RecalculateRegeneration();
         }
@@ -127,8 +124,8 @@ namespace RestaurantLoop.Runtime.Lives
 
         private void Save()
         {
-            ES3.Save(LivesSaveKey, _currentLives);
-            ES3.Save(LastRegenTimeSaveKey, _lastRegenTimeUtc.Ticks);
+            _saveService.SaveLives(_currentLives);
+            _saveService.SaveLastRegenTicks(_lastRegenTimeUtc.Ticks);
         }
     }
 }

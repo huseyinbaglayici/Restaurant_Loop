@@ -1,6 +1,6 @@
 using System.Linq;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.Runtime.SceneFlow;
+using RestaurantLoop.Runtime.Save;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -92,12 +92,12 @@ namespace RestaurantLoop.Editor
 
         private static int GetSavedLevelId()
         {
-            return ES3.KeyExists(CurrentLevelProvider.LevelIdKey) ? ES3.Load<int>(CurrentLevelProvider.LevelIdKey) : 1;
+            return new SaveService().LoadCurrentLevelId(1);
         }
 
         public static void ApplyLevel(int levelId)
         {
-            ES3.Save(CurrentLevelProvider.LevelIdKey, levelId);
+            new SaveService().SaveCurrentLevelId(levelId);
             Debug.Log($"[RestaurantLoop] Set Current Saved Level to: Level {levelId}");
         }
     }

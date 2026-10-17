@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Runtime.Save;
 using RestaurantLoop.Runtime.SceneFlow;
 using UnityEngine;
 using Zenject;
@@ -11,6 +12,7 @@ namespace RestaurantLoop.Runtime.Economy
     {
         private readonly PowerUpSettings _settings;
         private readonly CurrentLevelProvider _currentLevelProvider;
+        private readonly SaveService _saveService;
 
         private readonly Dictionary<PowerUpButtonId, int> _counts = new();
 
@@ -19,21 +21,18 @@ namespace RestaurantLoop.Runtime.Economy
 
         public PowerUpInventoryService(
             PowerUpSettings settings,
-            CurrentLevelProvider currentLevelProvider)
+            CurrentLevelProvider currentLevelProvider,
+            SaveService saveService)
         {
             _settings = settings;
             _currentLevelProvider = currentLevelProvider;
+            _saveService = saveService;
         }
 
         public void Initialize()
         {
-            // Load existing counts from save
             foreach (PowerUpButtonId id in Enum.GetValues(typeof(PowerUpButtonId)))
-            {
-                string key = GetCountSaveKey(id);
-                int count = ES3.KeyExists(key) ? ES3.Load<int>(key) : 0;
-                _counts[id] = count;
-            }
+                _counts[id] = _saveService.LoadPowerUpCount(id);
 
             // Check if any rewards/unlocks should be granted for the current player level
             int currentLevelId = _currentLevelProvider?.Current != null ? _currentLevelProvider.Current.LevelId : 1;
@@ -61,7 +60,7 @@ namespace RestaurantLoop.Runtime.Economy
 
             int newCount = GetCount(id) + amount;
             _counts[id] = newCount;
-            ES3.Save(GetCountSaveKey(id), newCount);
+            _saveService.SavePowerUpCount(id, newCount);
 
             OnCountChanged?.Invoke(id, newCount);
             OnInventoryChanged?.Invoke();
@@ -79,7 +78,7 @@ namespace RestaurantLoop.Runtime.Economy
 
             int newCount = current - 1;
             _counts[id] = newCount;
-            ES3.Save(GetCountSaveKey(id), newCount);
+            _saveService.SavePowerUpCount(id, newCount);
 
             OnCountChanged?.Invoke(id, newCount);
             OnInventoryChanged?.Invoke();
@@ -95,7 +94,7 @@ namespace RestaurantLoop.Runtime.Economy
 
             if (def.UnlockOnFirstFail)
             {
-                return ES3.KeyExists($"PowerUp_UnlockedGranted_{id}");
+                return _saveService.IsPowerUpUnlockGranted(id);
             }
 
             return currentLevelId >= def.UnlockLevel;
@@ -110,17 +109,16 @@ namespace RestaurantLoop.Runtime.Economy
             {
                 if (def != null && def.UnlockOnFirstFail)
                 {
-                    string unlockKey = $"PowerUp_UnlockedGranted_{def.Id}";
-                    if (!ES3.KeyExists(unlockKey))
+                    if (!_saveService.IsPowerUpUnlockGranted(def.Id))
                     {
                         if (def.StartingAmount > 0)
                         {
                             int newCount = GetCount(def.Id) + def.StartingAmount;
                             _counts[def.Id] = newCount;
-                            ES3.Save(GetCountSaveKey(def.Id), newCount);
+                            _saveService.SavePowerUpCount(def.Id, newCount);
                             anyGranted = true;
                         }
-                        ES3.Save(unlockKey, true);
+                        _saveService.MarkPowerUpUnlockGranted(def.Id);
                     }
                 }
             }
@@ -145,17 +143,16 @@ namespace RestaurantLoop.Runtime.Economy
                     if (def == null || def.UnlockOnFirstFail) continue;
                     if (currentLevelId >= def.UnlockLevel)
                     {
-                        string unlockKey = $"PowerUp_UnlockedGranted_{def.Id}";
-                        if (!ES3.KeyExists(unlockKey))
+                        if (!_saveService.IsPowerUpUnlockGranted(def.Id))
                         {
                             if (def.StartingAmount > 0)
                             {
                                 int newCount = GetCount(def.Id) + def.StartingAmount;
                                 _counts[def.Id] = newCount;
-                                ES3.Save(GetCountSaveKey(def.Id), newCount);
+                                _saveService.SavePowerUpCount(def.Id, newCount);
                                 anyGranted = true;
                             }
-                            ES3.Save(unlockKey, true);
+                            _saveService.MarkPowerUpUnlockGranted(def.Id);
                         }
                     }
                 }
@@ -169,17 +166,16 @@ namespace RestaurantLoop.Runtime.Economy
                     if (grant == null) continue;
                     if (currentLevelId >= grant.Level)
                     {
-                        string grantKey = $"PowerUp_Grant_L{grant.Level}_{grant.PowerUp}";
-                        if (!ES3.KeyExists(grantKey))
+                        if (!_saveService.IsLevelGrantClaimed(grant.Level, grant.PowerUp))
                         {
                             if (grant.Amount > 0)
                             {
                                 int newCount = GetCount(grant.PowerUp) + grant.Amount;
                                 _counts[grant.PowerUp] = newCount;
-                                ES3.Save(GetCountSaveKey(grant.PowerUp), newCount);
+                                _saveService.SavePowerUpCount(grant.PowerUp, newCount);
                                 anyGranted = true;
                             }
-                            ES3.Save(grantKey, true);
+                            _saveService.MarkLevelGrantClaimed(grant.Level, grant.PowerUp);
                         }
                     }
                 }
@@ -190,7 +186,5 @@ namespace RestaurantLoop.Runtime.Economy
                 OnInventoryChanged?.Invoke();
             }
         }
-
-        private static string GetCountSaveKey(PowerUpButtonId id) => $"PowerUp_Count_{id}";
     }
 }

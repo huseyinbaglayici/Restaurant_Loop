@@ -1,23 +1,28 @@
 using System;
-using UnityEngine;
+using RestaurantLoop.Runtime.Save;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Economy
 {
     public class EconomyService : IInitializable
     {
-        public const string CoinsSaveKey = "Player_Coins";
         public const int DefaultStartingCoins = 150;
 
+        private readonly SaveService _saveService;
         private int _coins;
 
         public int Coins => _coins;
 
         public event Action<int> OnCoinsChanged;
 
+        public EconomyService(SaveService saveService)
+        {
+            _saveService = saveService;
+        }
+
         public void Initialize()
         {
-            _coins = ES3.KeyExists(CoinsSaveKey) ? ES3.Load<int>(CoinsSaveKey) : DefaultStartingCoins;
+            _coins = _saveService.LoadCoins(DefaultStartingCoins);
         }
 
         public void AddCoins(int amount)
@@ -25,7 +30,7 @@ namespace RestaurantLoop.Runtime.Economy
             if (amount <= 0) return;
 
             _coins += amount;
-            Save();
+            _saveService.SaveCoins(_coins);
             OnCoinsChanged?.Invoke(_coins);
         }
 
@@ -35,14 +40,9 @@ namespace RestaurantLoop.Runtime.Economy
             if (_coins < amount) return false;
 
             _coins -= amount;
-            Save();
+            _saveService.SaveCoins(_coins);
             OnCoinsChanged?.Invoke(_coins);
             return true;
-        }
-
-        private void Save()
-        {
-            ES3.Save(CoinsSaveKey, _coins);
         }
     }
 }

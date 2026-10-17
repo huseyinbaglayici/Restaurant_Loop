@@ -14,7 +14,7 @@ namespace RestaurantLoop.Runtime.Installers
         {
             Container.Bind<CurrentLevelProvider>().AsSingle();
             Container.BindInterfacesAndSelfTo<SceneLoader>().AsSingle();
-            Container.BindInterfacesAndSelfTo<SaveManager>().AsSingle();
+            Container.Bind<SaveService>().AsSingle();
             Container.BindInterfacesAndSelfTo<EconomyService>().AsSingle();
             Container.BindInterfacesAndSelfTo<LivesService>().AsSingle();
             Container.BindInterfacesAndSelfTo<PowerUpInventoryService>().AsSingle();

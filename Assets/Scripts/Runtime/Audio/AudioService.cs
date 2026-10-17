@@ -1,5 +1,6 @@
 using System;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Runtime.Save;
 using RestaurantLoop.Runtime.SceneFlow;
 using RestaurantLoop.Runtime.Signals;
 using UnityEngine;
@@ -10,21 +11,22 @@ namespace RestaurantLoop.Runtime.Audio
 {
     public class AudioService : IInitializable
     {
-        private const string PrefsMusicKey = "Audio_MusicVolume";
-        private const string PrefsSfxKey = "Audio_SfxVolume";
+        private const float AmbienceToMusicRatio = 0.4f;
+        private const float ConveyorToSfxRatio = 0.5f;
 
         private readonly SignalBus _signalBus;
         private readonly AudioLibrary _settings;
         private readonly CurrentLevelProvider _currentLevelProvider;
         private readonly ThemeSettings _themeSettings;
+        private readonly SaveService _saveService;
 
         private readonly AudioSource _musicSource;
         private readonly AudioSource _ambienceSource;
         private readonly AudioSource _sfxSource;
         private readonly AudioSource _conveyorSource;
 
-        public float MusicVolume => _settings != null ? _settings.MusicVolume : 1f;
-        public float SfxVolume => _settings != null ? _settings.SfxVolume : 1f;
+        public float MusicVolume { get; private set; }
+        public float SfxVolume { get; private set; }
 
         public event Action<float, float> OnAudioSettingsChanged;
 
@@ -32,70 +34,42 @@ namespace RestaurantLoop.Runtime.Audio
             SignalBus signalBus,
             AudioLibrary settings,
             CurrentLevelProvider currentLevelProvider,
-            ThemeSettings themeSettings)
+            ThemeSettings themeSettings,
+            SaveService saveService)
         {
             _signalBus = signalBus;
             _settings = settings;
             _currentLevelProvider = currentLevelProvider;
             _themeSettings = themeSettings;
+            _saveService = saveService;
 
-            // PlayerPrefs'ten önceden kaydedilmiş değerleri yükle (ilk açılışta full 1.0 varsayılanı)
-            float savedMusic = PlayerPrefs.GetFloat(PrefsMusicKey, 1f);
-            float savedSfx = PlayerPrefs.GetFloat(PrefsSfxKey, 1f);
-
-            if (_settings != null)
-            {
-                _settings.MusicVolume = savedMusic;
-                _settings.AmbienceVolume = savedMusic * 0.4f;
-                _settings.SfxVolume = savedSfx;
-                _settings.ConveyorVolume = savedSfx * 0.5f;
-            }
+            MusicVolume = _saveService.MusicVolume;
+            SfxVolume = _saveService.SfxVolume;
 
             var root = new GameObject("AudioService");
             UnityEngine.Object.DontDestroyOnLoad(root);
 
-            _musicSource = CreateSource(root.transform, "Music", loop: true, volume: _settings != null ? _settings.MusicVolume : 1f);
-            _ambienceSource = CreateSource(root.transform, "Ambience", loop: true, volume: _settings != null ? _settings.AmbienceVolume : 0.4f);
+            _musicSource = CreateSource(root.transform, "Music", loop: true, volume: MusicVolume);
+            _ambienceSource = CreateSource(root.transform, "Ambience", loop: true, volume: MusicVolume * AmbienceToMusicRatio);
             _sfxSource = CreateSource(root.transform, "Sfx", loop: false, volume: 1f);
-            _conveyorSource = CreateSource(root.transform, "Conveyor", loop: true, volume: _settings != null ? _settings.ConveyorVolume : 0.5f);
+            _conveyorSource = CreateSource(root.transform, "Conveyor", loop: true, volume: SfxVolume * ConveyorToSfxRatio);
         }
 
         public void SetMusicVolume(float volume)
         {
-            volume = Mathf.Clamp01(volume); // Full 0.0 to 1.0
-            if (_settings != null)
-            {
-                _settings.MusicVolume = volume;
-                _settings.AmbienceVolume = volume * 0.4f;
-            }
-            if (_musicSource != null)
-            {
-                _musicSource.volume = volume;
-            }
-            if (_ambienceSource != null)
-            {
-                _ambienceSource.volume = volume * 0.4f;
-            }
-            PlayerPrefs.SetFloat(PrefsMusicKey, volume);
-            PlayerPrefs.Save();
+            MusicVolume = Mathf.Clamp01(volume);
+            _musicSource.volume = MusicVolume;
+            _ambienceSource.volume = MusicVolume * AmbienceToMusicRatio;
+            _saveService.MusicVolume = MusicVolume;
 
             OnAudioSettingsChanged?.Invoke(MusicVolume, SfxVolume);
         }
 
         public void SetSfxVolume(float volume)
         {
-            volume = Mathf.Clamp01(volume); // Full 0.0 to 1.0
-            if (_settings != null)
-            {
-                _settings.SfxVolume = volume;
-                _settings.ConveyorVolume = volume * 0.5f;
-            }
-            if (_conveyorSource != null)
-            {
-                _conveyorSource.volume = volume * 0.5f;
-            }
-            PlayerPrefs.SetFloat(PrefsSfxKey, volume);
-            PlayerPrefs.Save();
+            SfxVolume = Mathf.Clamp01(volume);
+            _conveyorSource.volume = SfxVolume * ConveyorToSfxRatio;
+            _saveService.SfxVolume = SfxVolume;
 
             OnAudioSettingsChanged?.Invoke(MusicVolume, SfxVolume);
         }
@@ -188,7 +162,7 @@ namespace RestaurantLoop.Runtime.Audio
         public void PlaySfx(AudioClip clip, float volumeScale = 1f)
         {
             if (clip == null) return;
-            _sfxSource.PlayOneShot(clip, _settings.SfxVolume * volumeScale);
+            _sfxSource.PlayOneShot(clip, SfxVolume * volumeScale);
         }
 
         public void PlayConveyorLoop(AudioClip clip = null)
@@ -200,7 +174,7 @@ namespace RestaurantLoop.Runtime.Audio
 
             _conveyorSource.Stop();
             _conveyorSource.clip = targetClip;
-            _conveyorSource.volume = _settings.ConveyorVolume > 0f ? _settings.ConveyorVolume : Mathf.Clamp01(_settings.SfxVolume * 2f);
+            _conveyorSource.volume = SfxVolume * ConveyorToSfxRatio;
             _conveyorSource.Play();
         }
 

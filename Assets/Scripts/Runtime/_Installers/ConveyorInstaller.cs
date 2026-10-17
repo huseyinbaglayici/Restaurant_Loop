@@ -30,7 +30,7 @@ namespace RestaurantLoop.Runtime.Installers
             if (level == null)
             {
                 Debug.LogError(
-                    "[ConveyorInstaller] CurrentLevelProvider is empty — SaveManager should have resolved a level at boot.");
+                    "[ConveyorInstaller] CurrentLevelProvider is empty — it should have resolved a level from the save at boot.");
                 return;
             }
 

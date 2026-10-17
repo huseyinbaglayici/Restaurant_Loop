@@ -1,5 +1,6 @@
 using System;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Runtime.Save;
 using UnityEngine;
 
 namespace RestaurantLoop.Runtime.SceneFlow
@@ -8,14 +9,14 @@ namespace RestaurantLoop.Runtime.SceneFlow
     /// ProjectContext-scoped. Resolves its initial value in the CONSTRUCTOR, not in
     /// IInitializable.Initialize() — Initialize() runs during Unity's Start(), which is always
     /// after a GameplayScene installer's own InstallBindings() (Awake-time), so it would read a
-    /// stale default. ResolveFromSave() is public so SaveManager.Load() can re-run it later.
+    /// stale default.
     /// </summary>
     public class CurrentLevelProvider
     {
-        public const string LevelIdKey = "CurrentLevelId";
         private const int DefaultLevelId = 1;
 
         private readonly LevelDatabase _levelDatabase;
+        private readonly SaveService _saveService;
         private ConveyorLevelDataSO _current;
 
         public event Action<ConveyorLevelDataSO> OnCurrentLevelChanged;
@@ -33,9 +34,10 @@ namespace RestaurantLoop.Runtime.SceneFlow
             }
         }
 
-        public CurrentLevelProvider(LevelDatabase levelDatabase)
+        public CurrentLevelProvider(LevelDatabase levelDatabase, SaveService saveService)
         {
             _levelDatabase = levelDatabase;
+            _saveService = saveService;
             ResolveFromSave();
         }
 
@@ -48,7 +50,7 @@ namespace RestaurantLoop.Runtime.SceneFlow
             }
             else
             {
-                levelId = ES3.KeyExists(LevelIdKey) ? ES3.Load<int>(LevelIdKey) : DefaultLevelId;
+                levelId = _saveService.LoadCurrentLevelId(DefaultLevelId);
             }
 
             if (_levelDatabase.TryGetLevel(levelId, out var level))

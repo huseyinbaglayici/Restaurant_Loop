@@ -8,11 +8,9 @@ namespace RestaurantLoop.Runtime.Data
         [Header("Music")]
         public AudioClip MenuMusic;
         public AudioClip GameplayMusic;
-        [Range(0f, 1f)] public float MusicVolume = 0.4f;
 
         [Header("Ambience")]
         public AudioClip GameplayAmbience;
-        [Range(0f, 1f)] public float AmbienceVolume = 0.15f;
 
         [Header("SFX")]
         public AudioClip DefaultClickSfx;
@@ -38,8 +36,5 @@ namespace RestaurantLoop.Runtime.Data
         public AudioClip FailSfx;
         [Tooltip("Yeterli para (coin) olmadığında çalacak ses (PowerUp satın alma, Keep Playing vb.)")]
         public AudioClip NotEnoughCoinsSfx;
-        [Range(0f, 1f)] public float SfxVolume = 0.2f;
-        [Tooltip("Konveyör bant sesi ses seviyesi (Varsayılan olarak 2 katı: 0.4f)")]
-        [Range(0f, 1f)] public float ConveyorVolume = 0.4f;
     }
 }

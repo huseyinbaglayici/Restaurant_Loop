@@ -1,5 +1,6 @@
 using System;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Runtime.Save;
 using UnityEditor;
 using UnityEngine;
 
@@ -45,13 +46,12 @@ namespace RestaurantLoop.Editor
         [MenuItem("RestaurantLoop/Test Mode/Grant +10 to All Power-Ups", false, 51)]
         public static void GrantTenToAll()
         {
+            var save = new SaveService();
             foreach (PowerUpButtonId id in Enum.GetValues(typeof(PowerUpButtonId)))
             {
-                string key = $"PowerUp_Count_{id}";
-                int current = ES3.KeyExists(key) ? ES3.Load<int>(key) : 0;
-                int updated = current + 10;
-                ES3.Save(key, updated);
-                ES3.Save($"PowerUp_UnlockedGranted_{id}", true);
+                int updated = save.LoadPowerUpCount(id) + 10;
+                save.SavePowerUpCount(id, updated);
+                save.MarkPowerUpUnlockGranted(id);
                 Debug.Log($"[RestaurantLoop] Granted +10 to {id}. New count: {updated}");
             }
         }
@@ -59,14 +59,9 @@ namespace RestaurantLoop.Editor
         [MenuItem("RestaurantLoop/Test Mode/Reset Power-Up Save Data", false, 52)]
         public static void ResetPowerUpSaveData()
         {
+            var save = new SaveService();
             foreach (PowerUpButtonId id in Enum.GetValues(typeof(PowerUpButtonId)))
-            {
-                string key = $"PowerUp_Count_{id}";
-                if (ES3.KeyExists(key)) ES3.DeleteKey(key);
-
-                string unlockKey = $"PowerUp_UnlockedGranted_{id}";
-                if (ES3.KeyExists(unlockKey)) ES3.DeleteKey(unlockKey);
-            }
+                save.ResetPowerUp(id);
             Debug.Log("[RestaurantLoop] Power-Up save data has been reset.");
         }
     }

@@ -86,7 +86,7 @@ namespace RestaurantLoop.Runtime.SceneFlow
 
         private void OnPlayRequested(PlayRequestedSignal signal)
         {
-            // Null Level means "continue with whatever SaveManager resolved at boot" — only an
+            // Null Level means "continue with whatever CurrentLevelProvider resolved at boot" — only an
             // explicit level-select (future menu) should override it.
             if (signal.Level != null)
                 _currentLevelProvider.Current = signal.Level;

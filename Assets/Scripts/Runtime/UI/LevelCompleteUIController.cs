@@ -68,7 +68,7 @@ namespace RestaurantLoop.Runtime.UI
         private ExitStackAnchor _exitStackAnchor;
         private FoodItemController.Pool _foodPool;
         private SignalBus _signalBus;
-        private SaveManager _saveManager;
+        private SaveService _saveService;
         private CurrentLevelProvider _currentLevelProvider;
         private LevelDatabase _levelDatabase;
         private AudioService _audioService;
@@ -90,7 +90,7 @@ namespace RestaurantLoop.Runtime.UI
             ExitStackAnchor exitStackAnchor,
             FoodItemController.Pool foodPool,
             SignalBus signalBus,
-            SaveManager saveManager,
+            SaveService saveService,
             CurrentLevelProvider currentLevelProvider,
             LevelDatabase levelDatabase,
             AudioService audioService,
@@ -103,7 +103,7 @@ namespace RestaurantLoop.Runtime.UI
             _exitStackAnchor = exitStackAnchor;
             _foodPool = foodPool;
             _signalBus = signalBus;
-            _saveManager = saveManager;
+            _saveService = saveService;
             _currentLevelProvider = currentLevelProvider;
             _levelDatabase = levelDatabase;
             _audioService = audioService;
@@ -580,7 +580,7 @@ namespace RestaurantLoop.Runtime.UI
             int nextLevelId = _currentLevelProvider.Current.LevelId + 1;
             if (!_levelDatabase.TryGetLevel(nextLevelId, out _)) return;
 
-            _saveManager.SetCurrentLevel(nextLevelId);
+            _saveService.SaveCurrentLevelId(nextLevelId);
             _currentLevelProvider.ResolveFromSave();
             _powerUpInventory?.CheckLevelRewards(nextLevelId);
         }

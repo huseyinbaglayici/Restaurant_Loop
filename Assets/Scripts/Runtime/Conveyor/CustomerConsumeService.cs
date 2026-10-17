@@ -281,7 +281,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             if (anyRevealed && _audioService != null && _audioLibrary != null && _audioLibrary.CustomerRevealSfx != null)
             {
-                _audioService.PlaySfx(_audioLibrary.CustomerRevealSfx, _audioLibrary.SfxVolume);
+                _audioService.PlaySfx(_audioLibrary.CustomerRevealSfx);
             }
         }
     }
