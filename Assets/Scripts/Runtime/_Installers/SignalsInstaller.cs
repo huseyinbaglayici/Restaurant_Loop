@@ -31,6 +31,8 @@ namespace RestaurantLoop.Runtime.Installers
             Container.DeclareSignal<BeltClearedSignal>().OptionalSubscriber();
             Container.DeclareSignal<ExitStackOverflowSignal>().OptionalSubscriber();
             Container.DeclareSignal<TrayDispenserRejectedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<LinkedPairPickedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<LinkedPairRejectedSignal>().OptionalSubscriber();
 
             Container.DeclareSignal<TutorialStepActivatedSignal>().OptionalSubscriber();
             Container.DeclareSignal<TutorialEndedSignal>().OptionalSubscriber();

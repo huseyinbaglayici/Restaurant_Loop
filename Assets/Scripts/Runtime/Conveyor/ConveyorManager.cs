@@ -110,6 +110,27 @@ namespace RestaurantLoop.Runtime.Conveyor
             return true;
         }
 
+        // A linked pair lands with its leading half one spacing ahead of the entry cell, so that stretch
+        // of belt has to be clear too — otherwise the leading half would land on top of an item there.
+        private bool CanAcceptPairEntry(float spacing)
+        {
+            if (_entryFlightsInProgress.Count > 0) return false;
+
+            for (int i = 0; i < _items.Count; i++)
+                if (_items[i].Progress < spacing + _tuning.MinEntrySpacing) return false;
+
+            return true;
+        }
+
+        public IEnumerable<FoodItemController> PendingVisuals()
+        {
+            foreach (var pending in _pendingEntries)
+            {
+                yield return pending.Visual;
+                if (pending.Partner != null) yield return pending.Partner.Visual;
+            }
+        }
+
         private void OnFoodBeltEntryLanded(FoodBeltEntryLandedSignal signal) => _entryFlightsInProgress.Remove(signal.ItemId);
 
         // Keep Playing resumed the level: an item still stuck at the belt end must be able to fail it again.
@@ -258,23 +279,23 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             float spacing = _tuning != null && _tuning.LinkedPairBeltSpacing > 0f ? _tuning.LinkedPairBeltSpacing : 1f;
 
-            if (_pendingEntries.Count == 0 && CanAcceptEntry())
+            // The pair lands forward along the belt: A one spacing ahead of the entry cell, B on it. Starting B
+            // behind the entry (negative progress) put it — and its tray — off the belt, on the tray dispenser.
+            if (_pendingEntries.Count == 0 && CanAcceptPairEntry(spacing))
             {
-                AddItem(stackA, visualA, 0f, sourceA, playEntryFlight: true);
-                AddItem(stackB, visualB, -spacing, sourceB, playEntryFlight: true);
+                AddItem(stackA, visualA, spacing, sourceA, playEntryFlight: true, crossFromEntry: true);
+                AddItem(stackB, visualB, 0f, sourceB, playEntryFlight: true);
                 return;
             }
 
-            // Both hover at the same height, B spacing cells behind A along the entry direction — same visual
-            // relationship they'll have once they land, so the pair reads as linked the whole time it waits.
-            var hoverA = _pathWorldPositions[0] + Vector3.up * (_tuning.EntryHoverHeight * (_pendingEntries.Count + 1));
-            Vector3 entryDir = _pathWorldPositions.Count > 1
-                ? _pathWorldPositions[0] - _pathWorldPositions[1]
-                : Vector3.back;
-            var hoverB = hoverA + entryDir * spacing;
+            // Both hover at the same height above the cells they'll land on, so the pair reads as linked the
+            // whole time it waits.
+            var lift = Vector3.up * (_tuning.EntryHoverHeight * (_pendingEntries.Count + 1));
+            var hoverA = SampleWorldPosition(spacing) + lift;
+            var hoverB = _pathWorldPositions[0] + lift;
 
-            var pendingB = new PendingEntry { Stack = stackB, Visual = visualB, HoverWorldPosition = hoverB, EntryProgress = -spacing };
-            var pendingA = new PendingEntry { Stack = stackA, Visual = visualA, HoverWorldPosition = hoverA, EntryProgress = 0f, Partner = pendingB };
+            var pendingB = new PendingEntry { Stack = stackB, Visual = visualB, HoverWorldPosition = hoverB, EntryProgress = 0f };
+            var pendingA = new PendingEntry { Stack = stackA, Visual = visualA, HoverWorldPosition = hoverA, EntryProgress = spacing, Partner = pendingB };
             _pendingEntries.Enqueue(pendingA);
 
             _signalBus.Fire(new FoodQueuedForEntrySignal { Visual = visualA, SourceWorldPosition = sourceA, HoverWorldPosition = hoverA });
@@ -288,7 +309,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             FoodItemController visual,
             float startProgress,
             Vector3 sourceWorldPosition,
-            bool playEntryFlight)
+            bool playEntryFlight,
+            bool crossFromEntry = false)
         {
             var item = new BeltItem
             {
@@ -296,8 +318,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                 Visual = visual,
                 Progress = startProgress,
                 // one below the entry cell so Tick() fires an entry-cell crossing (index 0) on its
-                // very first pass, instead of only becoming eligible once it has already left cell 0
-                LastCrossedIndex = Mathf.FloorToInt(startProgress + 0.5f) - 1
+                // very first pass, instead of only becoming eligible once it has already left cell 0.
+                // A pair's leading half starts ahead of the entry but still passes every cell from 0.
+                LastCrossedIndex = crossFromEntry ? -1 : Mathf.FloorToInt(startProgress + 0.5f) - 1
             };
             _items.Add(item);
 
@@ -446,10 +469,11 @@ namespace RestaurantLoop.Runtime.Conveyor
             // Let waiting entries in now that this frame's movement may have cleared the entry cell.
             // Adding one drops CanAcceptEntry() back to false immediately (its own Progress starts below
             // MinEntrySpacing), so this never lets two in on the same frame.
-            while (_pendingEntries.Count > 0 && CanAcceptEntry())
+            while (_pendingEntries.Count > 0 && CanReleasePending(_pendingEntries.Peek()))
             {
                 var pending = _pendingEntries.Dequeue();
-                AddItem(pending.Stack, pending.Visual, pending.EntryProgress, pending.HoverWorldPosition, playEntryFlight: true);
+                AddItem(pending.Stack, pending.Visual, pending.EntryProgress, pending.HoverWorldPosition, playEntryFlight: true,
+                    crossFromEntry: pending.Partner != null);
 
                 // Partner goes in the same pass, unconditionally — re-checking CanAcceptEntry() here would
                 // always fail (the line above just added an item at Progress 0) and split the pair again.
@@ -457,6 +481,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                     AddItem(pending.Partner.Stack, pending.Partner.Visual, pending.Partner.EntryProgress, pending.Partner.HoverWorldPosition, playEntryFlight: true);
             }
         }
+
+        private bool CanReleasePending(PendingEntry pending) =>
+            pending.Partner != null ? CanAcceptPairEntry(pending.EntryProgress) : CanAcceptEntry();
 
         // peek-only
         public bool TryPeekTypeAt(int pathIndex, out FoodType type)

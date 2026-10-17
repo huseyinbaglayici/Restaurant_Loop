@@ -74,6 +74,17 @@ namespace RestaurantLoop.Runtime.Signals
     // and leaving the second with nowhere to go. CheckDeadlock's full-stack edge trigger already fired
     // (or didn't need to, if an occupant still looked reachable) before this happened, so nothing else
     // catches it. The item is kept waiting at the belt end (never despawned) and docks once a slot frees.
+    // A linked pair was sent to the belt / refused because its partner isn't reachable yet.
+    public class LinkedPairPickedSignal
+    {
+        public int LinkId;
+    }
+
+    public class LinkedPairRejectedSignal
+    {
+        public int LinkId;
+    }
+
     public class ExitStackOverflowSignal
     {
         public int ItemId;

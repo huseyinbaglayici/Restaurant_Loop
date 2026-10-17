@@ -1,3 +1,4 @@
+using DG.Tweening;
 using RestaurantLoop.Runtime.Audio;
 using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Runtime.Signals;
@@ -98,6 +99,9 @@ namespace RestaurantLoop.Runtime.Conveyor
 
                 if (!isBestFront || !isPartnerFront)
                 {
+                    ShakeRejected(bestVisual);
+                    ShakeRejected(partnerVisual);
+                    _signalBus.Fire(new LinkedPairRejectedSignal { LinkId = stack.LinkId });
                     return true;
                 }
 
@@ -131,6 +135,10 @@ namespace RestaurantLoop.Runtime.Conveyor
                 // The queue visuals themselves fly onto the belt — no despawn + respawn snap. Goes through
                 // the pair-atomic entry point so both always land together (1 cell apart) instead of
                 // independently racing the entry-spacing gate and potentially splitting apart.
+                SquashTween.Play(linkedVisual.transform, 0.25f, 0.22f);
+                SquashTween.Play(linkedPartnerVisual.transform, 0.25f, 0.22f);
+                _signalBus.Fire(new LinkedPairPickedSignal { LinkId = stack.LinkId });
+
                 _conveyorManager.AddLinkedPairAtEntry(
                     stack, linkedVisual, linkedVisual.transform.position,
                     partnerVisual.Stack, linkedPartnerVisual, linkedPartnerVisual.transform.position);
@@ -158,6 +166,15 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             _signalBus.Fire(new TutorialActionPerformedSignal
                 { Kind = TutorialHoverTargetKind.QueueLane, QueueLaneIndex = lane, QueueRowIndex = row });
+        }
+
+        // "Not yet": a short sideways shake in screen space, so both halves read as stuck together.
+        private void ShakeRejected(FoodItemController visual)
+        {
+            var itemTransform = visual.transform;
+            itemTransform.DOKill(true);
+            itemTransform.DOPunchPosition(_cameraController.Camera.transform.right * 0.18f, 0.35f, 14, 0.6f)
+                .SetTarget(itemTransform);
         }
 
         private bool TryFindLinkedPartner(int linkId, int excludeLane, int excludeRow, out int partnerLane, out int partnerRow, out FoodItemController partnerVisual)
