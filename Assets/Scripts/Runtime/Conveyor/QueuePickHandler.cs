@@ -49,6 +49,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         // false = the click didn't consume the input, so the exit stack still gets a chance at it.
         public bool TryHandleClick(Camera camera, Vector2 screenPoint)
         {
+            // Shuffle is still dealing items back into their lanes.
+            if (_queueSpawner.IsAnimating) return false;
+
             int bestLane = -1;
             int bestRow = -1;
             FoodItemController bestVisual = null;

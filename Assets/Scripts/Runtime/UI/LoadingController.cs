@@ -1,4 +1,5 @@
 using System.Collections;
+using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Runtime.SceneFlow;
 using RestaurantLoop.Runtime.Signals;
@@ -20,6 +21,7 @@ namespace RestaurantLoop.Runtime.UI
     public class LoadingController : MonoBehaviour
     {
         private const float MinLoadingDuration = 1f;
+        private const float FadeOutDuration = 0.3f;
 
         [SerializeField] private GameObject loadingRoot;
         [SerializeField] private UnityEngine.UI.Image _backgroundImage;
@@ -31,6 +33,7 @@ namespace RestaurantLoop.Runtime.UI
         private ThemeSettings _themeSettings;
         private float _loadingStartedAt;
         private bool _isFirstLoad = true;
+        private CanvasGroup _loadingGroup;
 
         [Inject]
         public void Construct(
@@ -59,6 +62,8 @@ namespace RestaurantLoop.Runtime.UI
 
         private void Awake()
         {
+            _loadingGroup = loadingRoot.GetComponent<CanvasGroup>();
+            if (_loadingGroup == null) _loadingGroup = loadingRoot.AddComponent<CanvasGroup>();
             UpdateBackground();
         }
 
@@ -66,6 +71,9 @@ namespace RestaurantLoop.Runtime.UI
         {
             _loadingStartedAt = Time.time;
             UpdateBackground();
+            _loadingGroup.DOKill();
+            _loadingGroup.alpha = 1f;
+            _loadingGroup.blocksRaycasts = true;
             loadingRoot.SetActive(true);
         }
 
@@ -110,16 +118,24 @@ namespace RestaurantLoop.Runtime.UI
             }
             else
             {
-                loadingRoot.SetActive(false);
-                _isFirstLoad = false;
+                FadeOut();
             }
         }
 
         private IEnumerator HideLoadingAfterDelay(float delay)
         {
             yield return new WaitForSeconds(delay);
-            loadingRoot.SetActive(false);
+            FadeOut();
+        }
+
+        private void FadeOut()
+        {
             _isFirstLoad = false;
+            _loadingGroup.blocksRaycasts = false;
+            _signalBus.Fire<LoadingHiddenSignal>();
+            _loadingGroup.DOKill();
+            _loadingGroup.DOFade(0f, FadeOutDuration).SetUpdate(true).SetTarget(_loadingGroup)
+                .OnComplete(() => loadingRoot.SetActive(false));
         }
     }
 }

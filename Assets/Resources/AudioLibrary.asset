@@ -28,3 +28,5 @@ MonoBehaviour:
   WinSfx: {fileID: 8300000, guid: fc84ae5fec9fcb844a76636e2d1867f2, type: 3}
   FailSfx: {fileID: 8300000, guid: 17bb5916feead7544a3720489e3c70fb, type: 3}
   NotEnoughCoinsSfx: {fileID: 8300000, guid: 85bd6dbce48d98149afbad74bde02e20, type: 3}
+  ShuffleSfx: {fileID: 8300000, guid: f73ea7870852a034e8e363788e2e715e, type: 3}
+  PowerUpSfx: {fileID: 8300000, guid: 3a7672f8f01684c4397dcf25aa2fe10d, type: 3}

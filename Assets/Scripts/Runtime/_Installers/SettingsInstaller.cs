@@ -18,6 +18,7 @@ namespace RestaurantLoop.Runtime.Installers
         [SerializeField] private PowerUpSettings _powerUpSettings;
         [SerializeField] private AudioLibrary _audioLibrary;
         [SerializeField] private CustomerAnimationSet _customerAnimationSet;
+        [SerializeField] private FxSettings _fxSettings;
 
         public override void InstallBindings()
         {
@@ -31,6 +32,7 @@ namespace RestaurantLoop.Runtime.Installers
             Container.BindInstance(_powerUpSettings).AsSingle();
             Container.BindInstance(_audioLibrary).AsSingle();
             Container.BindInstance(_customerAnimationSet).AsSingle();
+            Container.BindInstance(_fxSettings).AsSingle();
         }
     }
 }

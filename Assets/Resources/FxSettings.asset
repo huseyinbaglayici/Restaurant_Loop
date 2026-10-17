@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8572a63e937a5d144ad36e6f36a5d2f4, type: 3}
+  m_Name: FxSettings
+  m_EditorClassIdentifier: 
+  Effects:
+  - Type: 0
+    Prefab: {fileID: 6073891735194678028, guid: 064c608c3a271334299e1fa22913842f,
+      type: 3}
+    Scale: 0.12
+    Prewarm: 1
+  - Type: 1
+    Prefab: {fileID: 8680598818964007281, guid: dcd90c4976197424b9958a7c54b6bb8c,
+      type: 3}
+    Scale: 0.045
+    Prewarm: 8
+  - Type: 2
+    Prefab: {fileID: 8176850701479282271, guid: b219c04f384e7f345bb8ae1fef443965,
+      type: 3}
+    Scale: 0.1
+    Prewarm: 1
+  - Type: 3
+    Prefab: {fileID: 1449242181322416601, guid: 052d5f6cf7d3ebc44bba49fbe653f9a8,
+      type: 3}
+    Scale: 0.08
+    Prewarm: 1

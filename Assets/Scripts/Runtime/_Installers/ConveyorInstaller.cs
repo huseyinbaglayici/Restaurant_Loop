@@ -1,5 +1,6 @@
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Runtime.Effects;
 using RestaurantLoop.Runtime.Tutorial;
 using RestaurantLoop.Runtime.UI;
 using RestaurantLoop.Runtime.SceneFlow;
@@ -68,6 +69,8 @@ namespace RestaurantLoop.Runtime.Installers
             Container.BindInterfacesTo<ConveyorAudio>().AsSingle();
             Container.BindInterfacesAndSelfTo<TrayVisualService>().AsSingle();
             Container.BindInterfacesAndSelfTo<FoodFlightService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<FxService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<QueuePowerUpAnimator>().AsSingle();
             Container.Bind<PowerUpService>().AsSingle();
             Container.Bind<PowerUpPurchaseService>().AsSingle();
             Container.Bind<LevelProgression>().AsSingle();

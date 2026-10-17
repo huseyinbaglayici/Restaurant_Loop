@@ -188,11 +188,24 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
         }
 
+        // Short positional shake for impacts (power-ups); always settles back on the resting position.
+        public void Shake(float strength, float duration)
+        {
+            if (_camera == null) return;
+            var cameraTransform = _camera.transform;
+            cameraTransform.DOKill(true);
+            var rest = cameraTransform.position;
+            cameraTransform.DOShakePosition(duration, new Vector3(strength, strength, 0f), 18, 90f, false, true)
+                .SetTarget(cameraTransform)
+                .OnKill(() => { if (cameraTransform != null) cameraTransform.position = rest; });
+        }
+
         public void FocusOnQueue(bool enabled)
         {
             if (_isFocusedOnQueue == enabled || _camera == null) return;
             _isFocusedOnQueue = enabled;
 
+            _camera.transform.DOKill(true);
             _moveTween?.Kill();
             _orthoTween?.Kill();
 

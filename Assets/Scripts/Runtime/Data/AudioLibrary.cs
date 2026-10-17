@@ -36,5 +36,9 @@ namespace RestaurantLoop.Runtime.Data
         public AudioClip FailSfx;
         [Tooltip("Yeterli para (coin) olmadığında çalacak ses (PowerUp satın alma, Keep Playing vb.)")]
         public AudioClip NotEnoughCoinsSfx;
+        [Tooltip("Shuffle power-up whoosh")]
+        public AudioClip ShuffleSfx;
+        [Tooltip("Pick From Bottom / Extra Tray activation pop")]
+        public AudioClip PowerUpSfx;
     }
 }

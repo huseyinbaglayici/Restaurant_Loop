@@ -226,6 +226,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             _flightService.Launch(visual.transform, TargetPosition, _feel.BeltToStack, () =>
             {
                 _audioService.PlaySfx(_audioLibrary.FoodDropToRackSfx);
+                if (visual != null) SquashTween.Play(visual.transform, 0.22f);
                 _signalBus.Fire(new FoodDockLandedSignal { ItemId = id, Visual = visual });
             });
         }

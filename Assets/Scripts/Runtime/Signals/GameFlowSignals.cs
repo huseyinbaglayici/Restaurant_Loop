@@ -45,4 +45,9 @@ namespace RestaurantLoop.Runtime.Signals
     public class MenuReadySignal
     {
     }
+
+    // Loading overlay started fading out: the scene under it is now visible.
+    public class LoadingHiddenSignal
+    {
+    }
 }

@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using RestaurantLoop.Runtime.Economy;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.SceneFlow;
@@ -61,12 +62,28 @@ namespace RestaurantLoop.Runtime.UI
 
         private void OnCoinsChanged(int coins) => UpdateCoins(coins);
 
+        private int _shownCoins = -1;
+
+        // Gains count up with a punch; the first fill and spends just snap.
         private void UpdateCoins(int coins)
         {
-            if (_moneyText != null)
+            if (_moneyText == null) return;
+
+            int from = _shownCoins;
+            _shownCoins = coins;
+            _moneyText.DOKill(true);
+            _moneyText.transform.DOKill(true);
+
+            if (from < 0 || coins <= from)
             {
                 _moneyText.text = coins.ToString();
+                return;
             }
+
+            int shown = from;
+            DOTween.To(() => shown, value => { shown = value; _moneyText.text = value.ToString(); }, coins, 0.5f)
+                .SetTarget(_moneyText).SetUpdate(true);
+            _moneyText.transform.DOPunchScale(Vector3.one * 0.25f, 0.4f, 6, 0.6f).SetUpdate(true);
         }
 
         private void HandleLevelEnded(bool won)

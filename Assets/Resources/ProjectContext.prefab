@@ -143,3 +143,4 @@ MonoBehaviour:
   _audioLibrary: {fileID: 11400000, guid: 0d1f23cf894e1c54bb6a3d73368ea21e, type: 2}
   _customerAnimationSet: {fileID: 11400000, guid: feefc5a1c8867e84694e14e21d782b5f,
     type: 2}
+  _fxSettings: {fileID: 11400000, guid: bb95e3f96d816aa49b644378459bd52f, type: 2}

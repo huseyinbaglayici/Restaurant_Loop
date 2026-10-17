@@ -1,3 +1,4 @@
+using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 using Zenject;
@@ -56,8 +57,11 @@ namespace RestaurantLoop.Runtime.Conveyor
         public Vector3 TopUnitWorldPosition => _stackBuilder.TopUnitWorldPosition;
 
         // Zenject injects before Awake (the prefab is instantiated inactive), so the settings are ready here.
+        private Vector3 _rootScale = Vector3.one;
+
         private void Awake()
         {
+            _rootScale = transform.localScale;
             _stackBuilder = new FoodStackBuilder(transform, _unitPrefab, _foodMeshSettings, _placement, _tableSettings, _cameraController);
             _queueSprite = new FoodQueueSprite(transform, _foodMeshSettings, _placement, _tableSettings, _cameraController);
             _amountBadge = new FoodAmountBadge(transform, _stackBuilder, _foodMeshSettings, _cameraController);
@@ -78,6 +82,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void OnDespawned()
         {
             if (this == null || gameObject == null) return;
+            // Queue hops / power-up animations tween the root; a pooled item must come back clean.
+            transform.DOKill();
+            transform.localScale = _rootScale;
             _queueSprite.Hide();
             _amountBadge.Hide();
             gameObject.SetActive(false);

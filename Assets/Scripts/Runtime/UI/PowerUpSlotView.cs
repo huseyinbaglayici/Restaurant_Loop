@@ -79,6 +79,7 @@ namespace RestaurantLoop.Runtime.UI
 
         private void ShowBadgeText(string text, Vector2 position)
         {
+            bool changed = _countText.gameObject.activeSelf && _countText.text != text;
             _countText.gameObject.SetActive(true);
             _countText.textWrappingMode = TextWrappingModes.NoWrap;
             _countText.overflowMode = TextOverflowModes.Overflow;
@@ -86,6 +87,12 @@ namespace RestaurantLoop.Runtime.UI
             _countText.text = text;
             _countText.rectTransform.anchoredPosition = position;
             ApplyBadgeStyle(_countText);
+
+            if (changed)
+            {
+                _countText.transform.DOKill(true);
+                _countText.transform.DOPunchScale(Vector3.one * 0.45f, 0.35f, 6, 0.5f).SetUpdate(true);
+            }
         }
 
         private void ApplyBadgeStyle(TMP_Text text)

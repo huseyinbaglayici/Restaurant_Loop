@@ -262,6 +262,10 @@ namespace RestaurantLoop.Runtime.Conveyor
                     newSlotPosition + _tuning.ExtraRackVisualOffset,
                     Quaternion.Euler(_tuning.ExtraRackVisualRotation));
                 _extraRackVisuals.Add(visual);
+
+                var rackScale = visual.transform.localScale;
+                visual.transform.localScale = Vector3.zero;
+                visual.transform.DOScale(rackScale, 0.45f).SetEase(Ease.OutBack, 2.2f).SetTarget(visual.transform);
             }
             else
             {

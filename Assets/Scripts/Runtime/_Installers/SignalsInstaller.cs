@@ -17,6 +17,7 @@ namespace RestaurantLoop.Runtime.Installers
             Container.DeclareSignal<GameplaySceneReadySignal>();
             Container.DeclareSignal<MainMenuReadySignal>();
             Container.DeclareSignal<MenuReadySignal>();
+            Container.DeclareSignal<LoadingHiddenSignal>().OptionalSubscriber();
 
             // conveyor feel layer (logical fires, ConveyorVisualService replays)
             Container.DeclareSignal<FoodQueuedForEntrySignal>().OptionalSubscriber();
