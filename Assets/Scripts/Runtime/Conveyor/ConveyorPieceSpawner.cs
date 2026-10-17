@@ -54,10 +54,8 @@ namespace RestaurantLoop.Runtime.Conveyor
                 if (cell.Shape == ConveyorTileShape.Straight)
                 {
                     var piece = _straightPool.Spawn(position, worldYRotation);
-                    if (theme != null && theme.ConveyorStraightPrefab != null)
-                    {
-                        piece.ApplyThemeVisual(theme.ConveyorStraightPrefab);
-                    }
+                    // Always applied: pooled pieces outlive the scene, null restores the base look.
+                    piece.ApplyThemeVisual(theme != null ? theme.ConveyorStraightPrefab : null);
                     _spawnedStraight.Add(piece);
                 }
                 else
@@ -82,10 +80,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
                     var piece = _cornerPool.Spawn(position, worldYRotation);
                     piece.SetAxisSign(flowSign);
-                    if (theme != null && theme.ConveyorCornerPrefab != null)
-                    {
-                        piece.ApplyThemeVisual(theme.ConveyorCornerPrefab);
-                    }
+                    piece.ApplyThemeVisual(theme != null ? theme.ConveyorCornerPrefab : null);
                     _spawnedCorner.Add(piece);
                 }
             }

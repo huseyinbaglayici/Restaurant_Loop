@@ -20,12 +20,14 @@ namespace RestaurantLoop.Runtime.UI
         public void Construct(AudioService audioService)
         {
             _audioService = audioService;
-            if (_audioService != null)
-            {
-                _audioService.OnAudioSettingsChanged -= HandleAudioSettingsChanged;
-                _audioService.OnAudioSettingsChanged += HandleAudioSettingsChanged;
-                SyncSlidersWithService();
-            }
+            SyncSlidersWithService();
+        }
+
+        // The panel usually starts inactive (OnEnable never runs), so the service subscription only
+        // lives between OnEnable/OnDisable; this is just a safety net for destroy-while-enabled.
+        private void OnDestroy()
+        {
+            if (_audioService != null) _audioService.OnAudioSettingsChanged -= HandleAudioSettingsChanged;
         }
 
         private void Awake()

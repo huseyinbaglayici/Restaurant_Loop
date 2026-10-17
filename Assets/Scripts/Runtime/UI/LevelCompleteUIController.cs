@@ -163,6 +163,8 @@ namespace RestaurantLoop.Runtime.UI
                 _consumeService.OnLevelEnded -= HandleLevelEnded;
             }
             _celebrationSequence?.Kill();
+            // The idle logo pulse loops forever on its own tween, outside the sequence.
+            if (_logoTransform != null) _logoTransform.DOKill();
         }
 
         // Own Canvas with overrideSorting so the logo always draws in front of the confetti
@@ -471,7 +473,6 @@ namespace RestaurantLoop.Runtime.UI
             _panelCompleted.SetActive(true);
 
             UpdateTexts();
-            _levelProgression?.AwardLevelCoins();
 
             if (_audioService != null && _audioLibrary != null && _audioLibrary.WinSfx != null)
             {
@@ -503,6 +504,8 @@ namespace RestaurantLoop.Runtime.UI
 
             _boardCleanup.ClearBeltAndExitStack();
             DestroySpawnedConfetti();
+            // Reward and advance together so leaving on the panel can't replay the level for coins again.
+            _levelProgression.AwardLevelCoins();
             _levelProgression.AdvanceSavedLevel();
 
             _signalBus.Fire<LevelEndedSignal>();

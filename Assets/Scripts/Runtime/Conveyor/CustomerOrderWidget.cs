@@ -71,6 +71,16 @@ namespace RestaurantLoop.Runtime.Conveyor
         private Tween _glowTween;
         private Tween _glowColorTween;
 
+        // Active widgets are destroyed with GameplayScene without being despawned — kill the looping
+        // pulse tweens so they don't keep driving destroyed RectTransforms.
+        private void OnDestroy()
+        {
+            _glowTween?.Kill();
+            _glowColorTween?.Kill();
+            if (_foodImage != null) { _foodImage.transform.DOKill(); _foodImage.DOKill(); }
+            if (_amountText != null) _amountText.transform.DOKill();
+        }
+
         public void OnDespawned()
         {
             if (this == null || gameObject == null) return;

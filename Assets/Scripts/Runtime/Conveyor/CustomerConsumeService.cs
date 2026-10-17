@@ -37,6 +37,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         private int? _lastDockedItemId;
         private int? _pendingDeadlockItemId;
 
+        // OnLevelEnded fires at most once until Keep Playing resumes the level (LevelResumedSignal).
+        private bool _levelEnded;
+
         public event Action<bool> OnLevelEnded;
 
         private static readonly Vector2Int[] Directions =
@@ -84,6 +87,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             _signalBus.Subscribe<FoodDockedSignal>(OnFoodDocked);
             _signalBus.Subscribe<FoodDockLandedSignal>(OnFoodDockLanded);
             _signalBus.Subscribe<ExitStackOverflowSignal>(OnExitStackOverflow);
+            _signalBus.Subscribe<BeltClearedSignal>(OnBeltCleared);
+            _signalBus.Subscribe<LevelResumedSignal>(OnLevelResumed);
         }
 
         public void Dispose()
@@ -91,25 +96,55 @@ namespace RestaurantLoop.Runtime.Conveyor
             _signalBus.TryUnsubscribe<FoodDockedSignal>(OnFoodDocked);
             _signalBus.TryUnsubscribe<FoodDockLandedSignal>(OnFoodDockLanded);
             _signalBus.TryUnsubscribe<ExitStackOverflowSignal>(OnExitStackOverflow);
+            _signalBus.TryUnsubscribe<BeltClearedSignal>(OnBeltCleared);
+            _signalBus.TryUnsubscribe<LevelResumedSignal>(OnLevelResumed);
         }
 
         private void OnFoodDocked(FoodDockedSignal signal) => _lastDockedItemId = signal.ItemId;
 
         private void OnFoodDockLanded(FoodDockLandedSignal signal)
         {
+            if (_lastDockedItemId == signal.ItemId) _lastDockedItemId = null;
             if (_pendingDeadlockItemId != signal.ItemId) return;
 
             _pendingDeadlockItemId = null;
+
+            // Re-checked on landing: a consume, reveal or freed slot during the flight can break the deadlock.
+            if (!IsDeadlocked()) return;
+
             Debug.Log("[CustomerConsumeService] Deadlocked item landed in the exit stack — level failed.");
-            OnLevelEnded?.Invoke(false);
+            EndLevel(false);
         }
 
         // Stack had no free slot at all for this item — unconditional loss, no WouldReach check needed
         // (there's nowhere left to put anything, reachable or not).
         private void OnExitStackOverflow(ExitStackOverflowSignal signal)
         {
+            _pendingDeadlockItemId = null;
             Debug.Log("[CustomerConsumeService] Exit stack overflowed — level failed.");
-            OnLevelEnded?.Invoke(false);
+            EndLevel(false);
+        }
+
+        private void OnBeltCleared() => _pendingDeadlockItemId = null;
+
+        private void OnLevelResumed()
+        {
+            _levelEnded = false;
+            _pendingDeadlockItemId = null;
+
+            // Keep Playing grows the stack, so filling it up again has to count as a new full edge.
+            _wasStackFull = false;
+        }
+
+        private void EndLevel(bool won)
+        {
+            if (_levelEnded) return;
+
+            // Every order is already served — the win arrives with the last consume flight, never fail over it.
+            if (!won && _customerState.RemainingCount == 0) return;
+
+            _levelEnded = true;
+            OnLevelEnded?.Invoke(won);
         }
 
         private List<RayEntry> BuildRay(
@@ -160,26 +195,36 @@ namespace RestaurantLoop.Runtime.Conveyor
             _conveyorManager.ClearCrossings();
 
             bool isStackFull = _exitStackAnchor.OccupiedCount == _exitStackAnchor.SlotCount;
+            if (!isStackFull) _pendingDeadlockItemId = null;
             if (isStackFull && !_wasStackFull) CheckDeadlock();
             _wasStackFull = isStackFull;
         }
 
         private void CheckDeadlock()
         {
-            for (int i = 0; i < _exitStackAnchor.SlotCount; i++)
-            {
-                if (!_exitStackAnchor.TryGetOccupant(i, out var occupant)) continue;
-                if (WouldReach(occupant.Stack.Type)) return;
-            }
+            if (_levelEnded || !IsDeadlocked()) return;
 
             Debug.Log("[CustomerConsumeService] Exit stack full and no occupant is reachable.");
 
             // Wait for the item that just filled the stack to actually finish flying into its slot before
             // telling the player the level failed — firing this the instant the dock is decided (same
             // frame, before FoodFlightService has moved it) shows the fail panel while the item is still
-            // sitting back at the belt end.
+            // sitting back at the belt end. _lastDockedItemId is cleared once that flight lands.
             if (_lastDockedItemId.HasValue) _pendingDeadlockItemId = _lastDockedItemId;
-            else OnLevelEnded?.Invoke(false);
+            else EndLevel(false);
+        }
+
+        private bool IsDeadlocked()
+        {
+            if (_exitStackAnchor.OccupiedCount < _exitStackAnchor.SlotCount) return false;
+
+            for (int i = 0; i < _exitStackAnchor.SlotCount; i++)
+            {
+                if (!_exitStackAnchor.TryGetOccupant(i, out var occupant)) continue;
+                if (WouldReach(occupant.Stack.Type)) return false;
+            }
+
+            return true;
         }
 
         // could this type, injected at the belt entry right now, reach an unblocked matching customer?
@@ -263,7 +308,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             RevealHiddenNeighbors(coord);
         }
 
-        public void NotifyLevelWon() => OnLevelEnded?.Invoke(true);
+        public void NotifyLevelWon() => EndLevel(true);
 
         private void RevealHiddenNeighbors(Vector2Int coord)
         {

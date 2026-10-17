@@ -46,8 +46,7 @@ namespace RestaurantLoop.Runtime.UI
             _economyService.AddCoins(GetRewardCoins(_currentLevelProvider.Current.Difficulty));
         }
 
-        // Only commits if the next id actually exists — otherwise this was the last level, so
-        // progress stays put instead of saving a level id the database can't resolve on next boot.
+        // After the last level, progress wraps to the first non-tutorial level so the player keeps playing.
         public void AdvanceSavedLevel()
         {
             if (_currentLevelProvider.Current == null) return;
@@ -63,11 +62,23 @@ namespace RestaurantLoop.Runtime.UI
             }
 
             int nextLevelId = _currentLevelProvider.Current.LevelId + 1;
-            if (!_levelDatabase.TryGetLevel(nextLevelId, out _)) return;
+            if (!_levelDatabase.TryGetLevel(nextLevelId, out _) && !TryGetFirstReplayLevelId(out nextLevelId)) return;
 
             _saveService.SaveCurrentLevelId(nextLevelId);
             _currentLevelProvider.ResolveFromSave();
             _powerUpInventory.CheckLevelRewards(nextLevelId);
+        }
+
+        private bool TryGetFirstReplayLevelId(out int levelId)
+        {
+            levelId = int.MaxValue;
+            foreach (var level in _levelDatabase.Levels)
+            {
+                if (level == null || level.IsTutorial) continue;
+                if (level.LevelId < levelId) levelId = level.LevelId;
+            }
+
+            return levelId != int.MaxValue;
         }
 
         // First fail unlocks the "unlock on first fail" power-ups.

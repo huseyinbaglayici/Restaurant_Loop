@@ -4,45 +4,40 @@ using RestaurantLoop.Runtime.Lives;
 
 namespace RestaurantLoop.Runtime.UI
 {
-    // The "Keep Playing" offer after a fail: pay coins to continue with a clear belt and an extra tray, or decline and lose a life.
+    // The "Keep Playing" offer after a fail: pay coins to continue with an extra exit-stack slot, or decline and lose a life.
     public class KeepPlayingOffer
     {
         public const int Cost = 300;
 
         private readonly EconomyService _economyService;
         private readonly LivesService _livesService;
-        private readonly ConveyorManager _conveyorManager;
         private readonly PowerUpService _powerUpService;
-        private readonly ConveyorAutoClearService _autoClearService;
 
         public KeepPlayingOffer(
             EconomyService economyService,
             LivesService livesService,
-            ConveyorManager conveyorManager,
-            PowerUpService powerUpService,
-            ConveyorAutoClearService autoClearService)
+            PowerUpService powerUpService)
         {
             _economyService = economyService;
             _livesService = livesService;
-            _conveyorManager = conveyorManager;
             _powerUpService = powerUpService;
-            _autoClearService = autoClearService;
         }
 
-        // False when the player can't afford it; nothing changes on the board then.
+        // The extra slot is the whole offer — once it's used up, a fail goes straight to Level Failed.
+        public bool IsAvailable => _powerUpService.CanActivateExtraTray();
+
+        // False when the offer isn't available or the player can't afford it; nothing changes on the board then.
         public bool TryAccept()
         {
+            if (!IsAvailable) return false;
+
             bool infinite = PowerUpInventoryService.IsInfinitePowerUpsEnabled();
             if (!infinite && !_economyService.TrySpendCoins(Cost)) return false;
 
-            _conveyorManager.ClearBelt();
-            _powerUpService.ActivateExtraTray(); // Extra Tray power-up: adds another slot each time Keep Playing is used.
-
-            // ClearBelt() zeroes ReservedItemCount, which can make ConveyorAutoClearService think the
-            // (still deadlocked) exit stack now "fits" and guarantees a win — yanking every occupant back
-            // onto the belt right as the player resumes. The level already failed once; don't let it be
-            // silently auto-solved out from under a manual Keep Playing continuation.
-            _autoClearService.Disable();
+            // Belt and hovering food stay in play — every level's supply exactly matches demand, so clearing
+            // them would make it unwinnable. The new slot is what makes room (an item held at the belt end
+            // docks into it right away).
+            _powerUpService.ActivateExtraTray();
             return true;
         }
 

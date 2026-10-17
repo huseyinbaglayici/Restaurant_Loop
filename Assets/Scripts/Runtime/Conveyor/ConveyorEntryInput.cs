@@ -1,3 +1,4 @@
+using UnityEngine;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
@@ -18,6 +19,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Tick()
         {
+            // Fail / complete / keep-playing panels pause the game; the board must not react under them.
+            if (Time.timeScale <= 0f) return;
             if (!_pointer.TryGetClick(out var camera, out var screenPoint)) return;
 
             if (_queuePick.TryHandleClick(camera, screenPoint)) return;

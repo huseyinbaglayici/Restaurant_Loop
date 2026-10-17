@@ -19,6 +19,9 @@ namespace RestaurantLoop.Runtime.Conveyor
             public FoodItemController Visual;
             public float Progress;
             public int LastCrossedIndex;
+
+            // Waiting at the belt end for a free exit-stack slot; the overflow fail was already reported.
+            public bool OverflowReported;
         }
 
         // A click that can't enter yet (MinEntrySpacing not clear) — already detached from its queue/exit-
@@ -109,6 +112,12 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void OnFoodBeltEntryLanded(FoodBeltEntryLandedSignal signal) => _entryFlightsInProgress.Remove(signal.ItemId);
 
+        // Keep Playing resumed the level: an item still stuck at the belt end must be able to fail it again.
+        private void OnLevelResumed()
+        {
+            for (int i = 0; i < _items.Count; i++) _items[i].OverflowReported = false;
+        }
+
         // Mirrors QueueSpawner.TryGetVisual so callers (e.g. QueueLinkVisualizer) can enumerate belt
         // items the same way they enumerate queue items, without exposing the BeltItem type itself.
         public FoodItemController GetVisualAt(int index) => _items[index].Visual;
@@ -142,6 +151,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void Initialize()
         {
             _signalBus.Subscribe<FoodBeltEntryLandedSignal>(OnFoodBeltEntryLanded);
+            _signalBus.Subscribe<LevelResumedSignal>(OnLevelResumed);
 
             var orderedPath = _level.BakedPath.OrderedPath;
             if (orderedPath.Count == 0)
@@ -308,6 +318,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         // cleared by ConsumeService, not here
         public void ClearCrossings() => _crossingsThisFrame.Clear();
 
+        // Teardown only (won level) — it despawns food, and every level's supply exactly matches demand.
         public void ClearBelt()
         {
             for (int i = _items.Count - 1; i >= 0; i--)
@@ -405,15 +416,21 @@ namespace RestaurantLoop.Runtime.Conveyor
                             SlotIndex = slotIndex,
                             SlotWorldPosition = _exitStackAnchor.GetFoodPosition(slotIndex)
                         });
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[ConveyorManager] Exit stack is full — item despawned.");
-                        _signalBus.Fire(new ExitStackOverflowSignal { ItemId = item.Id });
-                        _foodPool.Despawn(item.Visual);
+
+                        _items.RemoveAt(i);
+                        continue;
                     }
 
-                    _items.RemoveAt(i);
+                    // No free slot: the item waits at the belt end instead of being despawned (losing food
+                    // makes the level unwinnable) and docks as soon as a slot frees up, e.g. Keep Playing's
+                    // extra slot. The fail is reported once per stall.
+                    item.Progress = lastIndex;
+                    if (!item.OverflowReported)
+                    {
+                        item.OverflowReported = true;
+                        Debug.LogWarning("[ConveyorManager] Exit stack is full — item held at the belt end.");
+                        _signalBus.Fire(new ExitStackOverflowSignal { ItemId = item.Id });
+                    }
                     continue;
                 }
 
@@ -518,6 +535,10 @@ namespace RestaurantLoop.Runtime.Conveyor
                             }
                         }
 
+                        // The half that emptied first may have ridden to the end and docked with 0 left —
+                        // release that slot along with this one instead of stranding it in the exit stack.
+                        if (partnerVisual == null) partnerVisual = TakeEmptyLinkedHalfFromExitStack(linkId, visual);
+
                         for (int j = _items.Count - 1; j >= 0; j--)
                         {
                             if (_items[j].Visual != null && _items[j].Visual.Stack.LinkId == linkId)
@@ -547,6 +568,21 @@ namespace RestaurantLoop.Runtime.Conveyor
             return 0;
         }
 
+        private FoodItemController TakeEmptyLinkedHalfFromExitStack(int linkId, FoodItemController exclude)
+        {
+            for (int i = 0; i < _exitStackAnchor.SlotCount; i++)
+            {
+                if (!_exitStackAnchor.TryGetOccupant(i, out var occupant)) continue;
+                if (occupant == exclude || occupant.Stack.LinkId != linkId || occupant.Stack.Amount > 0) continue;
+
+                _exitStackAnchor.TryRemoveFromSlot(i, out occupant);
+                _exitStackAnchor.CompactSlots();
+                return occupant;
+            }
+
+            return null;
+        }
+
         public Vector3 SampleWorldPosition(float progress)
         {
             int count = _pathWorldPositions.Count;
@@ -569,6 +605,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void Dispose()
         {
             _signalBus.TryUnsubscribe<FoodBeltEntryLandedSignal>(OnFoodBeltEntryLanded);
+            _signalBus.TryUnsubscribe<LevelResumedSignal>(OnLevelResumed);
 
             foreach (var item in _items) _foodPool.Despawn(item.Visual);
             _items.Clear();

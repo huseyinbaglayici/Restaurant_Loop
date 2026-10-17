@@ -67,6 +67,16 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public int GetLaneCount(int lane) => (lane >= 0 && lane < _lanes.Count) ? _lanes[lane].Count : 0;
 
+        public int TotalCount
+        {
+            get
+            {
+                int total = 0;
+                foreach (var lane in _lanes) total += lane.Count;
+                return total;
+            }
+        }
+
         public bool TryGetVisual(int lane, int row, out FoodItemController visual)
         {
             if (lane < 0 || lane >= _lanes.Count || row < 0 || row >= _lanes[lane].Count)
@@ -100,27 +110,48 @@ namespace RestaurantLoop.Runtime.Conveyor
             return true;
         }
 
-        // Shuffle power-up: flattens every lane, shuffles, then redeals round-robin.
-        // Tick() picks up the new order next frame and animates each visual to its new slot.
+        // Shuffle power-up: flattens every lane, shuffles, then redeals each item to the shortest lane.
+        // Linked partners move as one unit and stay back-to-back in the same lane, so a pair is always
+        // pickable once it reaches the front. Tick() animates each visual to its new slot next frame.
         public void ShuffleLanes()
         {
             if (_lanes.Count == 0) return;
 
-            var all = new List<FoodItemController>();
+            var units = new List<List<FoodItemController>>();
+            var unitByLinkId = new Dictionary<int, List<FoodItemController>>();
             foreach (var lane in _lanes)
             {
-                all.AddRange(lane);
+                foreach (var visual in lane)
+                {
+                    int linkId = visual.Stack.LinkId;
+                    if (linkId != 0 && unitByLinkId.TryGetValue(linkId, out var linkedUnit))
+                    {
+                        linkedUnit.Add(visual);
+                        continue;
+                    }
+
+                    var unit = new List<FoodItemController> { visual };
+                    units.Add(unit);
+                    if (linkId != 0) unitByLinkId[linkId] = unit;
+                }
+
                 lane.Clear();
             }
 
-            for (int i = 0; i < all.Count; i++)
+            for (int i = 0; i < units.Count; i++)
             {
-                int randomIndex = UnityEngine.Random.Range(i, all.Count);
-                (all[i], all[randomIndex]) = (all[randomIndex], all[i]);
+                int randomIndex = UnityEngine.Random.Range(i, units.Count);
+                (units[i], units[randomIndex]) = (units[randomIndex], units[i]);
             }
 
-            for (int i = 0; i < all.Count; i++)
-                _lanes[i % _lanes.Count].Add(all[i]);
+            foreach (var unit in units)
+            {
+                int target = 0;
+                for (int lane = 1; lane < _lanes.Count; lane++)
+                    if (_lanes[lane].Count < _lanes[target].Count) target = lane;
+
+                _lanes[target].AddRange(unit);
+            }
         }
 
         public void Dispose()

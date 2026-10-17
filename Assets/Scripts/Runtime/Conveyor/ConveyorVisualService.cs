@@ -24,6 +24,13 @@ namespace RestaurantLoop.Runtime.Conveyor
             public bool IsEnteringBelt;
         }
 
+        private class ConsumeFlight
+        {
+            public Transform Transform;
+            public Func<Vector3> Target;
+            public Action Arrive;
+        }
+
         private readonly SignalBus _signalBus;
         private readonly ConveyorManager _conveyorManager;
         private readonly ConveyorTuning _tuning;
@@ -42,6 +49,10 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         // Visuals the logical layer handed over (in flight to a customer) — this service despawns them.
         private readonly HashSet<FoodItemController> _ownedVisuals = new();
+
+        // Food -> customer flights still in the air. The logical layer already counted these serves, so a
+        // belt clear lands them instantly instead of dropping them (see OnBeltCleared).
+        private readonly List<ConsumeFlight> _consumeFlights = new();
 
         // ConveyorAudio keeps the belt loop playing while this is true.
         public bool HasBeltVisuals => _beltVisuals.Count > 0;
@@ -95,6 +106,7 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _flightService.CancelAll();
             _beltVisuals.Clear();
+            _consumeFlights.Clear();
             DespawnOwnedVisuals();
             ConveyorPieceController.GlobalSpeedMultiplier = 1f;
         }
@@ -268,11 +280,23 @@ namespace RestaurantLoop.Runtime.Conveyor
             flyer.SetAmountBadgeVisible(false);
             _ownedVisuals.Add(flyer);
 
-            _flightService.Launch(
+            LaunchConsumeFlight(
                 flyer.transform,
                 () => ResolveCustomerHandoffPosition(coord, flyer.transform.position),
-                _feel.ConsumeToCustomer,
                 () => OnConsumeFlightArrived(flyer, flyer.transform.position, coord, takenStack, serveResult, levelWon, fullyConsumed));
+        }
+
+        private void LaunchConsumeFlight(Transform target, Func<Vector3> targetPosition, Action onArrive)
+        {
+            var flight = new ConsumeFlight { Transform = target, Target = targetPosition };
+            flight.Arrive = () =>
+            {
+                if (!_consumeFlights.Remove(flight)) return; // already landed via OnBeltCleared
+                onArrive();
+            };
+
+            _consumeFlights.Add(flight);
+            _flightService.Launch(target, targetPosition, _feel.ConsumeToCustomer, flight.Arrive);
         }
 
         // Beverage rack (icecek_stack): fixed base + several pre-placed single-drink children. Rather than
@@ -304,10 +328,9 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return;
             }
 
-            _flightService.Launch(
+            LaunchConsumeFlight(
                 child,
                 () => ResolveCustomerHandoffPosition(coord, child.position),
-                _feel.ConsumeToCustomer,
                 () =>
                 {
                     var worldPosition = child.position;
@@ -412,6 +435,19 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void OnBeltCleared()
         {
+            // Consume flights land instantly: the serve already happened logically, and its arrival is what
+            // updates the customer (and reports the win) — dropping it would leave that undone.
+            var landingNow = _consumeFlights.ToArray();
+            foreach (var flight in landingNow)
+            {
+                if (flight.Transform != null)
+                {
+                    _flightService.Cancel(flight.Transform);
+                    flight.Transform.position = flight.Target();
+                }
+                flight.Arrive();
+            }
+
             // Scoped to belt/owned visuals only — a global CancelAll() would also freeze an
             // already-docked item's BeltToStack flight mid-flight (dock happens, then a same-frame
             // deadlock can pause the game before the flight lands), stranding its visual on the belt

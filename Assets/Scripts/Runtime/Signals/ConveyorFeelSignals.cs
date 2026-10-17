@@ -73,7 +73,7 @@ namespace RestaurantLoop.Runtime.Signals
     // occupied) — e.g. a linked pair docks two items in one tick, filling the last slot with the first
     // and leaving the second with nowhere to go. CheckDeadlock's full-stack edge trigger already fired
     // (or didn't need to, if an occupant still looked reachable) before this happened, so nothing else
-    // catches it — without this signal the item is just despawned and the level silently never fails.
+    // catches it. The item is kept waiting at the belt end (never despawned) and docks once a slot frees.
     public class ExitStackOverflowSignal
     {
         public int ItemId;

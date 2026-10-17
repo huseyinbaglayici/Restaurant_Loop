@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 using Zenject;
 using RestaurantLoop.Runtime.Signals;
 using RestaurantLoop.Runtime.Data;
+using RestaurantLoop.Runtime.Lives;
 
 namespace RestaurantLoop.Runtime.SceneFlow
 {
@@ -10,13 +11,15 @@ namespace RestaurantLoop.Runtime.SceneFlow
     {
         private readonly SignalBus _signalBus;
         private readonly CurrentLevelProvider _currentLevelProvider;
+        private readonly LivesService _livesService;
 
         private AsyncOperation _pendingUnload;
 
-        public SceneLoader(SignalBus signalBus, CurrentLevelProvider currentLevelProvider)
+        public SceneLoader(SignalBus signalBus, CurrentLevelProvider currentLevelProvider, LivesService livesService)
         {
             _signalBus = signalBus;
             _currentLevelProvider = currentLevelProvider;
+            _livesService = livesService;
         }
 
         public void Initialize()
@@ -25,9 +28,16 @@ namespace RestaurantLoop.Runtime.SceneFlow
             _signalBus.Subscribe<PlayRequestedSignal>(OnPlayRequested);
             _signalBus.Subscribe<RestartLevelSignal>(OnRestartRequested);
 
-            // Cold boot only: MainMenuScene just finished loading. Continue straight on into
-            // GameplayScene under the same loading screen — the player never sees the menu.
-            _signalBus.Subscribe<MainMenuReadySignal>(LoadGameplayScene);
+            _signalBus.Subscribe<MainMenuReadySignal>(OnMainMenuReady);
+        }
+
+        // Cold boot only: MainMenuScene just finished loading. Continue straight on into GameplayScene
+        // under the same loading screen — unless the player is out of lives, then the menu (with its
+        // refill timer) is shown instead of a free attempt.
+        private void OnMainMenuReady()
+        {
+            if (_livesService.HasLives) LoadGameplayScene();
+            else _signalBus.Fire<MenuReadySignal>();
         }
 
         public void LoadGameplayScene()

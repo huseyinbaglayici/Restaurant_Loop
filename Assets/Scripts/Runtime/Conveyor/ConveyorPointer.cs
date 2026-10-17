@@ -1,4 +1,8 @@
+using System.Collections.Generic;
+using RestaurantLoop.Runtime.Tutorial;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
@@ -8,6 +12,8 @@ namespace RestaurantLoop.Runtime.Conveyor
     {
         private readonly CameraController _cameraController;
         private readonly Camera _camera;
+
+        private static readonly List<RaycastResult> UiHits = new();
 
         private bool _wasMouseDown;
 
@@ -32,7 +38,26 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (camera == null) return false;
 
             screenPoint = Input.mousePosition;
-            return true;
+            return !IsOverBlockingUi(screenPoint);
+        }
+
+        // A press on a HUD button or popup must not also pick the food behind it. Tutorial overlays and
+        // world-space canvases (tray counter) are ignored: the tutorial gate decides those clicks.
+        private static bool IsOverBlockingUi(Vector2 screenPoint)
+        {
+            var eventSystem = EventSystem.current;
+            if (eventSystem == null) return false;
+
+            UiHits.Clear();
+            eventSystem.RaycastAll(new PointerEventData(eventSystem) { position = screenPoint }, UiHits);
+            foreach (var hit in UiHits)
+            {
+                if (hit.module is GraphicRaycaster raycaster && raycaster.GetComponent<Canvas>().renderMode == RenderMode.WorldSpace) continue;
+                if (hit.gameObject.GetComponentInParent<TutorialView>(true) != null) continue;
+                return true;
+            }
+
+            return false;
         }
 
         public static float ScreenDistance(Camera camera, Vector3 worldPoint, Vector2 screenPoint)

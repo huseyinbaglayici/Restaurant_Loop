@@ -36,6 +36,10 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private readonly List<int> _traylessIds = new();
 
+        // Loop mode re-enters the same visual under a new id; its tray waits here until that happens.
+        private readonly Dictionary<int, FoodItemController> _visualsById = new();
+        private readonly Dictionary<FoodItemController, TrayController> _loopedTrays = new();
+
         private readonly Queue<DeferredCommand> _deferred = new();
 
         public TrayVisualService(
@@ -58,6 +62,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             _signalBus.Subscribe<FoodEnteredBeltSignal>(OnFoodEnteredBelt);
             _signalBus.Subscribe<FoodDockedSignal>(OnFoodDocked);
+            _signalBus.Subscribe<FoodLoopedSignal>(OnFoodLooped);
             _signalBus.Subscribe<FoodConsumedSignal>(OnFoodConsumed);
             _signalBus.Subscribe<BeltClearedSignal>(OnBeltCleared);
         }
@@ -66,6 +71,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             _signalBus.TryUnsubscribe<FoodEnteredBeltSignal>(OnFoodEnteredBelt);
             _signalBus.TryUnsubscribe<FoodDockedSignal>(OnFoodDocked);
+            _signalBus.TryUnsubscribe<FoodLoopedSignal>(OnFoodLooped);
             _signalBus.TryUnsubscribe<FoodConsumedSignal>(OnFoodConsumed);
             _signalBus.TryUnsubscribe<BeltClearedSignal>(OnBeltCleared);
 
@@ -109,6 +115,14 @@ namespace RestaurantLoop.Runtime.Conveyor
             int id = signal.ItemId;
             if (signal.Visual == null) return;
 
+            _visualsById[id] = signal.Visual;
+
+            if (_loopedTrays.Remove(signal.Visual, out var loopedTray) && loopedTray != null)
+            {
+                StartTrayEntry(id, loopedTray);
+                return;
+            }
+
             if (!_trayAnchor.TryAcquire(out var tray))
             {
                 _traylessIds.Add(id);
@@ -143,6 +157,27 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         private void OnFoodDocked(FoodDockedSignal signal) => HandleItemLeavingBelt(signal.ItemId);
 
+        // The old id is gone; keep its tray for the same visual's re-entry under the new id.
+        private void OnFoodLooped(FoodLoopedSignal signal)
+        {
+            int id = signal.ItemId;
+            _traylessIds.Remove(id);
+            _ridingIds.Remove(id);
+            _visualsById.Remove(id, out var visual);
+
+            if (!_rides.Remove(id, out var tray) || tray == null) return;
+
+            _flightService.Cancel(tray.transform);
+
+            if (visual != null)
+            {
+                _loopedTrays[visual] = tray;
+                return;
+            }
+
+            ReleaseTray(tray);
+        }
+
         private void OnFoodConsumed(FoodConsumedSignal signal)
         {
             if (!signal.ItemFullyConsumed) return;
@@ -158,6 +193,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private void HandleItemLeavingBelt(int id)
         {
             _traylessIds.Remove(id);
+            _visualsById.Remove(id);
 
             if (!_rides.TryGetValue(id, out var tray)) return;
             _rides.Remove(id);
@@ -165,7 +201,12 @@ namespace RestaurantLoop.Runtime.Conveyor
             if (tray == null) return;
 
             _flightService.Cancel(tray.transform);
+            ReleaseTray(tray);
+        }
 
+        // Hands the tray to the oldest trayless item, or flies it back to the dispenser.
+        private void ReleaseTray(TrayController tray)
+        {
             if (_traylessIds.Count > 0)
             {
                 int waitingId = _traylessIds[0];
@@ -212,9 +253,17 @@ namespace RestaurantLoop.Runtime.Conveyor
                 _flightService.Cancel(tray.transform);
             }
 
+            foreach (var tray in _loopedTrays.Values)
+            {
+                if (tray == null) continue;
+                _flightService.Cancel(tray.transform);
+            }
+
             _rides.Clear();
             _ridingIds.Clear();
             _traylessIds.Clear();
+            _visualsById.Clear();
+            _loopedTrays.Clear();
             _trayAnchor.ResetAll();
         }
     }

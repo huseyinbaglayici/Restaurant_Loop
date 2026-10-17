@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using RestaurantLoop.Runtime.Audio;
 using RestaurantLoop.Runtime.Data;
 using Zenject;
@@ -24,7 +25,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Tick()
         {
-            if (_visualService.HasBeltVisuals)
+            // Paused under a fail/complete panel: the belt is frozen, so stay silent.
+            if (_visualService.HasBeltVisuals && Time.timeScale > 0f)
             {
                 _audioService.PlayConveyorLoop(_audioLibrary.ConveyorLoopSfx);
             }

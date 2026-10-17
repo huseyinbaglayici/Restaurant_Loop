@@ -50,11 +50,24 @@ namespace RestaurantLoop.Runtime.UI
         public bool CanUseEffect(PowerUpButtonId id) =>
             id != PowerUpButtonId.ExtraTray || _powerUpService.CanActivateExtraTray();
 
+        // Checked on click only, so the button never greys out on a state no refresh event would undo.
+        // Blocks a charge or coins being spent on a shuffle that changes nothing or a second Pick From Bottom.
+        private bool WouldHaveEffectNow(PowerUpButtonId id) => id switch
+        {
+            PowerUpButtonId.Shuffle => _powerUpService.CanActivateShuffle(),
+            PowerUpButtonId.PickFromBottom => _powerUpService.CanActivatePickFromBottom(),
+            _ => true
+        };
+
+        // A tutorial step waiting on this button gets it for free, so the step can never soft-lock.
+        private bool IsTutorialPress(PowerUpButtonId id) => _gate.IsPowerUpRequired(id);
+
         public bool IsUsable(PowerUpButtonId id) =>
-            IsUnlocked(id) && _gate.CanClickPowerUpButton(id) && CanUseEffect(id);
+            IsUnlocked(id) && _gate.CanClickPowerUpButton(id) && CanUseEffect(id) &&
+            (IsTutorialPress(id) || WouldHaveEffectNow(id));
 
         public bool NeedsPurchase(PowerUpButtonId id) =>
-            GetCount(id) <= 0 && !PowerUpInventoryService.IsInfinitePowerUpsEnabled();
+            !IsTutorialPress(id) && GetCount(id) <= 0 && !PowerUpInventoryService.IsInfinitePowerUpsEnabled();
 
         // Buys one charge into the inventory. False when the player can't afford it.
         public bool TryBuy(PowerUpButtonId id)
@@ -66,16 +79,20 @@ namespace RestaurantLoop.Runtime.UI
         }
 
         // Spends one charge and runs the effect. Extra Tray only spends if a slot was actually added.
+        // A tutorial-required press spends nothing.
         public bool TryActivate(PowerUpButtonId id)
         {
+            bool isFree = IsTutorialPress(id);
+            if (!isFree && !WouldHaveEffectNow(id)) return false;
+
             if (id == PowerUpButtonId.ExtraTray)
             {
                 if (!_powerUpService.ActivateExtraTray()) return false;
-                _inventory.TryUse(id);
+                if (!isFree) _inventory.TryUse(id);
             }
             else
             {
-                if (!_inventory.TryUse(id)) return false;
+                if (!isFree && !_inventory.TryUse(id)) return false;
 
                 if (id == PowerUpButtonId.Shuffle) _powerUpService.ActivateShuffle();
                 else _powerUpService.ActivatePickFromBottom();

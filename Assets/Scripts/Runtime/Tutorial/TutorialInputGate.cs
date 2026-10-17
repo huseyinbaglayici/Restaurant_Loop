@@ -38,6 +38,10 @@ namespace RestaurantLoop.Runtime.Tutorial
         public bool CanClickPowerUpButton(PowerUpButtonId id) => !IsRestricting ||
             (_requiredStep.HoverKind == TutorialHoverTargetKind.PowerUpButton && _requiredStep.PowerUpButton == id);
 
+        // The active step waits for exactly this button — its press must always go through, for free.
+        public bool IsPowerUpRequired(PowerUpButtonId id) => IsRestricting &&
+            _requiredStep.HoverKind == TutorialHoverTargetKind.PowerUpButton && _requiredStep.PowerUpButton == id;
+
         // Exit stack has no hover-target kind of its own — block it like any unrepresented action
         // while a step is actively restricting input.
         public bool CanClickExitStack() => !IsRestricting;

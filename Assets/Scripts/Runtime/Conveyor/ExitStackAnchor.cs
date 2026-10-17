@@ -115,10 +115,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             var rack = _exitSlotPool.Spawn(center);
             rack.transform.rotation = Quaternion.Euler(_tuning.ExtraRackVisualRotation);
 
-            if (theme != null && theme.RackPrefab != null)
-            {
-                rack.ApplyThemeVisual(theme.RackPrefab);
-            }
+            // Always applied: the pooled rack outlives the scene, null restores the base look.
+            rack.ApplyThemeVisual(theme != null ? theme.RackPrefab : null);
 
             _spawnedFloors.Add(rack);
         }

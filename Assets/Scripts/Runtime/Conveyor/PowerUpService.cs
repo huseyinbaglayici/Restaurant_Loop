@@ -20,6 +20,11 @@ namespace RestaurantLoop.Runtime.Conveyor
             _cameraController = cameraController;
         }
 
+        // Fewer than two queue items: a shuffle can't change anything.
+        public bool CanActivateShuffle() => _queueSpawner.TotalCount >= 2;
+
+        public bool CanActivatePickFromBottom() => !_queueSpawner.PickFromBottomEnabled;
+
         public void ActivateShuffle() => _queueSpawner.ShuffleLanes();
 
         public void ActivatePickFromBottom()
