@@ -19,6 +19,7 @@ namespace RestaurantLoop.Runtime.Installers
             Container.BindInterfacesAndSelfTo<LivesService>().AsSingle();
             Container.BindInterfacesAndSelfTo<PowerUpInventoryService>().AsSingle();
             Container.BindInterfacesAndSelfTo<AudioService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<MusicDirector>().AsSingle();
         }
     }
 }

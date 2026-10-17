@@ -18,19 +18,21 @@ namespace RestaurantLoop.Runtime.UI
         private readonly CustomerConsumeService _consumeService;
         private readonly SignalBus _signalBus;
 
-        private GameObject _topHolder;
+        private readonly GameObject _topHolder;
 
         public LevelOverlayPresenter(
             CurrentLevelProvider currentLevelProvider,
             TextMeshProUGUI levelText,
-            [Inject(Id = "GameplayMoneyText", Optional = true)] TextMeshProUGUI moneyText,
+            [Inject(Id = "GameplayMoneyText")] TextMeshProUGUI moneyText,
+            [Inject(Id = "TopLevelHolder")] Transform topLevelHolder,
             EconomyService economyService,
-            [Inject(Optional = true)] CustomerConsumeService consumeService,
+            CustomerConsumeService consumeService,
             SignalBus signalBus)
         {
             _currentLevelProvider = currentLevelProvider;
             _levelText = levelText;
             _moneyText = moneyText;
+            _topHolder = topLevelHolder.gameObject;
             _economyService = economyService;
             _consumeService = consumeService;
             _signalBus = signalBus;
@@ -38,8 +40,6 @@ namespace RestaurantLoop.Runtime.UI
 
         public void Initialize()
         {
-            _topHolder = ResolveTopHolder();
-
             if (_levelText != null && _currentLevelProvider != null && _currentLevelProvider.Current != null)
             {
                 _levelText.text = $"LEVEL {_currentLevelProvider.Current.LevelId}";
@@ -79,41 +79,7 @@ namespace RestaurantLoop.Runtime.UI
             SetVisible(true);
         }
 
-        private void SetVisible(bool visible)
-        {
-            if (_topHolder != null)
-            {
-                _topHolder.SetActive(visible);
-            }
-            else
-            {
-                if (_levelText != null) _levelText.gameObject.SetActive(visible);
-                if (_moneyText != null) _moneyText.gameObject.SetActive(visible);
-            }
-        }
-
-        private GameObject ResolveTopHolder()
-        {
-            if (_levelText != null)
-            {
-                Transform curr = _levelText.transform;
-                while (curr != null && curr.parent != null && curr.parent.GetComponent<Canvas>() == null)
-                {
-                    if (curr.gameObject.name.Equals("holder_TopLevel", StringComparison.OrdinalIgnoreCase))
-                        return curr.gameObject;
-                    curr = curr.parent;
-                }
-                if (curr != null && curr.gameObject.name.Equals("holder_TopLevel", StringComparison.OrdinalIgnoreCase))
-                    return curr.gameObject;
-                if (curr != null && curr != _levelText.transform)
-                    return curr.gameObject;
-            }
-
-            var found = GameObject.Find("holder_TopLevel");
-            if (found != null) return found;
-
-            return null;
-        }
+        private void SetVisible(bool visible) => _topHolder.SetActive(visible);
 
         public void Dispose()
         {

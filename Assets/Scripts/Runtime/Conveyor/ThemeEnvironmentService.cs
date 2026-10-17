@@ -1,4 +1,3 @@
-using System.Linq;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 using Zenject;
@@ -12,6 +11,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly ConveyorPrefabSettings _prefabSettings;
         private readonly ThemeSettings _themeSettings;
         private readonly CameraController _cameraController;
+        private readonly Transform _levelHolder;
         private GameObject _environmentInstance;
 
         public ThemeEnvironmentService(
@@ -19,13 +19,15 @@ namespace RestaurantLoop.Runtime.Conveyor
             ConveyorLevelDataSO level,
             ConveyorPrefabSettings prefabSettings,
             ThemeSettings themeSettings,
-            [Inject(Optional = true)] CameraController cameraController = null)
+            CameraController cameraController,
+            [Inject(Id = "LevelHolder")] Transform levelHolder)
         {
             _tuning = tuning;
             _level = level;
             _prefabSettings = prefabSettings;
             _themeSettings = themeSettings;
             _cameraController = cameraController;
+            _levelHolder = levelHolder;
         }
 
         public void Initialize()
@@ -35,52 +37,30 @@ namespace RestaurantLoop.Runtime.Conveyor
             var themeEntry = _themeSettings != null ? _themeSettings.GetTheme(_level.Theme) : null;
             var targetPrefab = themeEntry?.EnvironmentPrefab;
 
-            // 1. Find LevelHolder under GameRoot or anywhere in scene
-            var gameRoot = GameObject.Find("GameRoot");
-            var levelHolder = gameRoot != null ? gameRoot.transform.Find("LevelHolder")?.gameObject : GameObject.Find("LevelHolder");
-
-            if (levelHolder != null)
+            if (targetPrefab != null)
             {
-                if (targetPrefab != null)
+                // Reuse a matching environment already under LevelHolder, hide the others
+                foreach (Transform child in _levelHolder)
                 {
-                    foreach (Transform child in levelHolder.transform)
+                    if (child.name == "Plane") continue;
+
+                    bool match = child.name == targetPrefab.name || 
+                                 child.name.StartsWith(targetPrefab.name) || 
+                                 targetPrefab.name.StartsWith(child.name);
+
+                    child.gameObject.SetActive(match);
+                    if (match && _environmentInstance == null)
                     {
-                        if (child.name == "Plane") continue;
-
-                        bool match = child.name == targetPrefab.name || 
-                                     child.name.StartsWith(targetPrefab.name) || 
-                                     targetPrefab.name.StartsWith(child.name);
-
-                        child.gameObject.SetActive(match);
-                        if (match && _environmentInstance == null)
-                        {
-                            _environmentInstance = child.gameObject;
-                        }
+                        _environmentInstance = child.gameObject;
                     }
                 }
 
-                // If targetPrefab was not found among LevelHolder children, instantiate it under LevelHolder
-                if (_environmentInstance == null && targetPrefab != null)
+                if (_environmentInstance == null)
                 {
-                    // Deactivate existing environment children in LevelHolder
-                    foreach (Transform child in levelHolder.transform)
-                    {
-                        if (child.name == "Plane") continue;
-                        child.gameObject.SetActive(false);
-                    }
-
-                    _environmentInstance = Object.Instantiate(targetPrefab, levelHolder.transform);
+                    _environmentInstance = Object.Instantiate(targetPrefab, _levelHolder);
                     _environmentInstance.name = targetPrefab.name;
                     _environmentInstance.SetActive(true);
                 }
-            }
-
-            // Fallback: If no LevelHolder or targetPrefab not in hierarchy, instantiate standalone
-            if (_environmentInstance == null && targetPrefab != null)
-            {
-                _environmentInstance = Object.Instantiate(targetPrefab, _tuning.EnvironmentBasePosition, Quaternion.identity);
-                _environmentInstance.name = targetPrefab.name;
-                _environmentInstance.SetActive(true);
             }
 
             if (_environmentInstance == null) return;

@@ -2,10 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using RestaurantLoop.Runtime.Audio;
-using RestaurantLoop.Runtime.Economy;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.Runtime.Save;
 using RestaurantLoop.Runtime.SceneFlow;
 using RestaurantLoop.Runtime.Signals;
 using TMPro;
@@ -15,6 +13,9 @@ using Zenject;
 
 namespace RestaurantLoop.Runtime.UI
 {
+    // Win flow view: celebration (logo tween + confetti, also previewed in Edit Mode) then the Level Complete panel.
+    // The celebration stays in this MonoBehaviour: it needs [ExecuteAlways] lifecycle, coroutines and its serialized
+    // scene refs. Rewards/saving live in LevelProgression, board cleanup in LevelBoardCleanup.
     [ExecuteAlways]
     public class LevelCompleteUIController : MonoBehaviour
     {
@@ -63,18 +64,14 @@ namespace RestaurantLoop.Runtime.UI
         [SerializeField] private TMP_Text _levelText;
         [SerializeField] private TMP_Text _coinRewardText;
 
+        // Injected only in Play Mode; stay null when the celebration runs in Edit Mode, hence the null checks.
         private CustomerConsumeService _consumeService;
-        private ConveyorManager _conveyorManager;
-        private ExitStackAnchor _exitStackAnchor;
-        private FoodItemController.Pool _foodPool;
         private SignalBus _signalBus;
-        private SaveService _saveService;
         private CurrentLevelProvider _currentLevelProvider;
-        private LevelDatabase _levelDatabase;
         private AudioService _audioService;
         private AudioLibrary _audioLibrary;
-        private EconomyService _economyService;
-        private PowerUpInventoryService _powerUpInventory;
+        private LevelProgression _levelProgression;
+        private LevelBoardCleanup _boardCleanup;
 
         private Vector2 _logoTargetPosition;
         private Sequence _celebrationSequence;
@@ -86,30 +83,20 @@ namespace RestaurantLoop.Runtime.UI
         [Inject]
         public void Construct(
             CustomerConsumeService consumeService,
-            ConveyorManager conveyorManager,
-            ExitStackAnchor exitStackAnchor,
-            FoodItemController.Pool foodPool,
             SignalBus signalBus,
-            SaveService saveService,
             CurrentLevelProvider currentLevelProvider,
-            LevelDatabase levelDatabase,
             AudioService audioService,
             AudioLibrary audioLibrary,
-            EconomyService economyService,
-            PowerUpInventoryService powerUpInventory)
+            LevelProgression levelProgression,
+            LevelBoardCleanup boardCleanup)
         {
             _consumeService = consumeService;
-            _conveyorManager = conveyorManager;
-            _exitStackAnchor = exitStackAnchor;
-            _foodPool = foodPool;
             _signalBus = signalBus;
-            _saveService = saveService;
             _currentLevelProvider = currentLevelProvider;
-            _levelDatabase = levelDatabase;
             _audioService = audioService;
             _audioLibrary = audioLibrary;
-            _economyService = economyService;
-            _powerUpInventory = powerUpInventory;
+            _levelProgression = levelProgression;
+            _boardCleanup = boardCleanup;
         }
 
         private void Awake()
@@ -117,24 +104,12 @@ namespace RestaurantLoop.Runtime.UI
             if (_logoTransform != null)
             {
                 _logoTargetPosition = _logoTransform.anchoredPosition;
-
-                // Logoyu kesin olarak konfetilerin önüne almak için Logo'ya özel Canvas ve Sorting Order veriyoruz
-                Canvas logoCanvas = _logoTransform.GetComponent<Canvas>();
-                if (logoCanvas == null)
-                {
-                    logoCanvas = _logoTransform.gameObject.AddComponent<Canvas>();
-                }
-                logoCanvas.overrideSorting = true;
-                if (!string.IsNullOrEmpty(_confettiSortingLayerName))
-                {
-                    logoCanvas.sortingLayerName = _confettiSortingLayerName;
-                }
-                logoCanvas.sortingOrder = _confettiSortingOrder + 20; // Konfetiden kesinlikle 20 birim daha önde
+                SetupLogoCanvas();
             }
 
             if (Application.isPlaying)
             {
-                // Oyun başlangıcında sahnede önceden yer alan tüm konfeti ve partikülleri durdurup kapatıyoruz
+                // Stop and hide any confetti already placed in the scene
                 if (_confettiParticles != null)
                 {
                     foreach (var ps in _confettiParticles)
@@ -190,6 +165,22 @@ namespace RestaurantLoop.Runtime.UI
             _celebrationSequence?.Kill();
         }
 
+        // Own Canvas with overrideSorting so the logo always draws in front of the confetti
+        private void SetupLogoCanvas()
+        {
+            Canvas logoCanvas = _logoTransform.GetComponent<Canvas>();
+            if (logoCanvas == null)
+            {
+                logoCanvas = _logoTransform.gameObject.AddComponent<Canvas>();
+            }
+            logoCanvas.overrideSorting = true;
+            if (!string.IsNullOrEmpty(_confettiSortingLayerName))
+            {
+                logoCanvas.sortingLayerName = _confettiSortingLayerName;
+            }
+            logoCanvas.sortingOrder = _confettiSortingOrder + 20;
+        }
+
 #if UNITY_EDITOR
         private void OnValidate()
         {
@@ -222,19 +213,7 @@ namespace RestaurantLoop.Runtime.UI
             if (_logoTransform != null)
             {
                 _logoTargetPosition = _logoTransform.anchoredPosition;
-
-                Canvas logoCanvas = _logoTransform.GetComponent<Canvas>();
-                if (logoCanvas == null)
-                {
-                    logoCanvas = _logoTransform.gameObject.AddComponent<Canvas>();
-                }
-                logoCanvas.overrideSorting = true;
-                if (!string.IsNullOrEmpty(_confettiSortingLayerName))
-                {
-                    logoCanvas.sortingLayerName = _confettiSortingLayerName;
-                }
-                logoCanvas.sortingOrder = _confettiSortingOrder + 20;
-
+                SetupLogoCanvas();
                 PlayLogoLoopAnimation();
             }
 
@@ -293,7 +272,7 @@ namespace RestaurantLoop.Runtime.UI
 
         private void StartCelebrationSequence()
         {
-            // Arka plan seslerini durdur ve kutlama sesini (CelebrationSfx) çal
+            // Stop background audio and play the celebration sfx
             if (_audioService != null)
             {
                 _audioService.StopMusic();
@@ -310,13 +289,12 @@ namespace RestaurantLoop.Runtime.UI
                 }
             }
 
-            // Kutlama panelini aç
             if (_celebrationPanel != null)
             {
                 _celebrationPanel.SetActive(true);
             }
 
-            // Logo animasyonu (Aşağıdan yukarıya süzülme ve scale bounce)
+            // Logo rises from below with a scale bounce, then pulses
             if (_logoTransform != null)
             {
                 _logoTransform.anchoredPosition = _logoTargetPosition + _logoStartOffset;
@@ -336,10 +314,8 @@ namespace RestaurantLoop.Runtime.UI
                 });
             }
 
-            // Havai fişek ve Konfeti VFX Tetikleme
             PlayConfettiEffects();
 
-            // Kutlama bittikten sonra asıl panelin açılması
             StartCoroutine(CelebrationToSuccessRoutine());
         }
 
@@ -351,7 +327,7 @@ namespace RestaurantLoop.Runtime.UI
             }
             else
             {
-                // Edit modunda anında patlat
+                // Edit Mode: single instant wave
                 SpawnSingleConfettiWave();
             }
         }
@@ -370,7 +346,7 @@ namespace RestaurantLoop.Runtime.UI
 
         private void SpawnSingleConfettiWave()
         {
-            // Sahneye önceden eklenmiş ParticleSystem'leri oynat
+            // Particle systems already placed in the scene
             if (_confettiParticles != null)
             {
                 foreach (var ps in _confettiParticles)
@@ -385,7 +361,7 @@ namespace RestaurantLoop.Runtime.UI
                 }
             }
 
-            // Prefab olarak instantiate edilmek isteniyorsa
+            // Prefabs spawned at the spawn points (or the logo), with a small random spread
             if (_confettiPrefabs != null && _confettiPrefabs.Length > 0)
             {
                 for (int i = 0; i < _confettiPrefabs.Length; i++)
@@ -406,7 +382,6 @@ namespace RestaurantLoop.Runtime.UI
                         spawnPos = _logoTransform.position;
                     }
 
-                    // Rastgele hafif dağılım ofseti (birden fazla konfeti daha doğal yayılsın)
                     if (_randomSpreadRadius > 0)
                     {
                         Vector2 randomOffset = Random.insideUnitCircle * _randomSpreadRadius;
@@ -415,8 +390,8 @@ namespace RestaurantLoop.Runtime.UI
 
                     GameObject fxInstance = Instantiate(prefab, spawnPos, spawnRot);
                     fxInstance.transform.localScale = prefab.transform.localScale * _confettiScaleMultiplier;
-                    
-                    // Eğer celebration panel Canvas içinde ise, konfetiyi hiyerarşide en arkaya (logonun arkasına) yerleştir
+
+                    // First sibling under the celebration panel so it renders behind the logo
                     if (_celebrationPanel != null)
                     {
                         fxInstance.transform.SetParent(_celebrationPanel.transform, true);
@@ -451,6 +426,18 @@ namespace RestaurantLoop.Runtime.UI
             }
         }
 
+        private void DestroySpawnedConfetti()
+        {
+            for (int i = _spawnedConfettiInstances.Count - 1; i >= 0; i--)
+            {
+                if (_spawnedConfettiInstances[i] != null)
+                {
+                    Destroy(_spawnedConfettiInstances[i]);
+                }
+            }
+            _spawnedConfettiInstances.Clear();
+        }
+
         private void ApplySortingOrder(GameObject obj)
         {
             if (obj == null) return;
@@ -470,7 +457,6 @@ namespace RestaurantLoop.Runtime.UI
         {
             yield return new WaitForSecondsRealtime(_celebrationDuration);
 
-            // Kutlama panelini kapat veya arkada bırakıp başarı panelini aç
             if (_celebrationPanel != null)
             {
                 _celebrationPanel.SetActive(false);
@@ -485,7 +471,7 @@ namespace RestaurantLoop.Runtime.UI
             _panelCompleted.SetActive(true);
 
             UpdateTexts();
-            AwardLevelCoins();
+            _levelProgression?.AwardLevelCoins();
 
             if (_audioService != null && _audioLibrary != null && _audioLibrary.WinSfx != null)
             {
@@ -503,30 +489,11 @@ namespace RestaurantLoop.Runtime.UI
                 _levelText.text = $"Level {levelId}";
             }
 
-            int reward = GetRewardCoins(_currentLevelProvider.Current.Difficulty);
+            int reward = LevelProgression.GetRewardCoins(_currentLevelProvider.Current.Difficulty);
             if (_coinRewardText != null)
             {
                 _coinRewardText.text = reward.ToString();
             }
-        }
-
-        private int GetRewardCoins(LevelDifficulty difficulty)
-        {
-            return difficulty switch
-            {
-                LevelDifficulty.Hard => 75,
-                LevelDifficulty.SuperHard => 100,
-                LevelDifficulty.Bonus => 100,
-                _ => 50
-            };
-        }
-
-        private void AwardLevelCoins()
-        {
-            if (_economyService == null || _currentLevelProvider == null || _currentLevelProvider.Current == null) return;
-
-            int reward = GetRewardCoins(_currentLevelProvider.Current.Difficulty);
-            _economyService.AddCoins(reward);
         }
 
         private void OnNextClicked()
@@ -534,55 +501,11 @@ namespace RestaurantLoop.Runtime.UI
             _panelCompleted.SetActive(false);
             Time.timeScale = 1f;
 
-            ClearRemainingEntities();
-            AdvanceSavedLevel();
+            _boardCleanup.ClearBeltAndExitStack();
+            DestroySpawnedConfetti();
+            _levelProgression.AdvanceSavedLevel();
 
             _signalBus.Fire<LevelEndedSignal>();
-        }
-
-        private void ClearRemainingEntities()
-        {
-            _conveyorManager.ClearBelt();
-
-            for (int i = 0; i < _exitStackAnchor.SlotCount; i++)
-            {
-                if (!_exitStackAnchor.TryRemoveFromSlot(i, out var visual)) continue;
-                if (visual != null) _foodPool.Despawn(visual);
-            }
-
-            // Sahnedeki kalan tüm konfeti instance'larını temizle
-            for (int i = _spawnedConfettiInstances.Count - 1; i >= 0; i--)
-            {
-                if (_spawnedConfettiInstances[i] != null)
-                {
-                    Destroy(_spawnedConfettiInstances[i]);
-                }
-            }
-            _spawnedConfettiInstances.Clear();
-        }
-
-        // Only commits if the next id actually exists — otherwise this was the last level, so
-        // progress stays put instead of saving a level id the database can't resolve on next boot.
-        private void AdvanceSavedLevel()
-        {
-            if (_currentLevelProvider.Current == null) return;
-
-            if (ShowcaseModeConfig.IsEnabled && ShowcaseModeConfig.Playlist.Count > 0)
-            {
-                if (ShowcaseModeConfig.TryAdvancePlaylist(out int nextShowcaseLevelId))
-                {
-                    _currentLevelProvider.ResolveFromSave();
-                    _powerUpInventory?.CheckLevelRewards(nextShowcaseLevelId);
-                }
-                return;
-            }
-
-            int nextLevelId = _currentLevelProvider.Current.LevelId + 1;
-            if (!_levelDatabase.TryGetLevel(nextLevelId, out _)) return;
-
-            _saveService.SaveCurrentLevelId(nextLevelId);
-            _currentLevelProvider.ResolveFromSave();
-            _powerUpInventory?.CheckLevelRewards(nextLevelId);
         }
     }
 }

@@ -1,4 +1,5 @@
 using DG.Tweening;
+using RestaurantLoop.Runtime.Signals;
 using TMPro;
 using UnityEngine;
 using Zenject;
@@ -13,7 +14,8 @@ namespace RestaurantLoop.Runtime.Conveyor
     public class TrayDispenserCounterUI : MonoBehaviour
     {
         [Inject] private TrayDispenserAnchor _trayAnchor;
-        [Inject(Optional = true)] private Camera _camera;
+        [Inject] private Camera _camera;
+        [Inject] private SignalBus _signalBus;
         [SerializeField] private TMP_Text _text;
 
         private int _lastAvailable = -1;
@@ -35,7 +37,18 @@ namespace RestaurantLoop.Runtime.Conveyor
             _originalPosCaptured = true;
         }
 
-        public void PlayRejectAnimation()
+        // Only while active: a theme's own dispenser prefab hides the scene default, which must stay quiet.
+        private void OnEnable()
+        {
+            _signalBus?.Subscribe<TrayDispenserRejectedSignal>(PlayRejectAnimation);
+        }
+
+        private void OnDisable()
+        {
+            _signalBus?.TryUnsubscribe<TrayDispenserRejectedSignal>(PlayRejectAnimation);
+        }
+
+        private void PlayRejectAnimation()
         {
             if (_text == null) return;
             if (!_originalPosCaptured)

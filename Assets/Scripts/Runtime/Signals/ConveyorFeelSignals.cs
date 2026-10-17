@@ -113,4 +113,10 @@ namespace RestaurantLoop.Runtime.Signals
     public class BeltClearedSignal
     {
     }
+
+    // A queue/exit-stack pick was refused because every tray is already out — TrayDispenserCounterUI
+    // shakes and flashes its counter.
+    public class TrayDispenserRejectedSignal
+    {
+    }
 }

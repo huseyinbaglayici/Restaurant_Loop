@@ -765,7 +765,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menuRoot: {fileID: 439184673}
-  _menuBackgroundImage: {fileID: 1555459827}
 --- !u!114 &551647098
 MonoBehaviour:
   m_ObjectHideFlags: 0

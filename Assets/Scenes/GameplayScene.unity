@@ -3582,6 +3582,8 @@ MonoBehaviour:
   _levelText: {fileID: 1989372339}
   _moneyText: {fileID: 1971849326}
   _trayDispenserRoot: {fileID: 0}
+  _levelHolder: {fileID: 1847017327}
+  _topLevelHolder: {fileID: 1930912408}
   _customerOrderCanvasRoot: {fileID: 517041083}
   _orderIconsGroup: {fileID: 1542402105}
   _orderTextsGroup: {fileID: 1532874812}
@@ -6590,17 +6592,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _buttonShuffle: {fileID: 1758009732}
-  _lockShuffle: {fileID: 0}
-  _countShuffleText: {fileID: 0}
-  _plusShuffle: {fileID: 0}
   _buttonPickFromBottom: {fileID: 1414090666}
-  _lockPickFromBottom: {fileID: 0}
-  _countPickFromBottomText: {fileID: 0}
-  _plusPickFromBottom: {fileID: 0}
   _buttonExtraTray: {fileID: 1647793349}
-  _lockExtraTray: {fileID: 0}
-  _countExtraTrayText: {fileID: 0}
-  _plusExtraTray: {fileID: 0}
 --- !u!1 &1847017326
 GameObject:
   m_ObjectHideFlags: 0

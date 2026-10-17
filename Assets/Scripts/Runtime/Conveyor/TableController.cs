@@ -26,21 +26,11 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void Initialize()
         {
-            if (_settings == null) return;
+            if (_settings == null || _settings.TablePrefab == null) return;
 
-            // Find existing table in scene or spawn from prefab
-            var existingTable = GameObject.Find("yemek_alti_masa");
-            if (existingTable != null)
-            {
-                _tableInstance = existingTable;
-            }
-            else if (_settings.TablePrefab != null)
-            {
-                _tableInstance = Object.Instantiate(_settings.TablePrefab, _settings.BasePosition, Quaternion.Euler(_settings.BaseRotation));
-                _tableInstance.name = "yemek_alti_masa";
-            }
-
-            if (_tableInstance == null) return;
+            // Spawned fresh each level; it lives in GameplayScene and unloads with it
+            _tableInstance = Object.Instantiate(_settings.TablePrefab, _settings.BasePosition, Quaternion.Euler(_settings.BaseRotation));
+            _tableInstance.name = "yemek_alti_masa";
 
             // Apply camera zoom scale if enabled
             float finalScaleFactor = 1f;

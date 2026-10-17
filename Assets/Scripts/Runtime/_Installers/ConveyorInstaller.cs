@@ -19,6 +19,8 @@ namespace RestaurantLoop.Runtime.Installers
         [SerializeField] private TextMeshProUGUI _levelText;
         [SerializeField] private TextMeshProUGUI _moneyText;
         [SerializeField] private Transform _trayDispenserRoot;
+        [SerializeField] private Transform _levelHolder;
+        [SerializeField] private Transform _topLevelHolder;
         [SerializeField] private RectTransform _customerOrderCanvasRoot;
         [SerializeField] private Transform _orderIconsGroup;
         [SerializeField] private Transform _orderTextsGroup;
@@ -49,6 +51,9 @@ namespace RestaurantLoop.Runtime.Installers
             Container.BindInterfacesAndSelfTo<ConveyorManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<CustomerConsumeService>().AsSingle();
             Container.BindInterfacesTo<ConveyorEntryInput>().AsSingle();
+            Container.Bind<ConveyorPointer>().AsSingle();
+            Container.Bind<QueuePickHandler>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ExitStackPickHandler>().AsSingle();
             Container.BindInterfacesAndSelfTo<ConveyorAutoClearService>().AsSingle();
 
             var dispenserRoot = ResolveTrayDispenserRoot();
@@ -60,12 +65,19 @@ namespace RestaurantLoop.Runtime.Installers
 
             // visual layer ticks after the logical one, flights last so they consume this frame's commands
             Container.BindInterfacesAndSelfTo<ConveyorVisualService>().AsSingle();
+            Container.BindInterfacesTo<ConveyorAudio>().AsSingle();
             Container.BindInterfacesAndSelfTo<TrayVisualService>().AsSingle();
             Container.BindInterfacesAndSelfTo<FoodFlightService>().AsSingle();
             Container.Bind<PowerUpService>().AsSingle();
+            Container.Bind<PowerUpPurchaseService>().AsSingle();
+            Container.Bind<LevelProgression>().AsSingle();
+            Container.Bind<LevelBoardCleanup>().AsSingle();
+            Container.Bind<KeepPlayingOffer>().AsSingle();
 
             Container.BindInstance(_levelText).AsSingle();
             Container.Bind<TextMeshProUGUI>().WithId("GameplayMoneyText").FromInstance(_moneyText).AsCached();
+            Container.BindInstance(_levelHolder).WithId("LevelHolder").AsCached();
+            Container.BindInstance(_topLevelHolder).WithId("TopLevelHolder").AsCached();
             Container.BindInterfacesTo<LevelOverlayPresenter>().AsSingle();
 
             Container.Bind<TutorialTargetRegistry>().AsSingle();

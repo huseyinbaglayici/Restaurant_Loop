@@ -31,10 +31,7 @@ namespace RestaurantLoop.Runtime.UI
             _signalBus = signalBus;
         }
 
-        private void Awake()
-        {
-        }
-
+        // Also runs when MainMenuVisibilityController re-activates the menu root.
         private void OnEnable()
         {
             UpdateView();
@@ -82,7 +79,7 @@ namespace RestaurantLoop.Runtime.UI
                 _levelInfoText.text = $"Level {level.LevelId}";
             }
 
-            // Update Theme Background
+            // Theme background (single owner of the menu background sprite)
             if (_themeSettings != null)
             {
                 ThemeType themeType = level != null ? level.Theme : ThemeType.Asian;

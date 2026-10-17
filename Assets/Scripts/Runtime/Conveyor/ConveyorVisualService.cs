@@ -43,6 +43,9 @@ namespace RestaurantLoop.Runtime.Conveyor
         // Visuals the logical layer handed over (in flight to a customer) — this service despawns them.
         private readonly HashSet<FoodItemController> _ownedVisuals = new();
 
+        // ConveyorAudio keeps the belt loop playing while this is true.
+        public bool HasBeltVisuals => _beltVisuals.Count > 0;
+
         public ConveyorVisualService(
             SignalBus signalBus,
             ConveyorManager conveyorManager,
@@ -53,7 +56,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             CustomerSpawner customerSpawner,
             RuntimeCustomerState customerState,
             CustomerConsumeService consumeService,
-            [Inject(Optional = true)] ExitStackAnchor exitStackAnchor,
+            ExitStackAnchor exitStackAnchor,
             AudioService audioService,
             AudioLibrary audioLibrary)
         {
@@ -92,7 +95,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             _flightService.CancelAll();
             _beltVisuals.Clear();
-            _audioService.StopConveyorLoop();
             DespawnOwnedVisuals();
             ConveyorPieceController.GlobalSpeedMultiplier = 1f;
         }
@@ -101,19 +103,6 @@ namespace RestaurantLoop.Runtime.Conveyor
         {
             ConveyorPieceController.GlobalSpeedMultiplier = _conveyorManager.SpeedMultiplier;
             AdvanceBeltVisuals();
-            UpdateConveyorLoopAudio();
-        }
-
-        private void UpdateConveyorLoopAudio()
-        {
-            if (_beltVisuals.Count > 0)
-            {
-                _audioService.PlayConveyorLoop(_audioLibrary.ConveyorLoopSfx);
-            }
-            else
-            {
-                _audioService.StopConveyorLoop();
-            }
         }
 
         private void AdvanceBeltVisuals()
@@ -218,12 +207,8 @@ namespace RestaurantLoop.Runtime.Conveyor
 
             Vector3 TargetPosition()
             {
-                if (_exitStackAnchor != null)
-                {
-                    var pos = _exitStackAnchor.GetFoodPositionForOccupant(visual);
-                    if (pos != Vector3.zero) return pos;
-                }
-                return fallbackSlotPosition;
+                var pos = _exitStackAnchor.GetFoodPositionForOccupant(visual);
+                return pos != Vector3.zero ? pos : fallbackSlotPosition;
             }
 
             _flightService.Launch(visual.transform, TargetPosition, _feel.BeltToStack, () =>

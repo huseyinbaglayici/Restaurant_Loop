@@ -1,64 +1,25 @@
-using System.Collections.Generic;
-using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
-using TMPro;
 using UnityEngine;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Conveyor
 {
+    // Pooled food item: owns the stack state and pool lifecycle, and decides which visual shows —
+    // the 2D queue sprite or the 3D stack with its amount badge. The visuals themselves live in
+    // FoodStackBuilder, FoodQueueSprite and FoodAmountBadge.
     public class FoodItemController : MonoBehaviour, IPoolable<Vector3, FoodStackData, FoodVisualState>
     {
-        // Above this, extra units still count toward Stack.Amount (consumed normally) but stop
-        // rendering — an uncapped stack reads as a tower instead of a pile of food.
-        private const int MaxVisibleUnits = 5;
-
-        // Only reached when a unit's prefab has no MeshFilter bounds to measure a height from — should never
-        // happen for authored art, but keeps stacking sane instead of collapsing units on top of each other.
-        private const float FallbackStackSpacing = 1f;
-
         [SerializeField] private GameObject _unitPrefab;
 
         [Inject] private FoodMeshSettings _foodMeshSettings;
         [Inject] private FoodPlacementSettings _placement;
         [Inject] private TableSettings _tableSettings;
+        // Scene-scoped binding while this pool lives in ProjectContext, so this currently resolves to null.
         [Inject(Optional = true)] private CameraController _cameraController;
 
-        // Stacked-units mode (most food types): one GameObject per visible unit. Only the top unit
-        // (highest index) is ever Opened — and only while this whole item is Opened — everything below
-        // it stays Closed, so the pile always reads as "one unpacked item about to be eaten, the rest
-        // still packaged". Tracked per unit because Closed/Opened are often completely different meshes.
-        private readonly List<GameObject> _units = new();
-        private readonly List<bool> _unitIsOpened = new();
-        private readonly List<GameObject> _unitSourcePrefab = new();
-        private readonly List<Vector3> _unitBaseScale = new();
-        private readonly List<Quaternion> _unitAppliedRotation = new();
-
-        // Fixed-child-slots mode (e.g. a drink shelf holding several pre-placed bottles): one instance is
-        // spawned and kept for the item's whole life; Amount toggles which of its slot children are visible
-        // instead of stacking N separate copies. No per-unit Closed/Opened split applies here.
-        private GameObject _fixedSlotInstance;
-        private GameObject _fixedSlotSourcePrefab;
-        private Vector3 _fixedSlotBaseScale = Vector3.one;
-        private Quaternion _fixedSlotBaseRotation = Quaternion.identity;
-        private float _appliedFixedSlotScale = -1f;
-
-        private bool _usesFixedChildSlots;
-        private bool _appliedUsesFixedChildSlots;
-
-        // 2D Queue Visuals (Sprite Icon + Amount Text)
-        private GameObject _queue2DHolder;
-        private SpriteRenderer _queue2DSpriteRenderer;
-        private TextMeshPro _queue2DAmountText;
-
-        // 3D Belt/Stack Amount Badge (World-Space Text Billboard)
-        private GameObject _conveyorAmountBadge;
-        private TextMeshPro _conveyorAmountText;
-
-        // Last multiplier / spacing pushed onto the stacked units — used to pick up live tweaks while playing.
-        private float _appliedClosedScale = -1f;
-        private float _appliedOpenedScale = -1f;
-        private float _appliedSpacing;
+        private FoodStackBuilder _stackBuilder;
+        private FoodQueueSprite _queueSprite;
+        private FoodAmountBadge _amountBadge;
 
         // The rotation this item rests at. Captured from the prefab, restored on every spawn so a pooled
         // object never inherits a spin left over from its previous life.
@@ -75,73 +36,31 @@ namespace RestaurantLoop.Runtime.Conveyor
         // e.g. a drink rack: several pre-placed single-item children under one shared base, instead of a
         // vertical stack of copies. Consume flights fly one of those children directly (see TakeFixedSlotChild)
         // rather than a duplicate of the whole rack.
-        public bool UsesFixedChildSlots => _usesFixedChildSlots;
+        public bool UsesFixedChildSlots => _stackBuilder.UsesFixedChildSlots;
 
         public Vector3 VisualCenter
         {
             get
             {
-                if (ShouldUse2DQueue() && _queue2DHolder != null)
+                if (ShouldUse2DQueue() && _queueSprite.Exists)
                 {
-                    return _queue2DHolder.transform.position;
+                    return _queueSprite.Position;
                 }
 
-                return _usesFixedChildSlots
-                    ? transform.position
-                    : transform.position + Vector3.up * (Mathf.Min(Stack.Amount, MaxVisibleUnits) * ResolveSpacing(Stack.Type) * 0.5f);
+                return _stackBuilder.GetVisualCenter(Stack, _location);
             }
         }
 
         // World position of the top unit — the one that renders Opened while this item is Opened. Consume
         // flights should spawn here, not at the item root (which sits at the bottom of the stack).
-        public Vector3 TopUnitWorldPosition
-        {
-            get
-            {
-                if (!_usesFixedChildSlots && _units.Count > 0)
-                {
-                    float highestY = float.MinValue;
-                    float centerX = transform.position.x;
-                    float centerZ = transform.position.z;
-                    bool found = false;
+        public Vector3 TopUnitWorldPosition => _stackBuilder.TopUnitWorldPosition;
 
-                    for (int i = 0; i < _units.Count; i++)
-                    {
-                        if (_units[i] != null && _units[i].activeInHierarchy)
-                        {
-                            var r = _units[i].GetComponentInChildren<Renderer>();
-                            if (r != null)
-                            {
-                                highestY = Mathf.Max(highestY, r.bounds.max.y);
-                                found = true;
-                            }
-                        }
-                    }
-                    if (found)
-                    {
-                        return new Vector3(centerX, highestY, centerZ);
-                    }
-                }
-                else if (_usesFixedChildSlots && _fixedSlotInstance != null)
-                {
-                    var renderers = _fixedSlotInstance.GetComponentsInChildren<Renderer>();
-                    if (renderers != null && renderers.Length > 0)
-                    {
-                        float maxY = float.MinValue;
-                        bool found = false;
-                        for (int i = 0; i < renderers.Length; i++)
-                        {
-                            if (renderers[i] != null && renderers[i].gameObject.activeInHierarchy)
-                            {
-                                maxY = Mathf.Max(maxY, renderers[i].bounds.max.y);
-                                found = true;
-                            }
-                        }
-                        if (found) return new Vector3(transform.position.x, maxY, transform.position.z);
-                    }
-                }
-                return transform.position;
-            }
+        // Zenject injects before Awake (the prefab is instantiated inactive), so the settings are ready here.
+        private void Awake()
+        {
+            _stackBuilder = new FoodStackBuilder(transform, _unitPrefab, _foodMeshSettings, _placement, _tableSettings, _cameraController);
+            _queueSprite = new FoodQueueSprite(transform, _foodMeshSettings, _placement, _tableSettings, _cameraController);
+            _amountBadge = new FoodAmountBadge(transform, _stackBuilder, _foodMeshSettings, _cameraController);
         }
 
         public void OnSpawned(Vector3 position, FoodStackData stack, FoodVisualState visualState)
@@ -159,8 +78,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void OnDespawned()
         {
             if (this == null || gameObject == null) return;
-            if (_queue2DHolder != null) _queue2DHolder.SetActive(false);
-            if (_conveyorAmountBadge != null) _conveyorAmountBadge.SetActive(false);
+            _queueSprite.Hide();
+            _amountBadge.Hide();
             gameObject.SetActive(false);
         }
 
@@ -190,647 +109,55 @@ namespace RestaurantLoop.Runtime.Conveyor
             ApplyStack(stack);
         }
 
+        public void SetAmountBadgeVisible(bool visible)
+        {
+            _amountBadge.SetVisible(visible);
+        }
+
+        public void PopAmountBadge()
+        {
+            _amountBadge.Pop(Stack, _location);
+        }
+
+        public Transform TakeFixedSlotChild()
+        {
+            return _stackBuilder.TakeFixedSlotChild();
+        }
+
         private bool ShouldUse2DQueue()
         {
             return _location == FoodLocation.Queue && (_tableSettings == null || _tableSettings.Enable2DQueueVisuals);
         }
 
-        private void Ensure2DVisualHolder()
-        {
-            if (_queue2DHolder != null) return;
-
-            _queue2DHolder = new GameObject("Queue2D_Visual");
-            _queue2DHolder.transform.SetParent(transform, false);
-
-            _queue2DSpriteRenderer = _queue2DHolder.AddComponent<SpriteRenderer>();
-            _queue2DSpriteRenderer.sortingOrder = 10;
-
-            var textObj = new GameObject("AmountText");
-            textObj.transform.SetParent(_queue2DHolder.transform, false);
-            // Position at top-right corner of the 2D sprite
-            textObj.transform.localPosition = new Vector3(6f, 6f, -0.2f);
-            textObj.transform.localRotation = Quaternion.identity;
-            textObj.transform.localScale = Vector3.one * 12f;
-
-            var rt = textObj.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(3f, 3f);
-
-            _queue2DAmountText = textObj.AddComponent<TextMeshPro>();
-            var meshSettings = _foodMeshSettings;
-            if (meshSettings != null && meshSettings.StackAmountFont != null)
-            {
-                _queue2DAmountText.font = meshSettings.StackAmountFont;
-            }
-            _queue2DAmountText.alignment = TextAlignmentOptions.Center;
-            _queue2DAmountText.fontSize = 6.5f;
-            _queue2DAmountText.color = Color.white;
-            _queue2DAmountText.fontStyle = FontStyles.Bold;
-            _queue2DAmountText.sortingOrder = 50; // Higher sorting order so it always appears above the sprite
-            
-            var meshRenderer = textObj.GetComponent<MeshRenderer>();
-            if (meshRenderer != null)
-            {
-                meshRenderer.sortingOrder = 50;
-            }
-        }
-
-        private void EnsureConveyorAmountBadge()
-        {
-            if (_conveyorAmountBadge != null) return;
-
-            _conveyorAmountBadge = new GameObject("Conveyor3D_AmountBadge");
-            _conveyorAmountBadge.transform.SetParent(transform, false);
-
-            var textObj = new GameObject("AmountText");
-            textObj.transform.SetParent(_conveyorAmountBadge.transform, false);
-            textObj.transform.localPosition = Vector3.zero;
-            textObj.transform.localRotation = Quaternion.identity;
-            textObj.transform.localScale = Vector3.one;
-
-            var rt = textObj.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(2f, 2f);
-
-            _conveyorAmountText = textObj.AddComponent<TextMeshPro>();
-            var meshSettings = _foodMeshSettings;
-            if (meshSettings != null && meshSettings.StackAmountFont != null)
-            {
-                _conveyorAmountText.font = meshSettings.StackAmountFont;
-            }
-            _conveyorAmountText.alignment = TextAlignmentOptions.Center;
-            _conveyorAmountText.fontSize = 5.5f;
-            _conveyorAmountText.color = Color.white;
-            _conveyorAmountText.fontStyle = FontStyles.Bold;
-            _conveyorAmountText.sortingOrder = 2000;
-            _conveyorAmountText.isOverlay = true; // Always renders on top of 3D geometry
-
-            var meshRenderer = textObj.GetComponent<MeshRenderer>();
-            if (meshRenderer != null)
-            {
-                meshRenderer.sortingOrder = 2000;
-            }
-        }
-
-        public void SetAmountBadgeVisible(bool visible)
-        {
-            if (_conveyorAmountBadge != null)
-            {
-                _conveyorAmountBadge.SetActive(visible);
-            }
-        }
-
-        public void PopAmountBadge()
-        {
-            if (Stack.Amount <= 0 && Stack.LinkId == 0) return;
-
-            EnsureConveyorAmountBadge();
-            _conveyorAmountBadge.SetActive(true);
-            var meshSettings = _foodMeshSettings;
-            if (meshSettings != null && meshSettings.StackAmountFont != null && _conveyorAmountText.font != meshSettings.StackAmountFont)
-            {
-                _conveyorAmountText.font = meshSettings.StackAmountFont;
-            }
-            _conveyorAmountText.text = Stack.Amount.ToString();
-            AlignConveyorBadgeWithCamera();
-
-            _conveyorAmountBadge.transform.DOKill(true);
-            _conveyorAmountBadge.transform.localScale = Vector3.zero;
-            _conveyorAmountBadge.transform.DOScale(Vector3.one, 0.25f).SetEase(Ease.OutBack);
-        }
-
-        private void ApplyConveyorAmountBadge(FoodStackData stack)
-        {
-            if (stack.Amount <= 0 && stack.LinkId == 0)
-            {
-                if (_conveyorAmountBadge != null) _conveyorAmountBadge.SetActive(false);
-                return;
-            }
-
-            EnsureConveyorAmountBadge();
-            _conveyorAmountBadge.SetActive(true);
-            var meshSettings = _foodMeshSettings;
-            if (meshSettings != null && meshSettings.StackAmountFont != null && _conveyorAmountText.font != meshSettings.StackAmountFont)
-            {
-                _conveyorAmountText.font = meshSettings.StackAmountFont;
-            }
-            _conveyorAmountText.text = stack.Amount.ToString();
-
-            AlignConveyorBadgeWithCamera();
-        }
-
-        private void AlignConveyorBadgeWithCamera()
-        {
-            if (_conveyorAmountBadge == null || !_conveyorAmountBadge.activeSelf) return;
-
-            var cam = Camera.main;
-            if (cam == null)
-            {
-                var camCtrl = _cameraController;
-                if (camCtrl != null && camCtrl.Camera != null) cam = camCtrl.Camera;
-            }
-            if (cam == null) return;
-
-            // Yemeğin dönüşünden etkilenmemesi için dünya ekseninde kameraya bakar
-            _conveyorAmountBadge.transform.rotation = cam.transform.rotation;
-
-            // Parent scale compensation so text size stays consistent regardless of model scaling
-            Vector3 lossy = transform.lossyScale;
-            _conveyorAmountBadge.transform.localScale = new Vector3(
-                lossy.x > 0.001f ? 1f / lossy.x : 1f,
-                lossy.y > 0.001f ? 1f / lossy.y : 1f,
-                lossy.z > 0.001f ? 1f / lossy.z : 1f);
-
-            var meshSettings = _foodMeshSettings;
-            float extraOffset = meshSettings != null ? meshSettings.ConveyorBadgeHeightOffset : 0.85f;
-            Vector3 topPosition = TopUnitWorldPosition;
-
-            // TopUnitWorldPosition returns the highest rendered bounds Y.
-            // Add a clean vertical offset and slight right offset so it hovers above the stack.
-            Vector3 worldOffset = Vector3.up * (extraOffset + 0.35f) + cam.transform.right * 0.35f;
-
-            if (_location == FoodLocation.FoodStack)
-            {
-                // Exit stackteki textlerin Z pozisyonunu +1, Y pozisyonunu -2.2 ayarla
-                worldOffset.z += 1f;
-                worldOffset.y -= 2.2f;
-            }
-
-            _conveyorAmountBadge.transform.position = topPosition + worldOffset;
-        }
-
-        private float GetQueue2DScaleMultiplier()
-        {
-            var tableSettings = _tableSettings;
-            if (tableSettings == null) return 1f;
-
-            float baseIconScale = tableSettings.Queue2DIconScale;
-            float globalQueueScale = _placement != null ? _placement.GlobalQueueScale : 1f;
-            float zoomMultiplier = 1f;
-
-            if (tableSettings.ScaleWithCamera)
-            {
-                var camCtrl = _cameraController;
-                float zoom = camCtrl != null ? camCtrl.CameraZoomFactor : 1f;
-
-                // Fallback to Main Camera orthographic ratio if CameraController wasn't resolved yet
-                if (camCtrl == null)
-                {
-                    var cam = Camera.main;
-                    if (cam != null && cam.orthographic)
-                    {
-                        // Standard base ortho size is around 8.5
-                        float baseOrtho = 8.5f;
-                        if (cam.orthographicSize > baseOrtho)
-                        {
-                            zoom = cam.orthographicSize / baseOrtho;
-                        }
-                    }
-                }
-
-                float multiplier = tableSettings.FoodQueueScaleMultiplier > 0f 
-                    ? tableSettings.FoodQueueScaleMultiplier 
-                    : tableSettings.TableScaleMultiplier;
-                zoomMultiplier = 1f + (zoom - 1f) * multiplier;
-            }
-
-            return baseIconScale * globalQueueScale * zoomMultiplier;
-        }
-
-        private void ApplyQueue2DVisual(FoodStackData stack)
-        {
-            Ensure2DVisualHolder();
-
-            _queue2DHolder.SetActive(true);
-
-            if (_foodMeshSettings != null && _foodMeshSettings.TryGetQueueIcon(stack.Type, out var icon))
-            {
-                _queue2DSpriteRenderer.sprite = icon;
-            }
-            else
-            {
-                _queue2DSpriteRenderer.sprite = null;
-            }
-
-            if (_queue2DAmountText != null)
-            {
-                if (_foodMeshSettings != null && _foodMeshSettings.StackAmountFont != null && _queue2DAmountText.font != _foodMeshSettings.StackAmountFont)
-                {
-                    _queue2DAmountText.font = _foodMeshSettings.StackAmountFont;
-                }
-                _queue2DAmountText.text = stack.Amount > 0 ? stack.Amount.ToString() : "";
-            }
-
-            var tableSettings = _tableSettings;
-            _queue2DHolder.transform.localScale = Vector3.one * GetQueue2DScaleMultiplier();
-            _queue2DHolder.transform.localPosition = tableSettings != null ? tableSettings.Queue2DOffset : new Vector3(0f, 0.5f, 0f);
-
-            Align2DWithCamera();
-        }
-
-        private void Align2DWithCamera()
-        {
-            if (_queue2DHolder == null || !_queue2DHolder.activeSelf) return;
-
-            var cam = Camera.main;
-            if (cam != null)
-            {
-                _queue2DHolder.transform.rotation = cam.transform.rotation;
-            }
-        }
-
         private void ApplyStack(FoodStackData stack)
         {
-            bool is2D = ShouldUse2DQueue();
-
-            if (is2D)
+            if (ShouldUse2DQueue())
             {
-                ApplyQueue2DVisual(stack);
-                Set3DVisualsActive(false);
-                if (_conveyorAmountBadge != null) _conveyorAmountBadge.SetActive(false);
+                _queueSprite.Show(stack);
+                _stackBuilder.SetActive(false);
+                _amountBadge.Hide();
                 return;
             }
 
-            if (_queue2DHolder != null) _queue2DHolder.SetActive(false);
-            Set3DVisualsActive(true);
-            ApplyConveyorAmountBadge(stack);
-
-            FoodMeshSettings.MeshVisual closedVisual = default, openedVisual = default;
-            bool hasClosed = _foodMeshSettings != null &&
-                              _foodMeshSettings.TryGetVisual(stack.Type, FoodVisualState.Closed, out closedVisual);
-            bool hasOpened = _foodMeshSettings != null &&
-                              _foodMeshSettings.TryGetVisual(stack.Type, FoodVisualState.Opened, out openedVisual);
-
-            bool hasStateVisual = _visualState == FoodVisualState.Opened ? hasOpened : hasClosed;
-            var stateVisual = _visualState == FoodVisualState.Opened ? openedVisual : closedVisual;
-            _usesFixedChildSlots = hasStateVisual && stateVisual.FixedChildSlots;
-
-            // Switching between fixed-slot and stacked-units mode (e.g. a level mixing food types) can't
-            // reuse the other mode's objects — clear whichever one was built before.
-            if (_usesFixedChildSlots != _appliedUsesFixedChildSlots)
-            {
-                ClearVisuals();
-                _appliedUsesFixedChildSlots = _usesFixedChildSlots;
-            }
-
-            if (_usesFixedChildSlots)
-            {
-                var sourcePrefab = stateVisual.Prefab;
-                if (sourcePrefab != _fixedSlotSourcePrefab)
-                {
-                    if (_fixedSlotInstance != null)
-                    {
-                        Destroy(_fixedSlotInstance);
-                        _fixedSlotInstance = null;
-                    }
-
-                    _fixedSlotSourcePrefab = sourcePrefab;
-                    _fixedSlotBaseScale = sourcePrefab != null ? sourcePrefab.transform.localScale : Vector3.one;
-                    _fixedSlotBaseRotation = sourcePrefab != null ? sourcePrefab.transform.localRotation : Quaternion.identity;
-                }
-
-                var correction = Quaternion.Euler(stateVisual.RotationEuler);
-                ApplyFixedChildSlots(stack, sourcePrefab, _fixedSlotBaseRotation * correction);
-            }
-            else
-            {
-                ApplyStackedUnits(stack, closedVisual, openedVisual, hasClosed, hasOpened);
-            }
+            _queueSprite.Hide();
+            _stackBuilder.SetActive(true);
+            // Badge is positioned before the rebuild (against the previous units); LateUpdate re-aligns it.
+            _amountBadge.Show(stack, _location);
+            _stackBuilder.Build(stack, _visualState, _location);
         }
 
-        private void Set3DVisualsActive(bool active)
-        {
-            for (int i = 0; i < _units.Count; i++)
-            {
-                if (_units[i] != null) _units[i].SetActive(active);
-            }
-
-            if (_fixedSlotInstance != null)
-            {
-                _fixedSlotInstance.SetActive(active);
-            }
-        }
-
-        private void ClearVisuals()
-        {
-            for (int i = 0; i < _units.Count; i++)
-                if (_units[i] != null) Destroy(_units[i]);
-
-            _units.Clear();
-            _unitIsOpened.Clear();
-            _unitSourcePrefab.Clear();
-            _unitBaseScale.Clear();
-            _unitAppliedRotation.Clear();
-
-            if (_fixedSlotInstance != null)
-            {
-                Destroy(_fixedSlotInstance);
-                _fixedSlotInstance = null;
-            }
-
-            _fixedSlotSourcePrefab = null;
-        }
-
-        private void ApplyStackedUnits(
-            FoodStackData stack,
-            FoodMeshSettings.MeshVisual closedVisual,
-            FoodMeshSettings.MeshVisual openedVisual,
-            bool hasClosed,
-            bool hasOpened)
-        {
-            // Clamped to at least 1: an authored/linked stack can sit at Amount 0 (e.g. a decoy half of a
-            // linked pair) while still occupying a real slot — it must stay visible and clickable there,
-            // never silently disappear. Genuine consumption never leaves an in-place item at exactly 0
-            // (ConsumeFromItem removes a fully-eaten belt item outright before this runs), so this only
-            // ever affects that authored-zero case.
-            int visibleCount = Mathf.Clamp(stack.Amount, 1, MaxVisibleUnits);
-
-            while (_units.Count > visibleCount)
-            {
-                int last = _units.Count - 1;
-                if (_units[last] != null) Destroy(_units[last]);
-                _units.RemoveAt(last);
-                _unitIsOpened.RemoveAt(last);
-                _unitSourcePrefab.RemoveAt(last);
-                _unitBaseScale.RemoveAt(last);
-                _unitAppliedRotation.RemoveAt(last);
-            }
-
-            while (_units.Count < visibleCount)
-            {
-                _units.Add(null);
-                _unitIsOpened.Add(false);
-                _unitSourcePrefab.Add(null);
-                _unitBaseScale.Add(Vector3.one);
-                _unitAppliedRotation.Add(Quaternion.identity);
-            }
-
-            var color = FoodTypeUtil.ToColor(stack.Type);
-
-            for (int i = 0; i < visibleCount; i++)
-            {
-                // Only the very top unit (highest index — see ApplyUnitLayout) shows unpacked, and only
-                // while this whole item is Opened. Consuming the top unit shrinks Amount, which exposes
-                // the unit below it as the new top — it picks up Opened here on the very next ApplyStack.
-                bool isTop = i == visibleCount - 1;
-                bool wantOpened = isTop && _visualState == FoodVisualState.Opened && hasOpened;
-                _unitIsOpened[i] = wantOpened;
-
-                var visual = wantOpened ? openedVisual : closedVisual;
-                bool hasThisVisual = wantOpened ? hasOpened : hasClosed;
-                var sourcePrefab = hasThisVisual ? visual.Prefab : _unitPrefab;
-
-                if (_units[i] == null || sourcePrefab != _unitSourcePrefab[i])
-                {
-                    if (_units[i] != null) Destroy(_units[i]);
-
-                    _units[i] = Instantiate(sourcePrefab, transform);
-                    _unitSourcePrefab[i] = sourcePrefab;
-                    _unitBaseScale[i] = sourcePrefab != null ? sourcePrefab.transform.localScale : Vector3.one;
-                    var baseRotation = sourcePrefab != null ? sourcePrefab.transform.localRotation : Quaternion.identity;
-
-                    // Extra correction on top of the prefab's own authored orientation, not a runtime
-                    // rotation: it is identical in the queue, on the belt and in the exit stack, so an
-                    // item never appears to turn while it travels.
-                    var correction = hasThisVisual ? Quaternion.Euler(visual.RotationEuler) : Quaternion.identity;
-                    _unitAppliedRotation[i] = baseRotation * correction;
-                    _units[i].transform.localRotation = _unitAppliedRotation[i];
-
-                    if (!hasThisVisual)
-                    {
-                        var renderer = _units[i].GetComponentInChildren<Renderer>();
-                        if (renderer != null) renderer.material.color = color;
-                    }
-                }
-            }
-
-            ApplyUnitLayout(stack.Type);
-        }
-
-        // A rack with pre-placed items instead of a vertical stack of copies: one instance total, and
-        // however many slot children the amount allows stay active — the rest hide. The rack's own mesh
-        // sits on whichever node actually branches (e.g. icecek_stack: a single-child pivot wrapper down
-        // to the base holding the 4 icecek_tekli children) — ResolveFixedSlotContainer walks down through
-        // any such single-child wrapper levels to find it; that node's children (all of them) are the slots.
-        private void ApplyFixedChildSlots(FoodStackData stack, GameObject sourcePrefab, Quaternion unitRotation)
-        {
-            if (_fixedSlotInstance == null)
-            {
-                _fixedSlotInstance = Instantiate(sourcePrefab, transform);
-                _fixedSlotInstance.transform.localPosition = Vector3.zero;
-            }
-
-            _fixedSlotInstance.transform.localRotation = unitRotation;
-            float scale = ResolveScale(stack.Type, _visualState);
-            _fixedSlotInstance.transform.localScale = _fixedSlotBaseScale * scale;
-            _appliedFixedSlotScale = scale;
-
-            var container = ResolveFixedSlotContainer();
-            int slotCount = container != null ? container.childCount : 0;
-            // Same Amount-0-stays-visible rule as ApplyStackedUnits — see comment there.
-            int visibleCount = slotCount == 0 ? 0 : Mathf.Clamp(stack.Amount, 1, slotCount);
-
-            for (int i = 0; i < slotCount; i++)
-                container.GetChild(i).gameObject.SetActive(i < visibleCount);
-        }
-
-        // Descends through wrapper levels that only exist to fix a pivot/orientation (exactly one child)
-        // until reaching the node that actually holds the slot children side by side.
-        private Transform ResolveFixedSlotContainer()
-        {
-            if (_fixedSlotInstance == null) return null;
-
-            var node = _fixedSlotInstance.transform;
-            while (node.childCount == 1) node = node.GetChild(0);
-            return node;
-        }
-
-        // Hands the caller the single drink that was just hidden by the latest ReduceAmount, detached from
-        // the rack so it can fly to a customer on its own instead of a duplicate of the whole rack. Always
-        // the container's current last child: ReduceAmount only ever hides slots from the top down, so
-        // that's always the one that just went invisible. The rack (base + remaining drinks) is left untouched.
-        public Transform TakeFixedSlotChild()
-        {
-            if (!_usesFixedChildSlots) return null;
-
-            var container = ResolveFixedSlotContainer();
-            if (container == null || container.childCount == 0) return null;
-
-            var child = container.GetChild(container.childCount - 1);
-            child.gameObject.SetActive(true);
-            child.SetParent(null, worldPositionStays: true);
-            return child;
-        }
-
-        // Scale and stack spacing both come from the placement asset, so they are re-applied together.
-        private void ApplyUnitLayout(FoodType type)
-        {
-            float spacing = ResolveSpacing(type);
-            _appliedClosedScale = ResolveScale(type, FoodVisualState.Closed);
-            _appliedOpenedScale = ResolveScale(type, FoodVisualState.Opened);
-            _appliedSpacing = spacing;
-
-            bool isDrink = type == FoodType.Drink;
-
-            for (int i = 0; i < _units.Count; i++)
-            {
-                float unitScale = ResolveScale(type, _unitIsOpened[i] ? FoodVisualState.Opened : FoodVisualState.Closed);
-                // For Drink specifically, the bottom model is shifted so it renders in front/on top
-                float yOffset = isDrink ? (_units.Count - 1 - i) * spacing : i * spacing;
-                _units[i].transform.localPosition = new Vector3(0f, yOffset, 0f);
-                _units[i].transform.localScale = _unitBaseScale[i] * unitScale;
-            }
-        }
-
-        // Units sit exactly one rendered height apart, so a short packaged mesh and a tall opened one
-        // both stack tightly without hand-tuning a constant per mesh. Measured off the bottom unit —
-        // always Closed unless the stack is down to its last (Opened) piece — so the pile's spacing
-        // doesn't jump around as the top unit's mesh changes.
-        private float ResolveSpacing(FoodType type)
-        {
-            var placement = _placement;
-            if (_units.Count == 0 || placement == null) return FallbackStackSpacing;
-
-            float scale = ResolveScale(type, _unitIsOpened[0] ? FoodVisualState.Opened : FoodVisualState.Closed);
-            float unitHeight = ResolveUnitHeight(_unitSourcePrefab[0], _unitAppliedRotation[0], _unitBaseScale[0] * scale);
-            if (unitHeight <= 0.0001f) return FallbackStackSpacing;
-
-            return unitHeight * placement.ResolveStackSpacingFactor(type, _location);
-        }
-
-        // Height along world Y after the unit's fixed orientation and scale are applied — a prefab laid
-        // on its side stacks by its new height, not the one it was authored with.
-        private static float ResolveUnitHeight(GameObject prefab, Quaternion appliedRotation, Vector3 scale)
-        {
-            var bounds = CombinedLocalBounds(prefab);
-            if (!bounds.HasValue) return 0.25f;
-
-            var size = appliedRotation * Vector3.Scale(bounds.Value.size, scale);
-            float h = Mathf.Abs(size.y);
-            // 2D Sprite prefabları (PF_Burger vb.) uninstantiated halde bounds.size.y = 20.48 birim gelebilir.
-            // Bu durumda katman yüksekliğini gerçekçi bir kalınlık sınırında (0.22 - 0.28) tutuyoruz.
-            if (h > 0.6f) h = 0.25f;
-            return h > 0.0001f ? h : 0.25f;
-        }
-
-        // Encapsulates every child mesh's bounds in the prefab root's local space — covers composite
-        // visuals (e.g. a food item still sitting in its opened wrapper) with more than one MeshFilter.
-        private static Bounds? CombinedLocalBounds(GameObject prefab)
-        {
-            if (prefab == null) return null;
-
-            var meshFilters = prefab.GetComponentsInChildren<MeshFilter>(true);
-            var spriteRenderers = prefab.GetComponentsInChildren<SpriteRenderer>(true);
-            if (meshFilters.Length == 0 && spriteRenderers.Length == 0) return null;
-
-            var worldToRoot = prefab.transform.worldToLocalMatrix;
-            Bounds? combined = null;
-
-            for (int i = 0; i < meshFilters.Length; i++)
-            {
-                var meshFilter = meshFilters[i];
-                if (meshFilter.sharedMesh == null) continue;
-
-                var meshToRoot = worldToRoot * meshFilter.transform.localToWorldMatrix;
-                var meshBounds = meshFilter.sharedMesh.bounds;
-                var extents = meshBounds.extents;
-
-                var localBounds = new Bounds(meshToRoot.MultiplyPoint3x4(meshBounds.center), Vector3.zero);
-                for (int x = -1; x <= 1; x += 2)
-                for (int y = -1; y <= 1; y += 2)
-                for (int z = -1; z <= 1; z += 2)
-                {
-                    var corner = meshBounds.center + Vector3.Scale(extents, new Vector3(x, y, z));
-                    localBounds.Encapsulate(meshToRoot.MultiplyPoint3x4(corner));
-                }
-
-                if (combined.HasValue)
-                {
-                    var c = combined.Value;
-                    c.Encapsulate(localBounds);
-                    combined = c;
-                }
-                else combined = localBounds;
-            }
-
-            for (int i = 0; i < spriteRenderers.Length; i++)
-            {
-                var sr = spriteRenderers[i];
-                if (sr.sprite == null) continue;
-
-                var srToRoot = worldToRoot * sr.transform.localToWorldMatrix;
-                var spriteBounds = sr.sprite.bounds;
-                var extents = spriteBounds.extents;
-
-                var localBounds = new Bounds(srToRoot.MultiplyPoint3x4(spriteBounds.center), Vector3.zero);
-                for (int x = -1; x <= 1; x += 2)
-                for (int y = -1; y <= 1; y += 2)
-                for (int z = -1; z <= 1; z += 2)
-                {
-                    var corner = spriteBounds.center + Vector3.Scale(extents, new Vector3(x, y, z));
-                    localBounds.Encapsulate(srToRoot.MultiplyPoint3x4(corner));
-                }
-
-                if (combined.HasValue)
-                {
-                    var c = combined.Value;
-                    c.Encapsulate(localBounds);
-                    combined = c;
-                }
-                else combined = localBounds;
-            }
-
-            return combined;
-        }
-
-        private float ResolveScale(FoodType type, FoodVisualState state)
-        {
-            var placement = _placement;
-            float baseScale = placement == null ? 1f : placement.ResolveScale(type, _location, state);
-            if (_location == FoodLocation.Queue && _tableSettings != null && _tableSettings.ScaleWithCamera && _cameraController != null)
-            {
-                float zoom = _cameraController.CameraZoomFactor;
-                float multiplier = _tableSettings.FoodQueueScaleMultiplier;
-                float factor = 1f + (zoom - 1f) * multiplier;
-                baseScale *= factor;
-            }
-            return baseScale;
-        }
-
-        // Picks up scale / spacing tweaks made in the placement asset while the game is running.
+        // Keeps camera-facing visuals aligned and picks up scale / spacing tweaks made in the placement
+        // asset while the game is running.
         private void LateUpdate()
         {
             if (ShouldUse2DQueue())
             {
-                Align2DWithCamera();
-
-                if (_queue2DHolder != null)
-                {
-                    _queue2DHolder.transform.localScale = Vector3.one * GetQueue2DScaleMultiplier();
-                }
+                _queueSprite.Refresh();
                 return;
             }
 
-            AlignConveyorBadgeWithCamera();
-
-            if (_usesFixedChildSlots)
-            {
-                float scale = ResolveScale(Stack.Type, _visualState);
-                if (Mathf.Approximately(scale, _appliedFixedSlotScale)) return;
-
-                if (_fixedSlotInstance != null) _fixedSlotInstance.transform.localScale = _fixedSlotBaseScale * scale;
-                _appliedFixedSlotScale = scale;
-                return;
-            }
-
-            float closedScale = ResolveScale(Stack.Type, FoodVisualState.Closed);
-            float openedScale = ResolveScale(Stack.Type, FoodVisualState.Opened);
-            float spacing = ResolveSpacing(Stack.Type);
-
-            if (Mathf.Approximately(closedScale, _appliedClosedScale) &&
-                Mathf.Approximately(openedScale, _appliedOpenedScale) &&
-                Mathf.Approximately(spacing, _appliedSpacing))
-                return;
-
-            ApplyUnitLayout(Stack.Type);
+            _amountBadge.AlignWithCamera(_location);
+            _stackBuilder.RefreshLayout(Stack.Type, _visualState, _location);
         }
 
         private void CaptureBaseRotationOnce()
