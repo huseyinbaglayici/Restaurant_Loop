@@ -8,18 +8,8 @@ namespace RestaurantLoop.Runtime.Data
     public static class ShowcaseModeConfig
     {
         private const string PrefKeyEnabled = "ShowcaseMode_Enabled";
-        private const string PrefKeySceneName = "ShowcaseMode_SceneName";
         private const string PrefKeyLevels = "ShowcaseMode_Levels";
         private const string PrefKeyIndex = "ShowcaseMode_CurrentIndex";
-
-        public const string DefaultShowcaseSceneName = "EylulGameplayScene";
-        public const string DefaultGameplaySceneName = "GameplayScene";
-        public const string DefaultShowcaseMainMenuName = "EylulMainMenuScene";
-        public const string DefaultMainMenuName = "MainMenuScene";
-        public const string DefaultShowcaseBootstrapName = "EylulBoostrapScene";
-        public const string DefaultBootstrapName = "BoostrapScene";
-
-        private const string PrefKeyMainMenuName = "ShowcaseMode_MainMenuName";
 
         public static bool IsEnabled
         {
@@ -27,26 +17,6 @@ namespace RestaurantLoop.Runtime.Data
             set
             {
                 PlayerPrefs.SetInt(PrefKeyEnabled, value ? 1 : 0);
-                PlayerPrefs.Save();
-            }
-        }
-
-        public static string TargetSceneName
-        {
-            get => PlayerPrefs.GetString(PrefKeySceneName, DefaultShowcaseSceneName);
-            set
-            {
-                PlayerPrefs.SetString(PrefKeySceneName, string.IsNullOrEmpty(value) ? DefaultShowcaseSceneName : value);
-                PlayerPrefs.Save();
-            }
-        }
-
-        public static string TargetMainMenuSceneName
-        {
-            get => PlayerPrefs.GetString(PrefKeyMainMenuName, DefaultShowcaseMainMenuName);
-            set
-            {
-                PlayerPrefs.SetString(PrefKeyMainMenuName, string.IsNullOrEmpty(value) ? DefaultShowcaseMainMenuName : value);
                 PlayerPrefs.Save();
             }
         }

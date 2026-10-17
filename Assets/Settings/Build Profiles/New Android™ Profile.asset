@@ -18,14 +18,8 @@ MonoBehaviour:
   m_PlatformId: b9b35072a6f44c2e863f17467ea3dc13
   m_PlatformBuildProfile:
     rid: 9027090129001906247
-  m_OverrideGlobalSceneList: 1
-  m_Scenes:
-  - m_enabled: 1
-    m_path: Assets/Scenes/Showcase/EylulBootstrapScene.unity
-  - m_enabled: 1
-    m_path: Assets/Scenes/Showcase/EylulGameplayScene.unity
-  - m_enabled: 1
-    m_path: Assets/Scenes/Showcase/EylulMainMenuScene.unity
+  m_OverrideGlobalSceneList: 0
+  m_Scenes: []
   m_ScriptingDefines:
   - 
   m_PlayerSettingsYaml:

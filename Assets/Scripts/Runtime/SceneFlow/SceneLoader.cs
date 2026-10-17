@@ -8,26 +8,8 @@ namespace RestaurantLoop.SceneFlow
 {
     public class SceneLoader : ISceneLoader, IInitializable
     {
-        private const string GameplaySceneName = "GameplayScene";
-
         private readonly SignalBus _signalBus;
         private readonly CurrentLevelProvider _currentLevelProvider;
-
-        public static string ActiveGameplaySceneName
-        {
-            get
-            {
-                if (ShowcaseModeConfig.IsEnabled) return ShowcaseModeConfig.TargetSceneName;
-
-                // Fallback to EylulGameplayScene if GameplayScene is not in build
-                if (Application.CanStreamedLevelBeLoaded("EylulGameplayScene") && !Application.CanStreamedLevelBeLoaded(GameplaySceneName))
-                {
-                    return "EylulGameplayScene";
-                }
-
-                return GameplaySceneName;
-            }
-        }
 
         private AsyncOperation _pendingUnload;
 
@@ -63,14 +45,14 @@ namespace RestaurantLoop.SceneFlow
 
         private void BeginLoad()
         {
-            var targetScene = ActiveGameplaySceneName;
+            var targetScene = SceneNames.Gameplay;
             var operation = SceneManager.LoadSceneAsync(targetScene, LoadSceneMode.Additive);
             operation.completed += OnGameplaySceneLoaded;
         }
 
         public void UnloadGameplayScene()
         {
-            var targetScene = ActiveGameplaySceneName;
+            var targetScene = SceneNames.Gameplay;
             _pendingUnload = SceneManager.UnloadSceneAsync(targetScene);
         }
 
@@ -82,7 +64,7 @@ namespace RestaurantLoop.SceneFlow
 
         private void OnGameplaySceneLoaded(AsyncOperation operation)
         {
-            var targetScene = ActiveGameplaySceneName;
+            var targetScene = SceneNames.Gameplay;
             var scene = SceneManager.GetSceneByName(targetScene);
             SceneManager.SetActiveScene(scene);
 

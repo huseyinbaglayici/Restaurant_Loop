@@ -10,16 +10,13 @@ namespace RestaurantLoop.Editor
 {
     public class ShowcaseModeWindow : EditorWindow
     {
+        private const string BootstrapScenePath = "Assets/Scenes/BoostrapScene.unity";
+
         private bool _showcaseEnabled;
-        private string _targetGameplayScene = ShowcaseModeConfig.DefaultShowcaseSceneName;
-        private string _targetMainMenuScene = ShowcaseModeConfig.DefaultShowcaseMainMenuName;
         private List<int> _playlist = new();
         private int _currentPlaylistIndex = 0;
         private Vector2 _scrollPos;
         private Vector2 _dbScrollPos;
-
-        private readonly string[] _gameplaySceneOptions = { "EylulGameplayScene", "GameplayScene" };
-        private readonly string[] _mainMenuSceneOptions = { "EylulMainMenuScene", "MainMenuScene" };
 
         [MenuItem("RestaurantLoop/Showcase (Test Modu)...", false, 0)]
         public static void Open()
@@ -32,8 +29,6 @@ namespace RestaurantLoop.Editor
         private void OnEnable()
         {
             _showcaseEnabled = ShowcaseModeConfig.IsEnabled;
-            _targetGameplayScene = ShowcaseModeConfig.TargetSceneName;
-            _targetMainMenuScene = ShowcaseModeConfig.TargetMainMenuSceneName;
             _playlist = ShowcaseModeConfig.Playlist;
             _currentPlaylistIndex = ShowcaseModeConfig.CurrentPlaylistIndex;
         }
@@ -55,7 +50,7 @@ namespace RestaurantLoop.Editor
 
             if (_showcaseEnabled)
             {
-                EditorGUILayout.HelpBox("Showcase modu devrede:\n• Bootstrap'ten başlandığında seçili hedef sahne yüklenir.\n• Aşağıdaki oynatma listesindeki levellar sırasıyla açılır.", MessageType.Info);
+                EditorGUILayout.HelpBox("Showcase modu devrede:\n• Aşağıdaki oynatma listesindeki levellar sırasıyla açılır.", MessageType.Info);
             }
             else
             {
@@ -65,47 +60,16 @@ namespace RestaurantLoop.Editor
 
             EditorGUILayout.Space(8);
 
-            // Scene Selection
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Hedef Sahneler (Showcase Akışı)", EditorStyles.boldLabel);
-
-            // MainMenu Scene
-            int selectedMenuIdx = System.Array.IndexOf(_mainMenuSceneOptions, _targetMainMenuScene);
-            if (selectedMenuIdx < 0) selectedMenuIdx = 0;
-
-            EditorGUI.BeginChangeCheck();
-            selectedMenuIdx = EditorGUILayout.Popup("Menü Sahnesi:", selectedMenuIdx, _mainMenuSceneOptions);
-            if (EditorGUI.EndChangeCheck())
-            {
-                _targetMainMenuScene = _mainMenuSceneOptions[selectedMenuIdx];
-                ShowcaseModeConfig.TargetMainMenuSceneName = _targetMainMenuScene;
-            }
-
-            // Gameplay Scene
-            int selectedSceneIdx = System.Array.IndexOf(_gameplaySceneOptions, _targetGameplayScene);
-            if (selectedSceneIdx < 0) selectedSceneIdx = 0;
-
-            EditorGUI.BeginChangeCheck();
-            selectedSceneIdx = EditorGUILayout.Popup("Oyun Sahnesi:", selectedSceneIdx, _gameplaySceneOptions);
-            if (EditorGUI.EndChangeCheck())
-            {
-                _targetGameplayScene = _gameplaySceneOptions[selectedSceneIdx];
-                ShowcaseModeConfig.TargetSceneName = _targetGameplayScene;
-            }
-            EditorGUILayout.EndVertical();
-
-            EditorGUILayout.Space(8);
-
             // Quick Play Button from Bootstrap
             if (!Application.isPlaying)
             {
                 GUI.backgroundColor = new Color(0.3f, 0.85f, 0.4f);
-                if (GUILayout.Button("▶ Showcase'i Başlat (EylulBootstrapScene)", GUILayout.Height(34)))
+                if (GUILayout.Button("▶ Showcase'i Başlat (BoostrapScene)", GUILayout.Height(34)))
                 {
                     ShowcaseModeConfig.IsEnabled = true;
                     _showcaseEnabled = true;
                     SavePlaylist();
-                    UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/Showcase/EylulBootstrapScene.unity");
+                    UnityEditor.SceneManagement.EditorSceneManager.OpenScene(BootstrapScenePath);
                     EditorApplication.isPlaying = true;
                 }
                 GUI.backgroundColor = Color.white;
