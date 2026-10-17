@@ -4,7 +4,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Editor.LevelEditor
+namespace RestaurantLoop.Editor.LevelEditor
 {
     public class TutorialStepsWindow : EditorWindow
     {

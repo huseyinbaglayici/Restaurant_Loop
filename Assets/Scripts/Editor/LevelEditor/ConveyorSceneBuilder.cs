@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace Editor.LevelEditor
+namespace RestaurantLoop.Editor.LevelEditor
 {
     internal static class ConveyorSceneBuilder
     {

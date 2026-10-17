@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Zenject;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.Signals;
 using RestaurantLoop.Runtime.Data;
 
-namespace RestaurantLoop.SceneFlow
+namespace RestaurantLoop.Runtime.SceneFlow
 {
     public class SceneLoader : ISceneLoader, IInitializable
     {

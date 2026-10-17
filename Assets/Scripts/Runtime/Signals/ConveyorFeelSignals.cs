@@ -2,7 +2,7 @@ using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 
-namespace RestaurantLoop.Signals
+namespace RestaurantLoop.Runtime.Signals
 {
     // Logical layer (ConveyorManager / CustomerConsumeService) fires these the instant a decision is
     // made, and the visual layer (ConveyorVisualService) reacts the same frame — no lag, no waiting.

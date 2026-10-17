@@ -1,6 +1,6 @@
 using System;
 
-namespace RestaurantLoop.Lives
+namespace RestaurantLoop.Runtime.Lives
 {
     public interface ILivesService
     {

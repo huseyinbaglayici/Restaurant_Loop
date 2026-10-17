@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.Economy
+namespace RestaurantLoop.Runtime.Economy
 {
     public class EconomyService : IEconomyService, IInitializable
     {

@@ -1,10 +1,10 @@
 using DG.Tweening;
-using RestaurantLoop.Audio;
-using RestaurantLoop.Lives;
+using RestaurantLoop.Runtime.Audio;
+using RestaurantLoop.Runtime.Lives;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.SceneFlow;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.SceneFlow;
+using RestaurantLoop.Runtime.Signals;
 using TMPro;
 using UnityEngine;
 using Zenject;
@@ -36,8 +36,8 @@ namespace RestaurantLoop.Runtime.UI
         private ILivesService _livesService;
         private CurrentLevelProvider _currentLevelProvider;
         private ConveyorAutoClearService _autoClearService;
-        private RestaurantLoop.Economy.IPowerUpInventoryService _powerUpInventory;
-        private RestaurantLoop.Economy.IEconomyService _economyService;
+        private RestaurantLoop.Runtime.Economy.IPowerUpInventoryService _powerUpInventory;
+        private RestaurantLoop.Runtime.Economy.IEconomyService _economyService;
 
         [Inject]
         public void Construct(
@@ -52,8 +52,8 @@ namespace RestaurantLoop.Runtime.UI
             [Inject(Optional = true)] ILivesService livesService = null,
             [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
             [Inject(Optional = true)] ConveyorAutoClearService autoClearService = null,
-            [Inject(Optional = true)] RestaurantLoop.Economy.IPowerUpInventoryService powerUpInventory = null,
-            [Inject(Optional = true)] RestaurantLoop.Economy.IEconomyService economyService = null)
+            [Inject(Optional = true)] RestaurantLoop.Runtime.Economy.IPowerUpInventoryService powerUpInventory = null,
+            [Inject(Optional = true)] RestaurantLoop.Runtime.Economy.IEconomyService economyService = null)
         {
             _consumeService = consumeService;
             _conveyorManager = conveyorManager;
@@ -155,7 +155,7 @@ namespace RestaurantLoop.Runtime.UI
         private void OnPlayOnClicked()
         {
             const int KeepPlayingCost = 300;
-            bool infinite = RestaurantLoop.Economy.PowerUpInventoryService.IsInfinitePowerUpsEnabled();
+            bool infinite = RestaurantLoop.Runtime.Economy.PowerUpInventoryService.IsInfinitePowerUpsEnabled();
             if (!infinite && _economyService != null)
             {
                 if (!_economyService.TrySpendCoins(KeepPlayingCost))

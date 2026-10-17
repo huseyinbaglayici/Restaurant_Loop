@@ -1,9 +1,9 @@
-using RestaurantLoop.Audio;
+using RestaurantLoop.Runtime.Audio;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.Installers
+namespace RestaurantLoop.Runtime.Installers
 {
     public class AudioInstaller : MonoInstaller
     {

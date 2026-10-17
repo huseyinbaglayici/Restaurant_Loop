@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
-using Runtime.Data;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.Installers
+namespace RestaurantLoop.Runtime.Installers
 {
     public class PoolInstaller : MonoInstaller
     {

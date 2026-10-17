@@ -1,12 +1,12 @@
 using System;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.SceneFlow;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.SceneFlow;
+using RestaurantLoop.Runtime.Signals;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Zenject;
 
-namespace RestaurantLoop.Audio
+namespace RestaurantLoop.Runtime.Audio
 {
     public class AudioService : IAudioService, IInitializable
     {

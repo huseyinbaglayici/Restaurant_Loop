@@ -1,7 +1,7 @@
 using Zenject;
-using RestaurantLoop.SceneFlow;
+using RestaurantLoop.Runtime.SceneFlow;
 
-namespace RestaurantLoop.Installers
+namespace RestaurantLoop.Runtime.Installers
 {
     public class SceneLoaderInstaller : MonoInstaller
     {

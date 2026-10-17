@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.SceneFlow;
+using RestaurantLoop.Runtime.SceneFlow;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.Economy
+namespace RestaurantLoop.Runtime.Economy
 {
     public class PowerUpInventoryService : IPowerUpInventoryService, IInitializable
     {

@@ -1,6 +1,6 @@
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.SceneFlow;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.SceneFlow;
+using RestaurantLoop.Runtime.Signals;
 using TMPro;
 using UnityEngine;
 using Zenject;

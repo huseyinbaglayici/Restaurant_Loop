@@ -1,6 +1,6 @@
 using System;
-using RestaurantLoop.Economy;
-using RestaurantLoop.Lives;
+using RestaurantLoop.Runtime.Economy;
+using RestaurantLoop.Runtime.Lives;
 using TMPro;
 using UnityEngine;
 using Zenject;

@@ -1,7 +1,7 @@
 using System;
 using RestaurantLoop.Runtime.Data;
 
-namespace RestaurantLoop.Economy
+namespace RestaurantLoop.Runtime.Economy
 {
     public interface IPowerUpInventoryService
     {

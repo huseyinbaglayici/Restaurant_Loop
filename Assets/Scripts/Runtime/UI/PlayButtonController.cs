@@ -1,9 +1,9 @@
-using RestaurantLoop.Lives;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.Lives;
+using RestaurantLoop.Runtime.Signals;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.UI
+namespace RestaurantLoop.Runtime.UI
 {
     public class PlayButtonController : MonoBehaviour
     {

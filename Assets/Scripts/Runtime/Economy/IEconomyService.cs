@@ -1,6 +1,6 @@
 using System;
 
-namespace RestaurantLoop.Economy
+namespace RestaurantLoop.Runtime.Economy
 {
     public interface IEconomyService
     {

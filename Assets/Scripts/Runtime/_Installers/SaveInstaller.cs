@@ -1,11 +1,11 @@
-using RestaurantLoop.Economy;
-using RestaurantLoop.Lives;
+using RestaurantLoop.Runtime.Economy;
+using RestaurantLoop.Runtime.Lives;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.Save;
+using RestaurantLoop.Runtime.Save;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.Installers
+namespace RestaurantLoop.Runtime.Installers
 {
     public class SaveInstaller : MonoInstaller
     {

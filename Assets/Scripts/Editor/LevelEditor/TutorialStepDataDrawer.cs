@@ -2,7 +2,7 @@ using RestaurantLoop.Runtime.Data;
 using UnityEditor;
 using UnityEngine;
 
-namespace Editor.LevelEditor
+namespace RestaurantLoop.Editor.LevelEditor
 {
     [CustomPropertyDrawer(typeof(TutorialStepData))]
     public class TutorialStepDataDrawer : PropertyDrawer

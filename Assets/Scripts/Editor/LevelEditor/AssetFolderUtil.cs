@@ -1,6 +1,6 @@
 using UnityEditor;
 
-namespace Editor.LevelEditor
+namespace RestaurantLoop.Editor.LevelEditor
 {
     internal static class AssetFolderUtil
     {

@@ -1,7 +1,7 @@
 using Zenject;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.Signals;
 
-namespace RestaurantLoop.Installers
+namespace RestaurantLoop.Runtime.Installers
 {
     public class SignalsInstaller : MonoInstaller
     {

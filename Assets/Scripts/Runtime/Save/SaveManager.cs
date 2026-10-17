@@ -1,8 +1,8 @@
-using RestaurantLoop.SceneFlow;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.SceneFlow;
+using RestaurantLoop.Runtime.Signals;
 using Zenject;
 
-namespace RestaurantLoop.Save
+namespace RestaurantLoop.Runtime.Save
 {
     public class SaveManager : ISaveManager, IInitializable
     {

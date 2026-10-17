@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.Signals;
 using UnityEngine;
 using Zenject;
 
@@ -23,7 +23,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly CustomerSpawner _customerSpawner;
         private readonly ExitStackAnchor _exitStackAnchor;
         private readonly SignalBus _signalBus;
-        private readonly RestaurantLoop.Audio.IAudioService _audioService;
+        private readonly RestaurantLoop.Runtime.Audio.IAudioService _audioService;
         private readonly AudioLibrary _audioLibrary;
 
         // [pathIndex][direction] -> ray, in outward order.
@@ -51,7 +51,7 @@ namespace RestaurantLoop.Runtime.Conveyor
             CustomerSpawner customerSpawner,
             ExitStackAnchor exitStackAnchor,
             SignalBus signalBus,
-            [Inject(Optional = true)] RestaurantLoop.Audio.IAudioService audioService = null,
+            [Inject(Optional = true)] RestaurantLoop.Runtime.Audio.IAudioService audioService = null,
             [Inject(Optional = true)] AudioLibrary audioLibrary = null)
         {
             _level = level;

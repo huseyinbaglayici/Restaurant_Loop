@@ -1,11 +1,11 @@
 using DG.Tweening;
-using RestaurantLoop.Audio;
-using RestaurantLoop.Economy;
+using RestaurantLoop.Runtime.Audio;
+using RestaurantLoop.Runtime.Economy;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Runtime.Tutorial;
-using RestaurantLoop.SceneFlow;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.SceneFlow;
+using RestaurantLoop.Runtime.Signals;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -41,7 +41,7 @@ namespace RestaurantLoop.Runtime.UI
         private IPowerUpInventoryService _inventory;
         private CurrentLevelProvider _currentLevelProvider;
         private PowerUpSettings _settings;
-        private RestaurantLoop.Economy.IEconomyService _economyService;
+        private RestaurantLoop.Runtime.Economy.IEconomyService _economyService;
         private IAudioService _audioService;
         private AudioLibrary _audioLibrary;
 
@@ -55,7 +55,7 @@ namespace RestaurantLoop.Runtime.UI
             [Inject(Optional = true)] CurrentLevelProvider currentLevelProvider = null,
             [Inject(Optional = true)] CustomerConsumeService consumeService = null,
             [Inject(Optional = true)] PowerUpSettings settings = null,
-            [Inject(Optional = true)] RestaurantLoop.Economy.IEconomyService economyService = null,
+            [Inject(Optional = true)] RestaurantLoop.Runtime.Economy.IEconomyService economyService = null,
             [Inject(Optional = true)] IAudioService audioService = null,
             [Inject(Optional = true)] AudioLibrary audioLibrary = null)
         {

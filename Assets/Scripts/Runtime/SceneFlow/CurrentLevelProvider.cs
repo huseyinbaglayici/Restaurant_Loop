@@ -2,7 +2,7 @@ using System;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 
-namespace RestaurantLoop.SceneFlow
+namespace RestaurantLoop.Runtime.SceneFlow
 {
     /// <summary>
     /// ProjectContext-scoped. Resolves its initial value in the CONSTRUCTOR, not in

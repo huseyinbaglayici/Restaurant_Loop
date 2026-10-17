@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.Lives
+namespace RestaurantLoop.Runtime.Lives
 {
     public class LivesService : ILivesService, IInitializable, ITickable
     {

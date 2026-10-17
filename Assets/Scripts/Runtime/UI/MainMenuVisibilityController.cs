@@ -1,8 +1,8 @@
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.Signals;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.UI
+namespace RestaurantLoop.Runtime.UI
 {
     // Lives in MainMenuScene. Hides the menu content while GameplayScene is up (also stops it eating
     // input behind the gameplay view) and brings it back once the loading screen is about to hand
@@ -16,17 +16,17 @@ namespace RestaurantLoop.UI
 
         private SignalBus _signalBus;
         private SceneFlow.CurrentLevelProvider _currentLevelProvider;
-        private Runtime.Data.ThemeSettings _themeSettings;
+        private RestaurantLoop.Runtime.Data.ThemeSettings _themeSettings;
 
         [Inject]
         public void Construct(
             SignalBus signalBus,
             [Inject(Optional = true)] SceneFlow.CurrentLevelProvider currentLevelProvider = null,
-            [Inject(Optional = true)] Runtime.Data.ThemeSettings themeSettings = null)
+            [Inject(Optional = true)] RestaurantLoop.Runtime.Data.ThemeSettings themeSettings = null)
         {
             _signalBus = signalBus;
             _currentLevelProvider = currentLevelProvider;
-            _themeSettings = themeSettings ?? Resources.Load<Runtime.Data.ThemeSettings>("ThemeSettings");
+            _themeSettings = themeSettings ?? Resources.Load<RestaurantLoop.Runtime.Data.ThemeSettings>("ThemeSettings");
 
             _signalBus.Subscribe<GameplaySceneReadySignal>(HideMenu);
             _signalBus.Subscribe<MenuReadySignal>(ShowMenu);

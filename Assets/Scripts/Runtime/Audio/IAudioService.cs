@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace RestaurantLoop.Audio
+namespace RestaurantLoop.Runtime.Audio
 {
     public interface IAudioService
     {

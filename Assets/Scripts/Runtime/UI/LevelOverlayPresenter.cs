@@ -1,8 +1,8 @@
 using System;
-using RestaurantLoop.Economy;
+using RestaurantLoop.Runtime.Economy;
 using RestaurantLoop.Runtime.Conveyor;
-using RestaurantLoop.SceneFlow;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.SceneFlow;
+using RestaurantLoop.Runtime.Signals;
 using TMPro;
 using UnityEngine;
 using Zenject;

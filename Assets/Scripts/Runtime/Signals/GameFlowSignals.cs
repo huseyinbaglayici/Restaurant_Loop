@@ -1,6 +1,6 @@
 using RestaurantLoop.Runtime.Data;
 
-namespace RestaurantLoop.Signals
+namespace RestaurantLoop.Runtime.Signals
 {
     public class LevelEndedSignal
     {

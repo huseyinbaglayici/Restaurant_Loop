@@ -2,7 +2,7 @@ using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Editor.LevelEditor
+namespace RestaurantLoop.Editor.LevelEditor
 {
     internal static class EntityLabelFactory
     {

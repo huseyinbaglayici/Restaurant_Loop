@@ -3,7 +3,7 @@ using System.Linq;
 using RestaurantLoop.Runtime.Data;
 using UnityEngine;
 
-namespace Editor.LevelEditor
+namespace RestaurantLoop.Editor.LevelEditor
 {
     // cell graph -> closed loop -> ordered path, direction picked from painted arrows
     internal static class ConveyorPathBaker

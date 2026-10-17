@@ -1,4 +1,4 @@
-namespace Editor.LevelEditor
+namespace RestaurantLoop.Editor.LevelEditor
 {
     // USS class name constants. A mismatch between these and LevelEditor.uss is a
     // silent failure at runtime; centralising the strings here makes USS-refactoring safe.

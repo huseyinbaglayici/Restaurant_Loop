@@ -1,7 +1,7 @@
 using DG.Tweening;
 using UnityEngine;
 
-namespace Runtime.Data
+namespace RestaurantLoop.Runtime.Data
 {
     [CreateAssetMenu(fileName = "ConveyorFeelSettings", menuName = "RestaurantLoop/Conveyor Feel Settings")]
     public class ConveyorFeelSettings : ScriptableObject

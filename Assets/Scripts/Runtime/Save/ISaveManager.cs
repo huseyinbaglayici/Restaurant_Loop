@@ -1,4 +1,4 @@
-namespace RestaurantLoop.Save
+namespace RestaurantLoop.Runtime.Save
 {
     public interface ISaveManager
     {

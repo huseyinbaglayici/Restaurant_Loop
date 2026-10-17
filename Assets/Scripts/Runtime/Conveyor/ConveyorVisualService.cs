@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using RestaurantLoop.Audio;
+using RestaurantLoop.Runtime.Audio;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.Signals;
-using Runtime.Data;
+using RestaurantLoop.Runtime.Signals;
 using UnityEngine;
 using Zenject;
 

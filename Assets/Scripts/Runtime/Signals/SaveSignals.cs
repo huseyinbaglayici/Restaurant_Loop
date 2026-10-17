@@ -1,4 +1,4 @@
-namespace RestaurantLoop.Signals
+namespace RestaurantLoop.Runtime.Signals
 {
     public class SaveRequestedSignal
     {

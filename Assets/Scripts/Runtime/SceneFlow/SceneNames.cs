@@ -1,4 +1,4 @@
-namespace RestaurantLoop.SceneFlow
+namespace RestaurantLoop.Runtime.SceneFlow
 {
     public static class SceneNames
     {

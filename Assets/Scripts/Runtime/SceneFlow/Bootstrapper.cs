@@ -1,9 +1,9 @@
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.Signals;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Zenject;
 
-namespace RestaurantLoop.SceneFlow
+namespace RestaurantLoop.Runtime.SceneFlow
 {
     // The shared loading screen lives inside MainMenuScene (LoadingController) — it can't be shown
     // before that scene exists, so we don't try to; LoadingRoot's own authored default (active) is

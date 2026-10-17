@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.Signals;
-using Runtime.Data;
+using RestaurantLoop.Runtime.Signals;
 using UnityEngine;
 using Zenject;
 
-namespace Runtime.Conveyor
+namespace RestaurantLoop.Runtime.Conveyor
 {
     public class TrayVisualService : IInitializable, ITickable, IDisposable
     {

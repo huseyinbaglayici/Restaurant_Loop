@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.SceneFlow;
+using RestaurantLoop.Runtime.SceneFlow;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;

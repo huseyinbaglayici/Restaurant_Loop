@@ -1,7 +1,7 @@
 using System;
 using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.Signals;
 using UnityEngine;
 using Zenject;
 

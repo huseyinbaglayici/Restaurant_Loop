@@ -1,7 +1,6 @@
 using System;
 using DG.Tweening;
 using RestaurantLoop.Runtime.Data;
-using Runtime.Data;
 using UnityEngine;
 
 namespace RestaurantLoop.Runtime.Conveyor

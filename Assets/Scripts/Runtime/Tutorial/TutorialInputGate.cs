@@ -1,6 +1,6 @@
 using System;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.Signals;
 using Zenject;
 
 namespace RestaurantLoop.Runtime.Tutorial

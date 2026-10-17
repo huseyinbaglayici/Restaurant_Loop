@@ -1,11 +1,11 @@
 using System.Collections;
 using RestaurantLoop.Runtime.Data;
-using RestaurantLoop.SceneFlow;
-using RestaurantLoop.Signals;
+using RestaurantLoop.Runtime.SceneFlow;
+using RestaurantLoop.Runtime.Signals;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.UI
+namespace RestaurantLoop.Runtime.UI
 {
     // Lives in MainMenuScene (loaded once at boot, never unloaded) so the same instance covers every
     // scene transition — boot's implicit continue-into-Gameplay included, not just later Play/Claim

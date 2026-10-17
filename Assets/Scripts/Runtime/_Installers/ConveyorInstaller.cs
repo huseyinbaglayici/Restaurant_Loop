@@ -2,13 +2,12 @@ using RestaurantLoop.Runtime.Conveyor;
 using RestaurantLoop.Runtime.Data;
 using RestaurantLoop.Runtime.Tutorial;
 using RestaurantLoop.Runtime.UI;
-using RestaurantLoop.SceneFlow;
-using Runtime.Conveyor;
+using RestaurantLoop.Runtime.SceneFlow;
 using TMPro;
 using UnityEngine;
 using Zenject;
 
-namespace RestaurantLoop.Installers
+namespace RestaurantLoop.Runtime.Installers
 {
     // scene-scoped, GameplayScene's SceneContext
     public class ConveyorInstaller : MonoInstaller
