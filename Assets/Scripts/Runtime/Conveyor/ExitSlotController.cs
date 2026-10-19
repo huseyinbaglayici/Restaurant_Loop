@@ -14,7 +14,8 @@ namespace RestaurantLoop.Runtime.Conveyor
         }
 
         // Null restores the base look.
-        public void ApplyThemeVisual(GameObject overridePrefab) => _themeVisual.Apply(overridePrefab);
+        public void ApplyThemeVisual(GameObject overridePrefab) =>
+            (_themeVisual ??= new ThemeVisualOverride(transform)).Apply(overridePrefab);
 
         public void OnSpawned(Vector3 position)
         {

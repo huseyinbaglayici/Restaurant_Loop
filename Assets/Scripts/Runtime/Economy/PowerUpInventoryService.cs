@@ -54,11 +54,14 @@ namespace RestaurantLoop.Runtime.Economy
             return _counts.TryGetValue(id, out int count) ? count : 0;
         }
 
+        // The real saved count; GetCount reports 99 while the editor's infinite toggle is on.
+        private int StoredCount(PowerUpButtonId id) => _counts.TryGetValue(id, out int count) ? count : 0;
+
         public void AddCount(PowerUpButtonId id, int amount)
         {
             if (amount <= 0) return;
 
-            int newCount = GetCount(id) + amount;
+            int newCount = StoredCount(id) + amount;
             _counts[id] = newCount;
             _saveService.SavePowerUpCount(id, newCount);
 
@@ -157,7 +160,7 @@ namespace RestaurantLoop.Runtime.Economy
         {
             if (amount <= 0) return false;
 
-            int newCount = GetCount(id) + amount;
+            int newCount = StoredCount(id) + amount;
             _counts[id] = newCount;
             _saveService.SavePowerUpCount(id, newCount);
             return true;

@@ -11,6 +11,8 @@ namespace RestaurantLoop.Runtime.Conveyor
     {
         // Layouts are authored for 9:16 portrait; narrower (taller) screens widen the ortho size so the
         // board keeps its full width and the extra height goes behind the HUD bars.
+        private const float NearPlanePullBack = 10f;
+
         public const float ReferenceAspect = 9f / 16f;
 
         private readonly ConveyorTuning _tuning;
@@ -46,9 +48,20 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void Initialize()
         {
             _framing.Apply();
+            PullBackFromBoard();
 
             _defaultPosition = _camera.transform.position;
             _defaultOrthoSize = _camera.orthographicSize;
+        }
+
+        // An orthographic view doesn't change with distance, but the authored camera sits so close to the
+        // table that the back queue rows (and anything hopping or swirling above them) crossed the near
+        // clip plane and vanished. Backing off along the view axis keeps everything well inside the frustum.
+        private void PullBackFromBoard()
+        {
+            if (!_camera.orthographic) return;
+            _camera.transform.position -= _camera.transform.forward * NearPlanePullBack;
+            _camera.farClipPlane += NearPlanePullBack;
         }
 
         // Short positional shake for impacts (power-ups); always settles back on the resting position.

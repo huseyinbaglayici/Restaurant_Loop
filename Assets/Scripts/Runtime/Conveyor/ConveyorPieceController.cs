@@ -27,6 +27,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         // Null restores the base look.
         public void ApplyThemeVisual(GameObject overridePrefab)
         {
+            _themeVisual ??= new ThemeVisualOverride(transform);
             _themeVisual.Apply(overridePrefab);
             UpdateVisualsAxisSign();
         }

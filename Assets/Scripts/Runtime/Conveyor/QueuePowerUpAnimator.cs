@@ -26,6 +26,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         private readonly CameraController _cameraController;
         private readonly AudioService _audioService;
         private readonly AudioLibrary _audioLibrary;
+        private readonly ConveyorTuning _tuning;
 
         private readonly List<Sequence> _running = new();
 
@@ -34,8 +35,10 @@ namespace RestaurantLoop.Runtime.Conveyor
             FxService fxService,
             CameraController cameraController,
             AudioService audioService,
-            AudioLibrary audioLibrary)
+            AudioLibrary audioLibrary,
+            ConveyorTuning tuning)
         {
+            _tuning = tuning;
             _queueSpawner = queueSpawner;
             _fxService = fxService;
             _cameraController = cameraController;
@@ -49,13 +52,8 @@ namespace RestaurantLoop.Runtime.Conveyor
             var visuals = new List<FoodItemController>(_queueSpawner.AllVisuals());
             if (visuals.Count == 0) return;
 
-            var center = Vector3.zero;
-            foreach (var visual in visuals)
-            {
-                _queueSpawner.ClaimForAnimation(visual);
-                center += visual.transform.position;
-            }
-            center /= visuals.Count;
+            foreach (var visual in visuals) _queueSpawner.ClaimForAnimation(visual);
+            var center = VisibleQueueCenter();
             var cameraTransform = _cameraController.Camera.transform;
             var screenUp = cameraTransform.up;
             var screenRight = cameraTransform.right;
@@ -115,7 +113,6 @@ namespace RestaurantLoop.Runtime.Conveyor
 
         public void PlayPickFromBottomRipple()
         {
-            var center = Vector3.zero;
             int count = 0;
             for (int lane = 0; lane < _queueSpawner.LaneCount; lane++)
             {
@@ -123,7 +120,6 @@ namespace RestaurantLoop.Runtime.Conveyor
                 {
                     var itemTransform = visual.transform;
                     var baseScale = itemTransform.localScale;
-                    center += itemTransform.position;
                     count++;
                     itemTransform.DOPunchPosition(_cameraController.Camera.transform.up * 0.45f, 0.35f, 1, 0f).SetDelay(row * 0.05f + lane * 0.02f).SetTarget(itemTransform);
                     itemTransform.DOPunchScale(baseScale * 0.18f, 0.35f, 5, 0.6f).SetDelay(row * 0.05f + lane * 0.02f).SetTarget(itemTransform)
@@ -132,8 +128,24 @@ namespace RestaurantLoop.Runtime.Conveyor
             }
 
             if (count == 0) return;
-            _fxService.Play(FxType.PowerUpBurst, center / count + Vector3.up * 0.5f);
+            _fxService.Play(FxType.PowerUpBurst, VisibleQueueCenter() + _cameraController.Camera.transform.up * 0.5f);
             if (_audioLibrary.PowerUpSfx != null) _audioService.PlaySfx(_audioLibrary.PowerUpSfx);
+        }
+
+        // Middle of the rows the player can actually see; deep rows tuck under the bottom bar.
+        private Vector3 VisibleQueueCenter()
+        {
+            int rows = Mathf.Max(1, _tuning.CameraVisibleQueueRows);
+            var sum = Vector3.zero;
+            int count = 0;
+            for (int lane = 0; lane < _queueSpawner.LaneCount; lane++)
+                for (int row = 0; row < rows; row++)
+                {
+                    sum += _queueSpawner.GetSlotPosition(lane, row);
+                    count++;
+                }
+
+            return count > 0 ? sum / count : Vector3.zero;
         }
 
         public void Dispose()

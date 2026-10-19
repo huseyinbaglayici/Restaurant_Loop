@@ -36,6 +36,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         public IReadOnlyList<(int PathIndex, FoodItemController Visual)> CrossingsThisFrame => _crossingsThisFrame;
 
         private int _nextItemId;
+        private bool _authoredEntitiesPending;
 
         // Belt items only (GetVisualAt indexes these). Capacity checks should use ReservedItemCount.
         public int ItemCount => _items.Count;
@@ -82,6 +83,14 @@ namespace RestaurantLoop.Runtime.Conveyor
                 return;
             }
 
+            _authoredEntitiesPending = _level.ConveyorEntities.Count > 0;
+        }
+
+        // First tick rather than Initialize, so the visual and tray services (bound later) are subscribed.
+        private void SpawnAuthoredEntities()
+        {
+            _authoredEntitiesPending = false;
+            var orderedPath = _level.BakedPath.OrderedPath;
             foreach (var entity in _level.ConveyorEntities)
             {
                 int index = orderedPath.IndexOf(entity.Coord);
@@ -259,6 +268,7 @@ namespace RestaurantLoop.Runtime.Conveyor
         public void Tick()
         {
             if (_path.Count == 0) return;
+            if (_authoredEntitiesPending) SpawnAuthoredEntities();
 
             float delta = _tuning.BeltSpeed * SpeedMultiplier * Time.deltaTime;
             float lastIndex = _path.Count - 1;
