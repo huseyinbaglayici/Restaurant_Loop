@@ -1,13 +1,11 @@
 <h1>Restaurant Loop</h1>
 
-A conveyor-belt puzzle game. Send food from the queue onto the belt, let it ride past the customers who ordered it, and keep the exit rack from filling up.
-
 <h2>Gameplay</h2>
 
 <table>
   <tr>
     <td align="center"><b>Easy</b><br/>Level intro, serving, win</td>
-    <td align="center"><b>Linked Meals</b><br/>Pairs that ride together</td>
+    <td align="center"><b>Linked Meals</b><br/>Pairs ride the belt together</td>
     <td align="center"><b>Power-Ups</b><br/>Shuffle, pick from bottom, extra tray</td>
   </tr>
   <tr>
@@ -17,25 +15,30 @@ A conveyor-belt puzzle game. Send food from the queue onto the belt, let it ride
   </tr>
 </table>
 
-<h2>Features</h2>
+<br/>
 
-- **30 levels** across two themes (Asian and Italian), with easy, hard and super hard difficulties.
-- **Customers** see along the belt; hidden customers are revealed as their neighbours are served, some order twice.
-- **Linked meals** leave the queue and ride the belt as a pair.
-- **Power-ups:** Shuffle, Pick From Bottom and Extra Tray, unlocked by level and bought with coins.
-- **Lives, coins and Keep Playing** after a fail; progress is saved with Easy Save 3.
-- **Tutorials** authored per level in the editor.
-- Safe-area HUD and aspect-aware camera framing for tall phones and tablets.
+<h2>Level Editor</h2>
+
+<table>
+  <tr>
+    <td align="center"><b>Conveyor Grid</b><br/>Belt path, customers, queue lanes, linked meals</td>
+  </tr>
+  <tr>
+    <td><img width="500" alt="Editor-ConveyorGrid" src="Restaurant_Loop_Screenshots/Editor-ConveyorGrid.png" /></td>
+  </tr>
+</table>
+
+<br/>
 
 <h2>Tech Stack</h2>
 
 - **Engine:** Unity 6000.0.64f1, URP
-- **DI:** Zenject (SignalBus for game events)
+- **DI:** Zenject
 - **Animation:** DOTween
 - **Save:** Easy Save 3
-- **Customers:** Vertex Animation Texture (VAT) baked animations
+- **Characters:** Vertex Animation Textures (VAT)
 - **Shaders:** Toony Colors Pro
-- **UI:** uGUI + TextMesh Pro, UI Toolkit for editor tools
+- **UI:** uGUI + TextMesh Pro, UI Toolkit for the editor tools
 
 <h2>Getting Started</h2>
 
@@ -47,6 +50,4 @@ A conveyor-belt puzzle game. Send food from the queue onto the belt, let it ride
 
 2. Open the folder with **Unity 6000.0.64f1** from Unity Hub.
 3. Open `Assets/Scenes/BoostrapScene.unity` and press **Play**.
-4. Editor tools are under the **RestaurantLoop** menu (Conveyor Grid Tool, Showcase Mode, Test Mode, VAT baker).
-
-See [`Docs/ConveyorSystem.md`](Docs/ConveyorSystem.md) for how the belt, queue and level editor fit together.
+4. Editor tools are under the **RestaurantLoop** menu (Conveyor Grid Tool, Showcase Mode, Test Mode, ...).
